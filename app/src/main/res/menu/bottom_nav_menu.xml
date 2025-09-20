@@ -1,0 +1,18 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_inicio"
+        android:icon="@android:drawable/ic_menu_view"
+        android:title="Inicio" />
+    <item
+        android:id="@+id/nav_calendario"
+        android:icon="@android:drawable/ic_menu_today"
+        android:title="Calendario" />
+    <item
+        android:id="@+id/nav_mapa"
+        android:icon="@android:drawable/ic_menu_mapmode"
+        android:title="Mapa" />
+    <item
+        android:id="@+id/nav_perfil"
+        android:icon="@android:drawable/ic_menu_myplaces"
+        android:title="Perfil" />
+</menu>
