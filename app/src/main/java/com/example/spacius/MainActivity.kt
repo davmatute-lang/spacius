@@ -1,5 +1,6 @@
 package com.example.spacius
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -24,10 +25,23 @@ class MainActivity : AppCompatActivity() {
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
         bottomNav.setOnItemSelectedListener { item ->
             when(item.itemId) {
-                R.id.nav_inicio -> true
-                R.id.nav_calendario -> true
-                R.id.nav_mapa -> true
-                R.id.nav_perfil -> true
+                R.id.nav_inicio -> {
+                    // Ya estamos en la pantalla principal
+                    true
+                }
+                R.id.nav_calendario -> {
+                    val intent = Intent(this, CalendarActivity::class.java)
+                    startActivity(intent)
+                    true
+                }
+                R.id.nav_mapa -> {
+                    // TODO: Implementar MapaActivity
+                    true
+                }
+                R.id.nav_perfil -> {
+                    // TODO: Implementar PerfilActivity
+                    true
+                }
                 else -> false
             }
         }

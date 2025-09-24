@@ -33,6 +33,11 @@
             android:name=".MainActivity"
             android:exported="true" />
 
+        <!-- CalendarActivity para el calendario -->
+        <activity
+            android:name=".CalendarActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

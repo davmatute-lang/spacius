@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="?android:attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
+
+    <TextView
+        android:id="@+id/dayText"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:text="1"
+        android:textSize="16sp"
+        android:textColor="#333333"
+        android:gravity="center"
+        android:background="@drawable/calendar_day_background"
+        android:layout_margin="4dp" />
+
+</LinearLayout>
