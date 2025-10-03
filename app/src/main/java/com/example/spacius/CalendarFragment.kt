@@ -69,6 +69,7 @@ class CalendarFragment : Fragment() {
         updateCalendar()
     }
     
+    
     private fun updateCalendar() {
         calendarAdapter.updateCalendar(currentDate)
         updateMonthYearText()
