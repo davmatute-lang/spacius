@@ -1,3 +1,20 @@
 <resources>
     <string name="app_name">Spacius</string>
+
+    <!-- Ajustes -->
+    <string name="ajustes">Ajustes</string>
+    <string name="bienvenido_ajustes">¡Bienvenido a Ajustes!</string>
+
+    <!-- Opciones -->
+    <string name="editar_perfil">Editar Perfil</string>
+    <string name="espacios_publicos">Espacios Públicos Existentes</string>
+    <string name="historial">Historial</string>
+    <string name="cerrar_sesion">Cerrar Sesión</string>
+
+    <!-- Content Descriptions (accesibilidad) -->
+    <string name="cd_editar_perfil">Botón para editar perfil</string>
+    <string name="cd_espacios">Botón para ver espacios públicos</string>
+    <string name="cd_historial">Botón para ver historial</string>
+    <string name="cd_cerrar_sesion">Botón para cerrar sesión</string>
+
 </resources>

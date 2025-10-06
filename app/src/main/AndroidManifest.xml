@@ -38,6 +38,10 @@
             android:name=".CalendarActivity"
             android:exported="false" />
 
+        <!-- Aquí registras SettingsActivity -->
+        <activity android:name=".SettingsActivity"
+            android:exported="true" />
+
     </application>
 
 </manifest>
