@@ -13,6 +13,10 @@
         android:theme="@style/Theme.Spacius"
         tools:targetApi="31">
 
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCpC1GdhoYWZ9jpbHrow_mEkFCUDDYfSgA" />
+
         <!-- LoginActivity será la primera pantalla -->
         <activity
             android:name=".LoginActivity"
@@ -37,6 +41,11 @@
         <activity
             android:name=".CalendarActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".MapsActivity"
+            android:exported="true">
+        </activity>
 
     </application>
 
