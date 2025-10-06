@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupBottomNavigation() {
         bottomNavigation = findViewById(R.id.bottomNavigation)
         bottomNavigation.setOnItemSelectedListener { item ->
-            when(item.itemId) {
+            when (item.itemId) {
                 R.id.nav_inicio -> {
                     loadFragment(HomeFragment())
                     true
@@ -46,11 +46,11 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_mapa -> {
-                    showComingSoonToast("Mapa")
+                    // 👉 Cargar el mapa dentro del mismo MainActivity
+                    loadFragment(MapsScreenFragment())
                     true
                 }
                 R.id.nav_perfil -> {
-                    // Cargar SettingsFragment en lugar de abrir Activity
                     loadFragment(SettingsFragment())
                     true
                 }
@@ -69,6 +69,8 @@ class MainActivity : AppCompatActivity() {
         android.widget.Toast.makeText(this, "$feature - Próximamente", android.widget.Toast.LENGTH_SHORT).show()
     }
 }
+
+
 
 
 
