@@ -50,7 +50,7 @@ dependencies {
     // ✅ Pruebas unitarias
     testImplementation("junit:junit:4.13.2")
 
-    // ✅ Pruebas instrumentadas (Espresso, AndroidJUnit4, etc.)
+    // ✅ Pruebas instrumentadas (Espresso, AndroidJUnit4, etc. diego)
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation("androidx.test:rules:1.5.0")
