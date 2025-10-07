@@ -38,7 +38,7 @@ android {
 dependencies {
 
     implementation(libs.androidx.core.ktx)
-    // Actualizado de 18.2.0 a 19.2.0
+    // Actualizado de 18.2.0 a 19.2.0 diego
     implementation("com.google.android.gms:play-services-maps:19.2.0")
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
