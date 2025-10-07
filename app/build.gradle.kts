@@ -38,7 +38,8 @@ android {
 dependencies {
 
     implementation(libs.androidx.core.ktx)
-    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    // Actualizado de 18.2.0 a 19.2.0
+    implementation("com.google.android.gms:play-services-maps:19.2.0")
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity)
@@ -47,13 +48,13 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    // ✅ Pruebas unitarias
-    testImplementation("junit:junit:4.13.2")
+    // Se usan las referencias del Catálogo de Versiones (libs.*)
+    testImplementation(libs.junit) // Reemplaza "junit:junit:4.13.2"
+    androidTestImplementation(libs.androidx.junit) // Reemplaza "androidx.test.ext:junit:1.1.5"
+    androidTestImplementation(libs.androidx.espresso.core) // Reemplaza "androidx.test.espresso:espresso-core:3.5.1"
 
-    // ✅ Pruebas instrumentadas (Espresso, AndroidJUnit4, etc. diego)
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation("androidx.test:rules:1.5.0")
-    androidTestImplementation("androidx.test:runner:1.5.2")
+    // Pruebas instrumentadas restantes (Actualizadas a las últimas versiones)
+    androidTestImplementation("androidx.test:rules:1.7.0")
+    androidTestImplementation("androidx.test:runner:1.7.0")
 
 }

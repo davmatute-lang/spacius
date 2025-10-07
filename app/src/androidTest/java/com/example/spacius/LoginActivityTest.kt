@@ -23,7 +23,7 @@ class LoginActivityTest {
 
     @Test
     fun muestraErrorSiCredencialesInvalidas() {
-        onView(withId(R.id.etEmail)).perform(typeText("usuario@falso.com"), closeSoftKeyboard())
+        onView(withId(R.id.etEmail)).perform(typeText("usuario05@falso.com"), closeSoftKeyboard())
         onView(withId(R.id.etPassword)).perform(typeText("123456"), closeSoftKeyboard())
         onView(withId(R.id.btnLogin)).perform(click())
     }
