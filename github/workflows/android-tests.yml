@@ -1,5 +1,5 @@
 name: Android Instrumented Tests
-#diegoRN version 4
+#diegoRN version 5
 on:
   push:
     branches: [ main ]
