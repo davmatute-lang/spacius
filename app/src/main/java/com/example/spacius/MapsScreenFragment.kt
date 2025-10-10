@@ -15,6 +15,18 @@ import com.google.android.gms.maps.model.MarkerOptions
 class MapsScreenFragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var map: GoogleMap
+    private var lat: Double = -2.170998  // valor por defecto
+    private var lng: Double = -79.922359 // valor por defecto
+    private var nombreLugar: String = "Guayaquil" // valor por defecto
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        arguments?.let {
+            lat = it.getDouble("latitud", lat)
+            lng = it.getDouble("longitud", lng)
+            nombreLugar = it.getString("nombreLugar", nombreLugar)
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -37,12 +49,11 @@ class MapsScreenFragment : Fragment(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
 
-        // Marcador ejemplo en Guayaquil
-        val guayaquil = LatLng(-2.170998, -79.922359)
-        map.addMarker(MarkerOptions().position(guayaquil).title("Guayaquil"))
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(guayaquil, 13f))
+        val ubicacion = LatLng(lat, lng)
+        map.addMarker(MarkerOptions().position(ubicacion).title(nombreLugar))
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(ubicacion, 16f))
 
-        // Habilitar controles de zoom
         map.uiSettings.isZoomControlsEnabled = true
     }
 }
+
