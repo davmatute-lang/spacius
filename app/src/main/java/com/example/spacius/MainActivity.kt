@@ -52,9 +52,10 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_mapa -> {
-                    loadFragment(MapsScreenFragment())
+                    loadFragment(MapsFragment())
                     true
                 }
+
                 R.id.nav_perfil -> {
                     loadFragment(SettingsFragment())
                     true

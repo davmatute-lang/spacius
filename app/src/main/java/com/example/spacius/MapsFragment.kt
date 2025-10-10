@@ -1,8 +1,12 @@
 package com.example.spacius
 
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.example.spacius.data.AppDatabase
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -10,37 +14,38 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.coroutines.launch
-import com.example.spacius.data.AppDatabase
-import com.example.spacius.data.Lugar
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
+class MapsFragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
     private lateinit var db: AppDatabase
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_map)
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val view = inflater.inflate(R.layout.fragment_maps, container, false)
 
-        // Inicializamos la base de datos
-        db = AppDatabase.getDatabase(this)
+        db = AppDatabase.getDatabase(requireContext())
 
-        // Inicialización del mapa
-        val mapFragment = supportFragmentManager
-            .findFragmentById(R.id.map) as SupportMapFragment
+        val mapFragment = childFragmentManager.findFragmentById(R.id.mapFragmentContainer) as? SupportMapFragment
+            ?: SupportMapFragment.newInstance().also {
+                childFragmentManager.beginTransaction()
+                    .replace(R.id.mapFragmentContainer, it)
+                    .commit()
+            }
+
         mapFragment.getMapAsync(this)
+        return view
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         mMap.uiSettings.isZoomControlsEnabled = true
 
-        // Marcador inicial en Guayaquil
-        val guayaquil = LatLng(-2.1709, -79.9224)
-        mMap.addMarker(MarkerOptions().position(guayaquil).title("Guayaquil, Ecuador"))
+        val guayaquil = LatLng(-2.170998, -79.922359)
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(guayaquil, 12f))
 
-        // 🔹 Cargar todos los lugares de la base de datos y agregarlos al mapa
         lifecycleScope.launch {
             val lugares = db.lugarDao().getAllLugares()
             for (lugar in lugares) {
@@ -53,7 +58,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 )
             }
 
-            // Centrar la cámara en el primer lugar si existe
             if (lugares.isNotEmpty()) {
                 val primerLugar = lugares.first()
                 val centro = LatLng(primerLugar.latitud, primerLugar.longitud)
