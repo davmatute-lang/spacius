@@ -13,91 +13,85 @@ class CalendarAdapter(
     private val context: Context,
     private var currentDate: Calendar
 ) : BaseAdapter() {
-    
-    private val calendar = Calendar.getInstance()
-    private val today = Calendar.getInstance()
-    private val daysInMonth = mutableListOf<Calendar?>()
-    
+
+    private val days = mutableListOf<Calendar>()
+    private val reservedDates = mutableListOf<Calendar>()
+
     init {
-        updateCalendar(currentDate)
+        generateDays()
     }
-    
-    fun updateCalendar(newDate: Calendar) {
-        currentDate = newDate
-        calendar.time = newDate.time
-        generateDaysInMonth()
-        notifyDataSetChanged()
-    }
-    
-    private fun generateDaysInMonth() {
-        daysInMonth.clear()
-        
-        // Obtener el primer día del mes
-        calendar.set(Calendar.DAY_OF_MONTH, 1)
-        val firstDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
-        
-        // Obtener el número de días en el mes
-        val daysInCurrentMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
-        
-        // Agregar días vacíos para alinear el primer día
-        for (i in 1 until firstDayOfWeek) {
-            daysInMonth.add(null)
-        }
-        
-        // Agregar todos los días del mes
-        for (day in 1..daysInCurrentMonth) {
-            val dayCalendar = Calendar.getInstance()
-            dayCalendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR))
-            dayCalendar.set(Calendar.MONTH, calendar.get(Calendar.MONTH))
-            dayCalendar.set(Calendar.DAY_OF_MONTH, day)
-            daysInMonth.add(dayCalendar)
-        }
-    }
-    
-    override fun getCount(): Int = 42 // 6 semanas * 7 días
-    
-    override fun getItem(position: Int): Calendar? = daysInMonth.getOrNull(position)
-    
+
+    override fun getCount(): Int = days.size
+
+    override fun getItem(position: Int): Calendar? = days.getOrNull(position)
+
     override fun getItemId(position: Int): Long = position.toLong()
-    
+
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
         val view = convertView ?: LayoutInflater.from(context)
             .inflate(R.layout.calendar_day_item, parent, false)
-        
+
         val dayText = view.findViewById<TextView>(R.id.dayText)
-        val dayCalendar = getItem(position)
-        
-        if (dayCalendar != null) {
-            val day = dayCalendar.get(Calendar.DAY_OF_MONTH)
-            dayText.text = day.toString()
-            dayText.visibility = View.VISIBLE
-            
-            // Estilo para el día actual
-            if (isToday(dayCalendar)) {
-                dayText.setBackgroundColor(Color.parseColor("#1976D2"))
-                dayText.setTextColor(Color.WHITE)
-            } else {
-                dayText.setBackgroundColor(Color.TRANSPARENT)
-                dayText.setTextColor(Color.BLACK)
-            }
-            
-            // Estilo para días del mes actual vs otros meses
-            if (dayCalendar.get(Calendar.MONTH) == currentDate.get(Calendar.MONTH)) {
-                dayText.alpha = 1.0f
-            } else {
-                dayText.alpha = 0.3f
-            }
+        val day = days[position]
+
+        dayText.text = day.get(Calendar.DAY_OF_MONTH).toString()
+
+        // Color del texto según si pertenece al mes actual o no
+        if (isSameMonth(day, currentDate)) {
+            dayText.setTextColor(Color.BLACK)
         } else {
-            dayText.text = ""
-            dayText.visibility = View.INVISIBLE
+            dayText.setTextColor(Color.GRAY)
         }
-        
+
+        // Si el día está reservado, se marca en morado
+        if (reservedDates.any { isSameDay(it, day) }) {
+            dayText.setBackgroundColor(Color.parseColor("#FFBB86FC")) // Morado
+            dayText.setTextColor(Color.WHITE)
+        } else {
+            dayText.setBackgroundColor(Color.TRANSPARENT)
+        }
+
         return view
     }
-    
-    private fun isToday(calendar: Calendar): Boolean {
-        return calendar.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
-                calendar.get(Calendar.MONTH) == today.get(Calendar.MONTH) &&
-                calendar.get(Calendar.DAY_OF_MONTH) == today.get(Calendar.DAY_OF_MONTH)
+
+    // Actualiza el calendario cuando cambia el mes
+    fun updateCalendar(newDate: Calendar) {
+        currentDate = newDate
+        generateDays()
+        notifyDataSetChanged()
+    }
+
+    // Marca una fecha reservada (desde ReservaFragment o CalendarActivity)
+    fun marcarFechaReservada(fecha: Calendar) {
+        reservedDates.add(fecha)
+        notifyDataSetChanged() // 🔹 Actualiza inmediatamente la vista
+    }
+
+    // Genera los días a mostrar (6 filas de 7 días)
+    private fun generateDays() {
+        days.clear()
+
+        val calendar = currentDate.clone() as Calendar
+        calendar.set(Calendar.DAY_OF_MONTH, 1)
+        val monthStart = calendar.get(Calendar.DAY_OF_WEEK) - 1
+        calendar.add(Calendar.DAY_OF_MONTH, -monthStart)
+
+        val totalCells = 42 // 6 semanas
+        for (i in 0 until totalCells) {
+            days.add(calendar.clone() as Calendar)
+            calendar.add(Calendar.DAY_OF_MONTH, 1)
+        }
+    }
+
+    private fun isSameDay(cal1: Calendar, cal2: Calendar): Boolean {
+        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+                cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH) &&
+                cal1.get(Calendar.DAY_OF_MONTH) == cal2.get(Calendar.DAY_OF_MONTH)
+    }
+
+    private fun isSameMonth(cal1: Calendar, cal2: Calendar): Boolean {
+        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+                cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH)
     }
 }
+

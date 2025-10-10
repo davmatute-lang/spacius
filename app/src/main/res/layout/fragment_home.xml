@@ -1,69 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5">
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#FFFFFF"
+    tools:context=".ui.InicioFragment">
 
-    <!-- Nombre de la app -->
+    <!-- Título -->
     <TextView
-        android:id="@+id/tvAppName"
+        android:id="@+id/txtBienvenida"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Spacius"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginTop="32dp"
-        android:textColor="#333333"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        android:layout_marginBottom="12dp"
+        android:text="Bienvenido/a"
+        android:textSize="26sp"
+        android:textStyle="bold" />
 
-    <!-- Imagen principal / banner -->
+    <!-- Imagen principal -->
     <ImageView
-        android:id="@+id/imgBanner"
-        android:layout_width="0dp"
+        android:id="@+id/imgPrincipal"
+        android:layout_width="match_parent"
         android:layout_height="200dp"
         android:scaleType="centerCrop"
-        android:src="@drawable/bann"
-        android:layout_marginTop="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        app:layout_constraintTop_toBottomOf="@id/tvAppName"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        android:src="@drawable/bann1"
+        android:layout_marginBottom="16dp" />
 
-    <!-- Mensaje de bienvenida -->
+    <!-- Subtítulo -->
     <TextView
-        android:id="@+id/tvWelcome"
-        android:layout_width="0dp"
+        android:id="@+id/txtLugaresRecomendados"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Bienvenido a Spacius"
+        android:text="Lugares recomendados:"
+        android:textStyle="bold"
         android:textSize="18sp"
-        android:textColor="#666666"
-        android:gravity="center"
-        android:layout_marginTop="24dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        app:layout_constraintTop_toBottomOf="@id/imgBanner"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        android:layout_marginBottom="8dp" />
 
-    <!-- Descripción -->
+    <!-- RecyclerView para la lista de lugares -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerLugares"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scrollbars="vertical"
+        tools:listitem="@layout/item_lugar" />
+
+    <!-- Última reserva -->
     <TextView
-        android:id="@+id/tvDescription"
-        android:layout_width="0dp"
+        android:id="@+id/txtUltimaReserva"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Gestiona tu espacio y tiempo de manera eficiente"
-        android:textSize="14sp"
-        android:textColor="#888888"
-        android:gravity="center"
-        android:layout_marginTop="8dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        app:layout_constraintTop_toBottomOf="@id/tvWelcome"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        android:layout_marginTop="16dp"
+        android:text="Última reserva realizada: 07/08/2025"
+        android:textStyle="bold" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- Eventos próximos -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Eventos Próximos:"
+        android:layout_marginTop="8dp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/txtEventos"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Boda Masiva - Estadio Monumental 14/08"
+        android:layout_marginBottom="20dp" />
+
+</LinearLayout>
+
+
+
