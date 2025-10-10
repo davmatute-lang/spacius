@@ -29,7 +29,7 @@ class CalendarAdapter(
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
         val view = convertView ?: LayoutInflater.from(context)
-            .inflate(R.layout.calendar_day_item, parent, false) // ✅ corregido nombre del layout
+            .inflate(R.layout.calendar_day_item, parent, false)
 
         val dayText = view.findViewById<TextView>(R.id.dayText)
         val day = days[position]
@@ -64,6 +64,7 @@ class CalendarAdapter(
     // Marca una fecha reservada (desde ReservaFragment o CalendarActivity)
     fun marcarFechaReservada(fecha: Calendar) {
         reservedDates.add(fecha)
+        notifyDataSetChanged() // 🔹 Actualiza inmediatamente la vista
     }
 
     // Genera los días a mostrar (6 filas de 7 días)
@@ -93,3 +94,4 @@ class CalendarAdapter(
                 cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH)
     }
 }
+

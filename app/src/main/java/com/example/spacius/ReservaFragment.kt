@@ -11,16 +11,19 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.spacius.MainActivity
-import com.example.spacius.CalendarFragment
 import com.example.spacius.R
+import com.example.spacius.data.AppDatabase
+import com.example.spacius.data.Reserva
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class ReservaFragment : Fragment(), OnMapReadyCallback {
@@ -28,6 +31,8 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
     private lateinit var map: GoogleMap
     private var latLugar: Double = -2.170998
     private var lngLugar: Double = -79.922359
+
+    private lateinit var db: AppDatabase
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -46,6 +51,8 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
 
         val btnReservar: Button = view.findViewById(R.id.btnReservar)
         val btnCancelar: Button = view.findViewById(R.id.btnCancelar)
+
+        db = AppDatabase.getDatabase(requireContext())
 
         // Cargar datos del lugar seleccionado
         arguments?.let {
@@ -96,8 +103,22 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
                 return@setOnClickListener
             }
 
-            // 🔹 Llamamos a MainActivity para marcar fecha de forma segura
+            // 🔹 Llamamos a MainActivity para marcar fecha visualmente
             (requireActivity() as MainActivity).marcarFechaEnCalendario(fechaSeleccionada)
+
+            // 🔹 Guardamos la reserva en la base de datos
+            lifecycleScope.launch {
+                val reserva = Reserva(
+                    idLugar = arguments?.getInt("idLugar") ?: 0,
+                    fecha = fechaSeleccionada,
+                    horaInicio = horaInicioSeleccionada,
+                    horaFin = horaFinSeleccionada,
+                    nombreUsuario = "UsuarioSimulado"
+                )
+                db.reservaDao().insertReserva(reserva)
+            }
+
+            Toast.makeText(requireContext(), "¡Reserva realizada!", Toast.LENGTH_SHORT).show()
         }
 
         // Botón Cancelar
@@ -126,6 +147,3 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
         map.uiSettings.isZoomControlsEnabled = true
     }
 }
-
-
-
