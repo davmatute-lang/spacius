@@ -1,5 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/mapFragmentContainer"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"/>
+    android:layout_height="match_parent">
+
+    <!-- Contenedor del mapa -->
+    <FrameLayout
+        android:id="@+id/mapFragmentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <!-- Mensaje cuando no hay reservas -->
+    <TextView
+        android:id="@+id/tvSinReservas"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:padding="32dp"
+        android:text="📍 No tienes reservas activas\n\n¡Explora los lugares disponibles y haz tu primera reserva!"
+        android:textSize="16sp"
+        android:textColor="@android:color/black"
+        android:visibility="gone"/>
+
+</FrameLayout>

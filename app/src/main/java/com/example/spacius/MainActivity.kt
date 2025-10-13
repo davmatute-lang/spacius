@@ -56,7 +56,9 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_mapa -> {
-                    loadFragment(MapsFragment())
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, MapsFragment(), "MAPS")
+                        .commit()
                     true
                 }
 
@@ -119,8 +121,9 @@ class MainActivity : AppCompatActivity() {
         // Cambiar pestaña a calendario
         setSelectedBottomNav(R.id.nav_calendario)
         
-        // Actualizar HomeFragment para reflejar que el lugar ya no está disponible
+        // Actualizar HomeFragment y MapsFragment para reflejar que el lugar ya no está disponible
         actualizarHomeFragment()
+        actualizarMapsFragment()
     }
 
     // 🔹 Nueva función para actualizar calendario desde DetalleReservaFragment
@@ -128,12 +131,23 @@ class MainActivity : AppCompatActivity() {
         if (calendarFragment.isAdded) {
             calendarFragment.actualizarDespuesDeCancelacion()
         }
+        // También actualizar el mapa y el home
+        actualizarMapsFragment()
+        actualizarHomeFragment()
     }
     
     // 🔹 Nueva función para actualizar HomeFragment después de una reserva o cancelación
     fun actualizarHomeFragment() {
         val homeFragment = supportFragmentManager.findFragmentByTag("HOME") as? HomeFragment
         homeFragment?.let {
+            // El onResume del fragment se encargará de recargar los datos
+        }
+    }
+    
+    // 🔹 Nueva función para actualizar MapsFragment después de una reserva o cancelación
+    fun actualizarMapsFragment() {
+        val mapsFragment = supportFragmentManager.findFragmentByTag("MAPS") as? MapsFragment
+        mapsFragment?.let {
             // El onResume del fragment se encargará de recargar los datos
         }
     }
