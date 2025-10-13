@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/button_rounded"
+    android:backgroundTint="@color/event_background"
+    android:gravity="center_vertical"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground">
+
+    <!-- Icono del evento -->
+    <TextView
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:text="📍"
+        android:textSize="20sp"
+        android:gravity="center"
+        android:background="@drawable/calendar_day_background"
+        android:backgroundTint="@color/event_icon_bg"
+        android:textColor="@color/white"
+        android:layout_marginEnd="12dp" />
+
+    <!-- Información del evento -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Nombre del lugar -->
+        <TextView
+            android:id="@+id/txtNombreLugarEvento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nombre del Lugar"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <!-- Fecha y hora -->
+        <TextView
+            android:id="@+id/txtFechaHoraEvento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="12/10/2025 • 10:00 - 12:00"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginTop="2dp" />
+
+    </LinearLayout>
+
+    <!-- Indicador de que es clickeable -->
+    <TextView
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:text="👁️"
+        android:textSize="16sp"
+        android:textColor="@color/text_disabled"
+        android:gravity="center"
+        android:background="?android:attr/selectableItemBackgroundBorderless" />
+
+</LinearLayout>

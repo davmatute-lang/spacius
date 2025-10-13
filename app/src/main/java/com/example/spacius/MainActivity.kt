@@ -32,7 +32,9 @@ class MainActivity : AppCompatActivity() {
 
         // Cargar fragment inicial
         if (savedInstanceState == null) {
-            loadFragment(HomeFragment())
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, HomeFragment(), "HOME")
+                .commit()
         }
     }
 
@@ -41,7 +43,9 @@ class MainActivity : AppCompatActivity() {
         bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_inicio -> {
-                    loadFragment(HomeFragment())
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, HomeFragment(), "HOME")
+                        .commit()
                     true
                 }
                 R.id.nav_calendario -> {
@@ -91,6 +95,47 @@ class MainActivity : AppCompatActivity() {
 
         // Cambiar pestaña a calendario
         setSelectedBottomNav(R.id.nav_calendario)
+    }
+
+    // 🔹 Nueva función para manejar reservas completas con más información
+    fun procesarReservaCompleta(
+        idLugar: Int,
+        nombreLugar: String,
+        fecha: String,
+        horaInicio: String,
+        horaFin: String
+    ) {
+        // Comprobar si el fragmento está agregado antes de llamar a la función
+        if (calendarFragment.isAdded) {
+            calendarFragment.marcarReservaCompleta(idLugar, nombreLugar, fecha, horaInicio, horaFin)
+        } else {
+            // Si aún no está agregado, lo agregamos primero
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, calendarFragment, "CALENDAR")
+                .commitNow()
+            calendarFragment.marcarReservaCompleta(idLugar, nombreLugar, fecha, horaInicio, horaFin)
+        }
+
+        // Cambiar pestaña a calendario
+        setSelectedBottomNav(R.id.nav_calendario)
+        
+        // Actualizar HomeFragment para reflejar que el lugar ya no está disponible
+        actualizarHomeFragment()
+    }
+
+    // 🔹 Nueva función para actualizar calendario desde DetalleReservaFragment
+    fun actualizarCalendarioDesdeDetalle() {
+        if (calendarFragment.isAdded) {
+            calendarFragment.actualizarDespuesDeCancelacion()
+        }
+    }
+    
+    // 🔹 Nueva función para actualizar HomeFragment después de una reserva o cancelación
+    fun actualizarHomeFragment() {
+        val homeFragment = supportFragmentManager.findFragmentByTag("HOME") as? HomeFragment
+        homeFragment?.let {
+            // El onResume del fragment se encargará de recargar los datos
+        }
     }
 }
 

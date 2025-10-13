@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.spacius.R
+import com.example.spacius.ui.ReservaFragment
 import com.example.spacius.data.*
 import kotlinx.coroutines.launch
 
@@ -33,23 +34,86 @@ class HomeFragment : Fragment() {
 
         db = AppDatabase.getDatabase(requireContext())
 
+        cargarLugaresDisponibles()
+        
+        return view
+    }
+    
+    // 🔹 Se ejecuta cuando el fragment vuelve a ser visible
+    override fun onResume() {
+        super.onResume()
+        cargarLugaresDisponibles() // Recargar lugares disponibles
+    }
+    
+    // 🔹 Nueva función para cargar lugares disponibles (no reservados)
+    private fun cargarLugaresDisponibles() {
         lifecycleScope.launch {
             if (db.lugarDao().countLugares() == 0) {
                 db.lugarDao().insertAll(getLugaresPredefinidos())
             }
 
-            lugares.addAll(db.lugarDao().getAllLugares())
-            recyclerView.adapter = LugarAdapter(lugares) { lugar ->
-                lanzarDetalleReserva(lugar)
+            // Obtener todos los lugares
+            val todosLosLugares = db.lugarDao().getAllLugares()
+            
+            // Obtener IDs de lugares reservados
+            val lugaresReservadosIds = db.reservaDao().getLugaresReservadosIds()
+            
+            // Filtrar lugares no reservados
+            val lugaresDisponibles = todosLosLugares.filter { lugar ->
+                !lugaresReservadosIds.contains(lugar.id)
             }
+            
+            // Actualizar la lista
+            lugares.clear()
+            lugares.addAll(lugaresDisponibles)
+            
+            // Configurar adapter
+            if (recyclerView.adapter == null) {
+                recyclerView.adapter = LugarAdapter(lugares) { lugar ->
+                    lanzarDetalleReserva(lugar)
+                }
+            } else {
+                recyclerView.adapter?.notifyDataSetChanged()
+            }
+            
+            // 🔹 Mostrar mensaje si no hay lugares disponibles
+            mostrarEstadoLugares(lugaresDisponibles.isEmpty())
         }
+    }
 
-        return view
+    // 🔹 Función para mostrar mensaje cuando no hay lugares disponibles
+    private var mensajeView: TextView? = null
+    
+    private fun mostrarEstadoLugares(sinLugares: Boolean) {
+        if (sinLugares) {
+            recyclerView.visibility = View.GONE
+            
+            if (mensajeView == null) {
+                // Crear vista de mensaje cuando no hay lugares disponibles
+                mensajeView = TextView(requireContext()).apply {
+                    text = "🎉 ¡Todos los lugares están reservados!\n\n" +
+                           "Revisa el calendario para ver tus reservas o " +
+                           "espera a que se liberen espacios."
+                    textSize = 16f
+                    setTextColor(resources.getColor(android.R.color.black, null))
+                    gravity = android.view.Gravity.CENTER
+                    setPadding(32, 64, 32, 64)
+                }
+                
+                (recyclerView.parent as? ViewGroup)?.addView(mensajeView)
+            } else {
+                mensajeView?.visibility = View.VISIBLE
+            }
+        } else {
+            recyclerView.visibility = View.VISIBLE
+            mensajeView?.visibility = View.GONE
+        }
     }
 
     private fun lanzarDetalleReserva(lugar: Lugar) {
         val fragment = ReservaFragment()
         fragment.arguments = Bundle().apply {
+            putInt("idLugar", lugar.id)          // <- Nuevo: ID del lugar
             putString("nombreLugar", lugar.nombre)
             putString("descripcion", lugar.descripcion)
             putString("fecha", lugar.fechaDisponible)

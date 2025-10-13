@@ -103,22 +103,33 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
                 return@setOnClickListener
             }
 
-            // 🔹 Llamamos a MainActivity para marcar fecha visualmente
-            (requireActivity() as MainActivity).marcarFechaEnCalendario(fechaSeleccionada)
-
-            // 🔹 Guardamos la reserva en la base de datos
-            lifecycleScope.launch {
-                val reserva = Reserva(
-                    idLugar = arguments?.getInt("idLugar") ?: 0,
-                    fecha = fechaSeleccionada,
-                    horaInicio = horaInicioSeleccionada,
-                    horaFin = horaFinSeleccionada,
-                    nombreUsuario = "UsuarioSimulado"
-                )
-                db.reservaDao().insertReserva(reserva)
+            if (horaInicioSeleccionada.isBlank() || horaInicioSeleccionada == "Hora inicio") {
+                Toast.makeText(requireContext(), "Por favor, selecciona hora de inicio", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
 
-            Toast.makeText(requireContext(), "¡Reserva realizada!", Toast.LENGTH_SHORT).show()
+            if (horaFinSeleccionada.isBlank() || horaFinSeleccionada == "Hora fin") {
+                Toast.makeText(requireContext(), "Por favor, selecciona hora de fin", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // 🔹 Obtener datos del lugar
+            val idLugar = arguments?.getInt("idLugar") ?: 0
+            val nombreLugar = arguments?.getString("nombreLugar") ?: "Lugar desconocido"
+
+            // 🔹 Usar la nueva función completa
+            (requireActivity() as MainActivity).procesarReservaCompleta(
+                idLugar = idLugar,
+                nombreLugar = nombreLugar,
+                fecha = fechaSeleccionada,
+                horaInicio = horaInicioSeleccionada,
+                horaFin = horaFinSeleccionada
+            )
+
+            Toast.makeText(requireContext(), "¡Reserva realizada exitosamente! 🎉", Toast.LENGTH_LONG).show()
+            
+            // 🔹 Regresar al HomeFragment después de la reserva exitosa
+            requireActivity().supportFragmentManager.popBackStack()
         }
 
         // Botón Cancelar
