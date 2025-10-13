@@ -92,5 +92,35 @@ class MainActivity : AppCompatActivity() {
         // Cambiar pestaña a calendario
         setSelectedBottomNav(R.id.nav_calendario)
     }
+
+    // 🔹 Nueva función para manejar reservas completas con más información
+    fun procesarReservaCompleta(
+        idLugar: Int,
+        nombreLugar: String,
+        fecha: String,
+        horaInicio: String,
+        horaFin: String
+    ) {
+        // Comprobar si el fragmento está agregado antes de llamar a la función
+        if (calendarFragment.isAdded) {
+            calendarFragment.marcarReservaCompleta(idLugar, nombreLugar, fecha, horaInicio, horaFin)
+        } else {
+            // Si aún no está agregado, lo agregamos primero
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, calendarFragment, "CALENDAR")
+                .commitNow()
+            calendarFragment.marcarReservaCompleta(idLugar, nombreLugar, fecha, horaInicio, horaFin)
+        }
+
+        // Cambiar pestaña a calendario
+        setSelectedBottomNav(R.id.nav_calendario)
+    }
+
+    // 🔹 Nueva función para actualizar calendario desde DetalleReservaFragment
+    fun actualizarCalendarioDesdeDetalle() {
+        if (calendarFragment.isAdded) {
+            calendarFragment.actualizarDespuesDeCancelacion()
+        }
+    }
 }
 

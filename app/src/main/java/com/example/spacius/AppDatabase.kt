@@ -48,6 +48,12 @@ interface ReservaDao {
 
     @Insert
     suspend fun insertReserva(reserva: Reserva)
+
+    @Query("DELETE FROM reservas WHERE id = :reservaId")
+    suspend fun deleteReservaById(reservaId: Int)
+
+    @Query("SELECT * FROM reservas WHERE id = :reservaId LIMIT 1")
+    suspend fun getReservaById(reservaId: Int): Reserva?
 }
 
 @Database(entities = [Lugar::class, Reserva::class], version = 1)

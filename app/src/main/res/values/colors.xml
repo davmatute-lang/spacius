@@ -3,4 +3,17 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <color name="blue_primary">#007AFF</color> <color name="green_secondary">#4CAF50</color> <color name="light_blue_start">#E6F4FF</color> <color name="light_blue_end">#F0F8FF</color> </resources>
+    <color name="blue_primary">#007AFF</color>
+    <color name="green_secondary">#4CAF50</color>
+    <color name="light_blue_start">#E6F4FF</color>
+    <color name="light_blue_end">#F0F8FF</color>
+
+    <!-- Colores para calendario y eventos -->
+    <color name="calendar_reserved">#FFBB86FC</color>
+    <color name="calendar_today">#1976D2</color>
+    <color name="event_background">#E3F2FD</color>
+    <color name="event_icon_bg">#1976D2</color>
+    <color name="text_primary">#333333</color>
+    <color name="text_secondary">#666666</color>
+    <color name="text_disabled">#999999</color>
+</resources>

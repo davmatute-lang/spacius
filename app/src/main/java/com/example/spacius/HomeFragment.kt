@@ -50,6 +50,7 @@ class HomeFragment : Fragment() {
     private fun lanzarDetalleReserva(lugar: Lugar) {
         val fragment = ReservaFragment()
         fragment.arguments = Bundle().apply {
+            putInt("idLugar", lugar.id)          // <- Nuevo: ID del lugar
             putString("nombreLugar", lugar.nombre)
             putString("descripcion", lugar.descripcion)
             putString("fecha", lugar.fechaDisponible)

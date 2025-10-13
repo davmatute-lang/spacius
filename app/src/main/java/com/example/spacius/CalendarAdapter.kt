@@ -38,15 +38,15 @@ class CalendarAdapter(
 
         // Color del texto según si pertenece al mes actual o no
         if (isSameMonth(day, currentDate)) {
-            dayText.setTextColor(Color.BLACK)
+            dayText.setTextColor(context.getColor(R.color.text_primary))
         } else {
-            dayText.setTextColor(Color.GRAY)
+            dayText.setTextColor(context.getColor(R.color.text_disabled))
         }
 
         // Si el día está reservado, se marca en morado
         if (reservedDates.any { isSameDay(it, day) }) {
-            dayText.setBackgroundColor(Color.parseColor("#FFBB86FC")) // Morado
-            dayText.setTextColor(Color.WHITE)
+            dayText.setBackgroundColor(context.getColor(R.color.calendar_reserved))
+            dayText.setTextColor(context.getColor(R.color.white))
         } else {
             dayText.setBackgroundColor(Color.TRANSPARENT)
         }
@@ -65,6 +65,11 @@ class CalendarAdapter(
     fun marcarFechaReservada(fecha: Calendar) {
         reservedDates.add(fecha)
         notifyDataSetChanged() // 🔹 Actualiza inmediatamente la vista
+    }
+
+    // 🔹 Nueva función para limpiar todas las fechas reservadas
+    fun limpiarFechasReservadas() {
+        reservedDates.clear()
     }
 
     // Genera los días a mostrar (6 filas de 7 días)
