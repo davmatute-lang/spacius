@@ -2,9 +2,9 @@ name: Android Instrumented Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, Ashlee_Coello, Dani-Freire, Diego_Rubio]
   pull_request:
-    branches: [ main ]
+    branches: [ main, Ashlee_Coello, Dani-Freire, Diego_Rubio]
 
 jobs:
   instrumented-tests:
