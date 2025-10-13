@@ -586,7 +586,7 @@ Este proyecto sigue GitFlow con múltiples branches de desarrollo:
 
 ### Contribuidores Activos
 - Ashlee Coello
-- Dani Freire (rama actual)
+- Dani Freire
 - Diego Rubio
 
 ## 📞 Soporte y Contacto
