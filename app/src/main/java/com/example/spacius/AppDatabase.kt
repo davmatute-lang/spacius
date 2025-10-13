@@ -54,6 +54,14 @@ interface ReservaDao {
 
     @Query("SELECT * FROM reservas WHERE id = :reservaId LIMIT 1")
     suspend fun getReservaById(reservaId: Int): Reserva?
+    
+    // 🔹 Nueva función para verificar si un lugar ya está reservado
+    @Query("SELECT COUNT(*) > 0 FROM reservas WHERE idLugar = :idLugar")
+    suspend fun isLugarReservado(idLugar: Int): Boolean
+    
+    // 🔹 Función para obtener los IDs de lugares reservados
+    @Query("SELECT DISTINCT idLugar FROM reservas")
+    suspend fun getLugaresReservadosIds(): List<Int>
 }
 
 @Database(entities = [Lugar::class, Reserva::class], version = 1)

@@ -127,6 +127,9 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
             )
 
             Toast.makeText(requireContext(), "¡Reserva realizada exitosamente! 🎉", Toast.LENGTH_LONG).show()
+            
+            // 🔹 Regresar al HomeFragment después de la reserva exitosa
+            requireActivity().supportFragmentManager.popBackStack()
         }
 
         // Botón Cancelar
