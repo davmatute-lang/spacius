@@ -14,6 +14,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 👇 ESTA ES LA LÍNEA NUEVA IMPORTANTE
+      - name: Dar permiso de ejecución a gradlew
+        run: chmod +x gradlew
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -23,15 +27,9 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      # 👇 Permiso de ejecución para gradlew
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      # 🧱 Construye el APK y el APK de pruebas
       - name: Build Debug APK and Test APK
         run: ./gradlew :app:assembleDebug :app:assembleAndroidTest
 
-      # 📱 Ejecuta las pruebas instrumentadas en emulador
       - name: Run Instrumented Tests on Emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -40,10 +38,10 @@ jobs:
           arch: x86_64
           script: ./gradlew :app:connectedDebugAndroidTest
 
-      # 📦 Guarda los resultados (logs, reportes de tests)
       - name: Upload Instrumented Test Reports
-        if: always()   # se ejecuta aunque las pruebas fallen
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: android-test-reports
           path: app/build/reports/androidTests/connected/
+
