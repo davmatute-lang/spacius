@@ -47,30 +47,6 @@
         android:scrollbars="vertical"
         tools:listitem="@layout/item_lugar" />
 
-    <!-- Última reserva -->
-    <TextView
-        android:id="@+id/txtUltimaReserva"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Última reserva realizada: 07/08/2025"
-        android:textStyle="bold" />
-
-    <!-- Eventos próximos -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Eventos Próximos:"
-        android:layout_marginTop="8dp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/txtEventos"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Boda Masiva - Estadio Monumental 14/08"
-        android:layout_marginBottom="20dp" />
-
 </LinearLayout>
 
 

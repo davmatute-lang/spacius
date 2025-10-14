@@ -59,18 +59,6 @@
             android:layout_marginTop="16dp"
             android:elevation="4dp" />
 
-        <!-- Olvidar contraseña -->
-        <TextView
-            android:id="@+id/tvOlvido"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="¿Olvidaste tu contraseña?"
-            android:textColor="#BBDEFB"
-            android:textSize="14sp"
-            android:layout_gravity="end"
-            android:layout_marginTop="8dp"
-            android:letterSpacing="0.01" />
-
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogin"
             android:layout_width="match_parent"
