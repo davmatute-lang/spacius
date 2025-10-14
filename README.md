@@ -249,7 +249,7 @@ Si necesitas tu propia API Key:
 
 ## 🔄 Flujo de Datos
 
-```mermaid
+
 Usuario → Home → Selecciona Lugar → Formulario Reserva
                                           ↓
                                     Guarda en Room DB
