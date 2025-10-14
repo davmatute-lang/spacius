@@ -22,7 +22,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_map)
 
-        // Inicializamos la base de datos DIEGO PRUEBA
+        // Inicializamos la base de datos DIEGO PRUEBA version2
         db = AppDatabase.getDatabase(this)
 
         // Inicialización del mapa
