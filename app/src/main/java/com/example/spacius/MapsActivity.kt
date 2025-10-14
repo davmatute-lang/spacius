@@ -22,10 +22,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_map)
 
-        // Inicializamos la base de datos
+        // Inicializamos la base de datos DIEGO PRUEBA version4
         db = AppDatabase.getDatabase(this)
 
-        // Inicialización del mapa
+        // Inicialización del  Version 2
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
