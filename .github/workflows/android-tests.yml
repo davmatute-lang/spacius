@@ -2,34 +2,28 @@ name: Build APK
 
 on:
   push:
-    branches:
-      - main  # Cambia por la rama que uses
+    branches: [ master ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Clonar el repositorio
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Configurar JDK
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # 3. Dar permisos a gradlew
-      - name: Grant execute permission
+      - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # 4. Construir APK en modo debug
       - name: Build Debug APK
         run: ./gradlew assembleDebug
 
-      # 5. Guardar el APK como artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
