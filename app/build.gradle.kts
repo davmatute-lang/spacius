@@ -4,6 +4,9 @@ plugins {
 
     // 🔹 Necesario para usar Room con anotaciones
     id("kotlin-kapt")
+    
+    // 🔥 Google Services para Firebase
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -58,6 +61,11 @@ dependencies {
     // --- 🔹 Glide (Carga de imágenes) ---
     implementation("com.github.bumptech.glide:glide:4.16.0")
     kapt("com.github.bumptech.glide:compiler:4.16.0")
+
+    // --- 🔥 Firebase ---
+    implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-analytics-ktx")
 
     // --- Tests ---
     testImplementation(libs.junit)
