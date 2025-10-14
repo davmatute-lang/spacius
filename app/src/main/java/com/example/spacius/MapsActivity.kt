@@ -25,7 +25,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         // Inicializamos la base de datos
         db = AppDatabase.getDatabase(this)
 
-        // Inicialización del  Version 1
+        // Inicialización del  Version 2
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
