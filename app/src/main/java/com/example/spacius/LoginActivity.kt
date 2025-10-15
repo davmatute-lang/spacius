@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.FirebaseApp
 
 class LoginActivity : AppCompatActivity() {
 
@@ -23,6 +24,11 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
+        // Asegurar que Firebase esté inicializado
+        if (FirebaseApp.getApps(this).isEmpty()) {
+            FirebaseApp.initializeApp(this)
+        }
+        
         // Inicializar Firebase Auth
         auth = Firebase.auth
 
@@ -99,13 +105,18 @@ class LoginActivity : AppCompatActivity() {
                     Toast.makeText(this, "Bienvenido ${user?.email}", Toast.LENGTH_SHORT).show()
                     irAMainActivity()
                 } else {
-                    // Error en el login
-                    val errorMessage = when (task.exception?.message) {
-                        "The email address is badly formatted." -> "Formato de correo inválido"
-                        "There is no user record corresponding to this identifier. The user may have been deleted." -> "No existe una cuenta con este correo"
-                        "The password is invalid or the user does not have a password." -> "Contraseña incorrecta"
-                        "A network error (such as timeout, interrupted connection or unreachable host) has occurred." -> "Error de conexión. Verifica tu internet"
-                        else -> "Error al iniciar sesión. Verifica tus credenciales"
+                    // Error en el login - Log detallado
+                    val exception = task.exception
+                    android.util.Log.e("LoginActivity", "Error de Firebase Auth: ${exception?.message}")
+                    android.util.Log.e("LoginActivity", "Exception type: ${exception?.javaClass?.simpleName}")
+                    
+                    val errorMessage = when {
+                        exception?.message?.contains("badly formatted") == true -> "Formato de correo inválido"
+                        exception?.message?.contains("no user record") == true -> "No existe una cuenta con este correo"
+                        exception?.message?.contains("password is invalid") == true -> "Contraseña incorrecta"
+                        exception?.message?.contains("network error") == true -> "Error de conexión. Verifica tu internet"
+                        exception?.message?.contains("too many requests") == true -> "Demasiados intentos. Espera un momento"
+                        else -> "Error: ${exception?.message ?: "Desconocido"}"
                     }
                     Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
                 }
