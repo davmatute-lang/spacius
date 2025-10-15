@@ -4,12 +4,17 @@
     <!-- Ajustes -->
     <string name="ajustes">Ajustes</string>
     <string name="bienvenido_ajustes">¡Bienvenido a Ajustes!</string>
-
-    <!-- Opciones -->
     <string name="editar_perfil">Editar Perfil</string>
-    <string name="espacios_publicos">Espacios Públicos Existentes</string>
+    <string name="cambiar_foto">Cambiar foto</string>
+    <string name="nombre_completo">Nombre completo</string>
+    <string name="identificacion">Identificación</string>
+    <string name="fecha_nacimiento">Fecha de nacimiento</string>
+    <string name="correo_electronico">Correo electrónico</string>
+    <string name="contrasena">Contraseña</string>
+    <string name="guardar_cambios">Guardar cambios</string>
     <string name="historial">Historial</string>
     <string name="cerrar_sesion">Cerrar Sesión</string>
+    <string name="foto_perfil">Foto de perfil</string>
 
     <!-- Content Descriptions (accesibilidad) -->
     <string name="cd_editar_perfil">Botón para editar perfil</string>

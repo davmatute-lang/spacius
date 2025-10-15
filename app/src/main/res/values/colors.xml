@@ -16,4 +16,10 @@
     <color name="text_primary">#333333</color>
     <color name="text_secondary">#666666</color>
     <color name="text_disabled">#999999</color>
+
+    <!--Colores para ajustes-->
+        <color name="purple_200">#BB86FC</color>
+        <color name="purple_500">#6200EE</color>
+        <color name="purple_700">#3700B3</color>
+
 </resources>

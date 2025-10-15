@@ -63,7 +63,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 R.id.nav_perfil -> {
-                    loadFragment(SettingsFragment())
+                    loadFragment(fragment = SettingsFragment())
                     true
                 }
                 else -> false
