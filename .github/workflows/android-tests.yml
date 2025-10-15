@@ -1,35 +1,56 @@
-name: Android Instrumented Tests
+name: Android CI - Login Test & Firebase Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
-  instrumented-tests:
+  build:
+    name: Build, Test & Deploy
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Descarga tu código
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 2️⃣ Configura JDK
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          distribution: temurin
+          java-version: 17
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      # 3️⃣ Permiso para gradlew
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-      - name: Build Debug APK and Test APK
-        run: ./gradlew :app:assembleDebug :app:assembleAndroidTest
+      # 4️⃣ Construye el proyecto
+      - name: Build with Gradle
+        run: ./gradlew assembleDebug
 
-      - name: Run Instrumented Tests on Emulator
-        uses: reactivecircus/android-emulator-runner@v2
+      # 5️⃣ Ejecuta pruebas unitarias
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest
+
+      # 6️⃣ Subir APK como artefacto (opcional)
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
         with:
-          api-level: 30
-          target: google_apis
-          arch: x86_64
-          script: ./gradlew :app:connectedDebugAndroidTest
+          name: spacius-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+
+      # 7️⃣ Instala Firebase CLI
+      - name: Install Firebase CLI
+        run: curl -sL https://firebase.tools | bash
+
+      # 8️⃣ Despliegue a Firebase App Distribution
+      - name: Deploy to Firebase App Distribution
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          firebase appdistribution:distribute app/build/outputs/apk/debug/app-debug.apk \
+            --app <YOUR_FIREBASE_APP_ID> \
+            --groups "testers"

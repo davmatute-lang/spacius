@@ -424,8 +424,6 @@ Flujo de Sincronización Automática:
 ### Pendientes (Recomendadas)
 - ⚠️ **Encriptación de contraseñas**: Actualmente en texto plano
 - ⚠️ **API Key de Google Maps**: Expuesta en AndroidManifest
-- ⚠️ **HTTPS**: Si se implementa backend
-- ⚠️ **Token de sesión**: Sistema de autenticación más robusto
 - ⚠️ **Ofuscación de código**: ProGuard/R8 en release
 
 ### Mejoras de Seguridad Sugeridas
