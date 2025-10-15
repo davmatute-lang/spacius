@@ -1,9 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-
-    // 🔹 Necesario para usar Room con anotaciones
-    id("kotlin-kapt")
     
     // 🔥 Google Services para Firebase
     id("com.google.gms.google-services")
@@ -53,19 +50,15 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation("com.google.android.gms:play-services-maps:18.2.0")
 
-    // --- 🔹 Room (Base de datos local) ---
-    implementation("androidx.room:room-runtime:2.6.1")
-    kapt("androidx.room:room-compiler:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-
     // --- 🔹 Glide (Carga de imágenes) ---
     implementation("com.github.bumptech.glide:glide:4.16.0")
-    kapt("com.github.bumptech.glide:compiler:4.16.0")
 
     // --- 🔥 Firebase ---
     implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-analytics-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
 
     // --- Tests ---
     testImplementation(libs.junit)

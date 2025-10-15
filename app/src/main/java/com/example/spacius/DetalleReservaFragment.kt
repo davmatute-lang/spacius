@@ -12,7 +12,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
-import com.example.spacius.data.AppDatabase
+import com.example.spacius.data.FirestoreRepository
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -24,9 +24,9 @@ import kotlinx.coroutines.launch
 class DetalleReservaFragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var map: GoogleMap
-    private lateinit var db: AppDatabase
+    private lateinit var firestoreRepository: FirestoreRepository
     
-    private var reservaId: Int = 0
+    private var reservaId: String = ""
     private var latLugar: Double = -2.170998
     private var lngLugar: Double = -79.922359
 
@@ -36,7 +36,7 @@ class DetalleReservaFragment : Fragment(), OnMapReadyCallback {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_detalle_reserva, container, false)
 
-        db = AppDatabase.getDatabase(requireContext())
+        firestoreRepository = FirestoreRepository()
 
         // Obtener referencias de las vistas
         val txtNombreLugar: TextView = view.findViewById(R.id.txtNombreLugarDetalle)
@@ -51,7 +51,7 @@ class DetalleReservaFragment : Fragment(), OnMapReadyCallback {
 
         // Obtener datos pasados desde el calendario
         arguments?.let { args ->
-            reservaId = args.getInt("reservaId", 0)
+            reservaId = args.getString("reservaId", "")
             val nombreLugar = args.getString("nombreLugar", "")
             val descripcion = args.getString("descripcionLugar", "")
             val fecha = args.getString("fecha", "")
@@ -125,8 +125,8 @@ class DetalleReservaFragment : Fragment(), OnMapReadyCallback {
     private fun cancelarReserva() {
         lifecycleScope.launch {
             try {
-                // Eliminar de la base de datos
-                db.reservaDao().deleteReservaById(reservaId)
+                // Eliminar de Firestore
+                firestoreRepository.eliminarReserva(reservaId)
                 
                 Toast.makeText(
                     requireContext(), 
@@ -134,16 +134,13 @@ class DetalleReservaFragment : Fragment(), OnMapReadyCallback {
                     Toast.LENGTH_LONG
                 ).show()
 
-                // Notificar al calendario que actualice la vista
-                (requireActivity() as? MainActivity)?.actualizarCalendarioDesdeDetalle()
-
-                // Volver al calendario
+                // Volver al calendario (se actualizará automáticamente en onResume)
                 requireActivity().supportFragmentManager.popBackStack()
                 
             } catch (e: Exception) {
                 Toast.makeText(
                     requireContext(), 
-                    "❌ Error al cancelar la reserva", 
+                    "❌ Error al cancelar la reserva: ${e.message}", 
                     Toast.LENGTH_SHORT
                 ).show()
             }

@@ -13,10 +13,10 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
-import com.example.spacius.MainActivity
+import com.example.spacius.CalendarFragment
 import com.example.spacius.R
-import com.example.spacius.data.AppDatabase
-import com.example.spacius.data.Reserva
+import com.example.spacius.data.FirestoreRepository
+import com.example.spacius.data.ReservaFirestore
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -31,8 +31,11 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
     private lateinit var map: GoogleMap
     private var latLugar: Double = -2.170998
     private var lngLugar: Double = -79.922359
+    private lateinit var firestoreRepository: FirestoreRepository
 
-    private lateinit var db: AppDatabase
+    // Variables para almacenar datos del lugar
+    private var lugarId: String = ""
+    private var nombreLugar: String = ""
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -40,47 +43,58 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_reserva_exitosa, container, false)
 
+        // Inicializar Firestore
+        firestoreRepository = FirestoreRepository()
+
         val txtNombre: TextView = view.findViewById(R.id.btnNombreLugar)
         val txtDescripcion: TextView = view.findViewById(R.id.btnDescripcionLugar)
         val txtCapacidad: TextView = view.findViewById(R.id.btnCapacidad)
         val imgLugar: ImageView = view.findViewById(R.id.imgLugar)
 
-        val btnSeleccionarFecha: TextView = view.findViewById(R.id.btnFecha)
-        val btnHoraInicio: TextView = view.findViewById(R.id.btnHoraInicio)
-        val btnHoraFin: TextView = view.findViewById(R.id.btnHoraFin)
+        val btnSeleccionarFecha: Button = view.findViewById(R.id.btnFecha)
+        val btnHoraInicio: Button = view.findViewById(R.id.btnHoraInicio)
+        val btnHoraFin: Button = view.findViewById(R.id.btnHoraFin)
 
         val btnReservar: Button = view.findViewById(R.id.btnReservar)
         val btnCancelar: Button = view.findViewById(R.id.btnCancelar)
 
-        db = AppDatabase.getDatabase(requireContext())
+        // Cargar datos del lugar seleccionado desde Firestore
+        arguments?.let { bundle ->
+            lugarId = bundle.getString("lugarId") ?: ""
+            nombreLugar = bundle.getString("nombreLugar") ?: "Lugar desconocido"
+            
+            txtNombre.text = nombreLugar
+            txtDescripcion.text = bundle.getString("descripcion")
+            txtCapacidad.text = "📅 ${bundle.getString("fecha")} | 🕐 ${bundle.getString("hora")}"
 
-        // Cargar datos del lugar seleccionado
-        arguments?.let {
-            txtNombre.text = it.getString("nombreLugar")
-            txtDescripcion.text = it.getString("descripcion")
-            txtCapacidad.text = "Disponibilidad: ${it.getString("fecha")} - ${it.getString("hora")}"
-
-            Glide.with(this).load(it.getString("imagenUrl"))
+            Glide.with(this).load(bundle.getString("imagenUrl"))
                 .placeholder(R.drawable.ic_launcher_background)
                 .into(imgLugar)
 
-            latLugar = it.getDouble("latitud")
-            lngLugar = it.getDouble("longitud")
+            latLugar = bundle.getDouble("latitud", -2.170998)
+            lngLugar = bundle.getDouble("longitud", -79.922359)
         }
+
+        // Variables para almacenar selecciones del usuario
+        var fechaSeleccionada = ""
+        var horaInicioSeleccionada = ""
+        var horaFinSeleccionada = ""
 
         // Selección de fecha
         btnSeleccionarFecha.setOnClickListener {
             val c = Calendar.getInstance()
             DatePickerDialog(requireContext(), { _, y, m, d ->
+                fechaSeleccionada = String.format("%04d-%02d-%02d", y, m + 1, d)
                 btnSeleccionarFecha.text = "$d/${m + 1}/$y"
-            }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show()
+        }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show()
         }
 
         // Selección de hora inicio
         btnHoraInicio.setOnClickListener {
             val c = Calendar.getInstance()
             TimePickerDialog(requireContext(), { _, h, m ->
-                btnHoraInicio.text = String.format("%02d:%02d", h, m)
+                horaInicioSeleccionada = String.format("%02d:%02d", h, m)
+                btnHoraInicio.text = horaInicioSeleccionada
             }, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), true).show()
         }
 
@@ -88,48 +102,72 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
         btnHoraFin.setOnClickListener {
             val c = Calendar.getInstance()
             TimePickerDialog(requireContext(), { _, h, m ->
-                btnHoraFin.text = String.format("%02d:%02d", h, m)
+                horaFinSeleccionada = String.format("%02d:%02d", h, m)
+                btnHoraFin.text = horaFinSeleccionada
             }, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), true).show()
         }
 
-        // Botón Reservar
+        // Botón Reservar con Firestore
         btnReservar.setOnClickListener {
-            val fechaSeleccionada = btnSeleccionarFecha.text.toString()
-            val horaInicioSeleccionada = btnHoraInicio.text.toString()
-            val horaFinSeleccionada = btnHoraFin.text.toString()
-
-            if (fechaSeleccionada.isBlank() || fechaSeleccionada == "Seleccionar fecha") {
+            // Validaciones
+            if (fechaSeleccionada.isBlank()) {
                 Toast.makeText(requireContext(), "Por favor, selecciona una fecha", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            if (horaInicioSeleccionada.isBlank() || horaInicioSeleccionada == "Hora inicio") {
+            if (horaInicioSeleccionada.isBlank()) {
                 Toast.makeText(requireContext(), "Por favor, selecciona hora de inicio", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            if (horaFinSeleccionada.isBlank() || horaFinSeleccionada == "Hora fin") {
+            if (horaFinSeleccionada.isBlank()) {
                 Toast.makeText(requireContext(), "Por favor, selecciona hora de fin", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // 🔹 Obtener datos del lugar
-            val idLugar = arguments?.getInt("idLugar") ?: 0
-            val nombreLugar = arguments?.getString("nombreLugar") ?: "Lugar desconocido"
+            // Validar que la hora de fin sea posterior a la de inicio
+            if (horaInicioSeleccionada >= horaFinSeleccionada) {
+                Toast.makeText(requireContext(), "La hora de fin debe ser posterior a la de inicio", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
-            // 🔹 Usar la nueva función completa
-            (requireActivity() as MainActivity).procesarReservaCompleta(
-                idLugar = idLugar,
-                nombreLugar = nombreLugar,
+            // Crear reserva con Firestore
+            val reserva = ReservaFirestore(
+                lugarId = lugarId,
+                lugarNombre = nombreLugar,
                 fecha = fechaSeleccionada,
                 horaInicio = horaInicioSeleccionada,
-                horaFin = horaFinSeleccionada
+                horaFin = horaFinSeleccionada,
+                estado = "activa"
             )
 
-            Toast.makeText(requireContext(), "¡Reserva realizada exitosamente! 🎉", Toast.LENGTH_LONG).show()
-            
-            // 🔹 Regresar al HomeFragment después de la reserva exitosa
-            requireActivity().supportFragmentManager.popBackStack()
+            // Guardar en Firestore
+            lifecycleScope.launch {
+                try {
+                    btnReservar.isEnabled = false
+                    btnReservar.text = "Reservando..."
+
+                    val exito = firestoreRepository.crearReserva(reserva)
+                    
+                    if (exito) {
+                        Toast.makeText(requireContext(), "¡Reserva realizada exitosamente! 🎉", Toast.LENGTH_LONG).show()
+                        
+                        // Notificar al calendario para que recargue las reservas
+                        notificarReservaCreada()
+                        
+                        // Mostrar fragment de confirmación
+                        mostrarReservaExitosa()
+                    } else {
+                        Toast.makeText(requireContext(), "Error al crear la reserva. Inténtalo nuevamente.", Toast.LENGTH_LONG).show()
+                        btnReservar.isEnabled = true
+                        btnReservar.text = "Reservar"
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                    btnReservar.isEnabled = true
+                    btnReservar.text = "Reservar"
+                }
+            }
         }
 
         // Botón Cancelar
@@ -149,12 +187,39 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
         return view
     }
 
+    /**
+     * Notificar al calendario que se creó una nueva reserva
+     * (El calendario también se recarga automáticamente en onResume)
+     */
+    private fun notificarReservaCreada() {
+        // Implementación simplificada - el calendario se recarga automáticamente en onResume
+        android.util.Log.d("ReservaFragment", "Reserva creada - el calendario se actualizará automáticamente")
+    }
+
+    /**
+     * Mostrar fragmento de confirmación de reserva exitosa
+     */
+    private fun mostrarReservaExitosa() {
+        val fragment = ReservaExitosaFragment()
+        fragment.arguments = Bundle().apply {
+            putString("nombreLugar", nombreLugar)
+            putString("fecha", arguments?.getString("fecha"))
+            putString("hora", arguments?.getString("hora"))
+        }
+
+        requireActivity().supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
         val lugar = LatLng(latLugar, lngLugar)
         map.clear()
-        map.addMarker(MarkerOptions().position(lugar).title("Ubicación del Lugar"))
+        map.addMarker(MarkerOptions().position(lugar).title("📍 $nombreLugar"))
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(lugar, 15f))
         map.uiSettings.isZoomControlsEnabled = true
+        map.uiSettings.isMapToolbarEnabled = true
     }
 }

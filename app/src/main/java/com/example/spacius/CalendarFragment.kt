@@ -9,8 +9,8 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.example.spacius.data.AppDatabase
-import com.example.spacius.data.Reserva
+import com.example.spacius.data.FirestoreRepository
+import com.example.spacius.data.ReservaFirestore
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.launch
@@ -23,7 +23,7 @@ class CalendarFragment : Fragment() {
     private lateinit var eventsContainer: LinearLayout
     private var currentDate = Calendar.getInstance()
 
-    private lateinit var db: AppDatabase
+    private lateinit var firestoreRepository: FirestoreRepository
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,10 +36,18 @@ class CalendarFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        db = AppDatabase.getDatabase(requireContext())
+        firestoreRepository = FirestoreRepository()
 
         initViews(view)
         setupCalendar()
+        cargarReservasPersistentes()
+        cargarEventosDelMes()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Recargar reservas cada vez que el fragment se vuelve visible
+        android.util.Log.d("CalendarFragment", "Fragment visible - recargando reservas...")
         cargarReservasPersistentes()
         cargarEventosDelMes()
     }
@@ -91,113 +99,60 @@ class CalendarFragment : Fragment() {
         monthYearText.text = "$month $year"
     }
 
-    // 🔹 Cargar reservas de la base de datos y marcarlas
+    // 🔹 Cargar reservas de Firestore y marcarlas
     private fun cargarReservasPersistentes() {
         lifecycleScope.launch {
-            val reservas: List<Reserva> = db.reservaDao().getAllReservas()
+            android.util.Log.d("CalendarFragment", "Cargando reservas desde Firestore...")
+            
+            val reservas: List<ReservaFirestore> = firestoreRepository.obtenerReservasUsuario()
+            android.util.Log.d("CalendarFragment", "Reservas encontradas: ${reservas.size}")
             
             // 🔹 Limpiar fechas reservadas anteriores antes de recargar
             calendarAdapter.limpiarFechasReservadas()
             
             reservas.forEach { reserva ->
-                val parts = reserva.fecha.split("/")
+                android.util.Log.d("CalendarFragment", "Procesando reserva: ${reserva.fecha}")
+                // Las fechas en Firestore están en formato YYYY-MM-DD
+                val parts = reserva.fecha.split("-")
                 if (parts.size == 3) {
                     val cal = Calendar.getInstance()
-                    cal.set(parts[2].toInt(), parts[1].toInt() - 1, parts[0].toInt())
+                    cal.set(parts[0].toInt(), parts[1].toInt() - 1, parts[2].toInt())
                     calendarAdapter.marcarFechaReservada(cal)
                 }
             }
             calendarAdapter.notifyDataSetChanged()
+            android.util.Log.d("CalendarFragment", "Calendario actualizado con reservas")
         }
     }
 
-    // ✅ Función pública para marcar una fecha desde ReservaFragment
-    fun marcarFechaDesdeReserva(fecha: String) {
-        val parts = fecha.split("/")
-        if (parts.size != 3) return
-
-        val dia = parts[0].toInt()
-        val mes = parts[1].toInt() - 1
-        val anio = parts[2].toInt()
-        val fechaCal = Calendar.getInstance()
-        fechaCal.set(anio, mes, dia)
-
-        // Marcar visualmente
-        calendarAdapter.marcarFechaReservada(fechaCal)
-        calendarAdapter.notifyDataSetChanged()
-
-        // Guardar en base de datos
-        lifecycleScope.launch {
-            val reserva = Reserva(
-                idLugar = 0, // puedes pasar idLugar real si quieres
-                fecha = fecha,
-                horaInicio = "",
-                horaFin = "",
-                nombreUsuario = "Usuario" // reemplazar con nombre real si lo tienes
-            )
-            db.reservaDao().insertReserva(reserva)
-            
-            // 🔹 Actualizar eventos después de agregar reserva
-            cargarEventosDelMes()
-        }
+    // ✅ Función pública para recargar reservas (llamada después de crear una nueva reserva)
+    fun recargarReservas() {
+        android.util.Log.d("CalendarFragment", "Recargando reservas...")
+        cargarReservasPersistentes()
+        cargarEventosDelMes()
     }
 
-    // 🔹 Nueva función para manejar reservas completas
-    fun marcarReservaCompleta(
-        idLugar: Int,
-        nombreLugar: String,
-        fecha: String,
-        horaInicio: String,
-        horaFin: String
-    ) {
-        val parts = fecha.split("/")
-        if (parts.size != 3) return
-
-        val dia = parts[0].toInt()
-        val mes = parts[1].toInt() - 1
-        val anio = parts[2].toInt()
-        val fechaCal = Calendar.getInstance()
-        fechaCal.set(anio, mes, dia)
-
-        // Marcar visualmente en el calendario
-        calendarAdapter.marcarFechaReservada(fechaCal)
-        calendarAdapter.notifyDataSetChanged()
-
-        // Guardar en base de datos con información completa
-        lifecycleScope.launch {
-            val reserva = Reserva(
-                idLugar = idLugar,
-                fecha = fecha,
-                horaInicio = horaInicio,
-                horaFin = horaFin,
-                nombreUsuario = "Usuario" // En el futuro, obtener nombre real del usuario logueado
-            )
-            db.reservaDao().insertReserva(reserva)
-            
-            // 🔹 Actualizar eventos después de agregar reserva
-            cargarEventosDelMes()
-        }
-    }
-
-    // 🔹 Nueva función para cargar eventos del mes actual
+    // 🔹 Nueva función para cargar eventos del mes actual desde Firestore
     private fun cargarEventosDelMes() {
         lifecycleScope.launch {
-            val reservas = db.reservaDao().getAllReservas()
+            android.util.Log.d("CalendarFragment", "Cargando eventos del mes desde Firestore...")
+            val reservas = firestoreRepository.obtenerReservasUsuario()
             val eventosDelMes = filtrarEventosDelMes(reservas)
             mostrarEventosEnUI(eventosDelMes)
         }
     }
 
     // 🔹 Filtrar reservas que pertenecen al mes actual mostrado
-    private fun filtrarEventosDelMes(reservas: List<Reserva>): List<Reserva> {
+    private fun filtrarEventosDelMes(reservas: List<ReservaFirestore>): List<ReservaFirestore> {
         val mesActual = currentDate.get(Calendar.MONTH) + 1
         val anioActual = currentDate.get(Calendar.YEAR)
         
         return reservas.filter { reserva ->
-            val parts = reserva.fecha.split("/")
+            // Las fechas en Firestore están en formato YYYY-MM-DD
+            val parts = reserva.fecha.split("-")
             if (parts.size == 3) {
+                val anioReserva = parts[0].toInt()
                 val mesReserva = parts[1].toInt()
-                val anioReserva = parts[2].toInt()
                 mesReserva == mesActual && anioReserva == anioActual
             } else {
                 false
@@ -206,7 +161,7 @@ class CalendarFragment : Fragment() {
     }
 
     // 🔹 Mostrar eventos en la sección de eventos
-    private fun mostrarEventosEnUI(eventos: List<Reserva>) {
+    private fun mostrarEventosEnUI(eventos: List<ReservaFirestore>) {
         eventsContainer.removeAllViews()
         
         if (eventos.isEmpty()) {
@@ -226,51 +181,54 @@ class CalendarFragment : Fragment() {
     }
 
     // 🔹 Crear y agregar una vista de evento individual
-    private fun agregarEventoALista(reserva: Reserva) {
+    private fun agregarEventoALista(reserva: ReservaFirestore) {
         val eventoView = LayoutInflater.from(requireContext())
             .inflate(R.layout.item_evento, eventsContainer, false)
 
         val txtNombreLugar = eventoView.findViewById<TextView>(R.id.txtNombreLugarEvento)
         val txtFechaHora = eventoView.findViewById<TextView>(R.id.txtFechaHoraEvento)
 
-        // Obtener nombre del lugar desde la base de datos
-        lifecycleScope.launch {
-            val lugar = db.lugarDao().getLugarById(reserva.idLugar)
-            val nombreLugar = lugar?.nombre ?: "Lugar reservado"
-            
-            txtNombreLugar.text = nombreLugar
-            
-            // Formatear fecha y hora
-            val fechaHora = if (reserva.horaInicio.isNotEmpty() && reserva.horaFin.isNotEmpty()) {
-                "${reserva.fecha} • ${reserva.horaInicio} - ${reserva.horaFin}"
-            } else {
-                reserva.fecha
-            }
-            txtFechaHora.text = fechaHora
+        // Usar el nombre del lugar directamente desde la reserva de Firestore
+        txtNombreLugar.text = reserva.lugarNombre
+        
+        // Formatear fecha y hora para mostrar en formato legible
+        val fechaLegible = formatearFechaParaMostrar(reserva.fecha)
+        val fechaHora = if (reserva.horaInicio.isNotEmpty() && reserva.horaFin.isNotEmpty()) {
+            "$fechaLegible • ${reserva.horaInicio} - ${reserva.horaFin}"
+        } else {
+            fechaLegible
+        }
+        txtFechaHora.text = fechaHora
 
-            // 🔹 Configurar click para abrir detalles
-            eventoView.setOnClickListener {
-                abrirDetalleReserva(reserva, lugar)
-            }
+        // 🔹 Configurar click para abrir detalles
+        eventoView.setOnClickListener {
+            abrirDetalleReserva(reserva)
         }
 
         eventsContainer.addView(eventoView)
     }
 
-    // 🔹 Nueva función para abrir el detalle de una reserva
-    private fun abrirDetalleReserva(reserva: Reserva, lugar: com.example.spacius.data.Lugar?) {
+    // 🔹 Formatear fecha de YYYY-MM-DD a DD/MM/YYYY
+    private fun formatearFechaParaMostrar(fecha: String): String {
+        val parts = fecha.split("-")
+        return if (parts.size == 3) {
+            "${parts[2]}/${parts[1]}/${parts[0]}"
+        } else {
+            fecha
+        }
+    }
+
+    // 🔹 Nueva función para abrir el detalle de una reserva de Firestore
+    private fun abrirDetalleReserva(reserva: ReservaFirestore) {
         val fragment = DetalleReservaFragment()
         fragment.arguments = Bundle().apply {
-            putInt("reservaId", reserva.id)
-            putString("nombreLugar", lugar?.nombre ?: "Lugar desconocido")
-            putString("descripcionLugar", lugar?.descripcion ?: "")
-            putString("fecha", reserva.fecha)
+            putString("reservaId", reserva.id)
+            putString("nombreLugar", reserva.lugarNombre)
+            putString("fecha", formatearFechaParaMostrar(reserva.fecha))
             putString("horaInicio", reserva.horaInicio)
             putString("horaFin", reserva.horaFin)
-            putString("usuario", reserva.nombreUsuario)
-            putString("imagenUrl", lugar?.imagenUrl ?: "")
-            putDouble("latitud", lugar?.latitud ?: -2.170998)
-            putDouble("longitud", lugar?.longitud ?: -79.922359)
+            putString("usuario", reserva.usuarioNombre)
+            putString("estado", reserva.estado)
         }
 
         requireActivity().supportFragmentManager.beginTransaction()

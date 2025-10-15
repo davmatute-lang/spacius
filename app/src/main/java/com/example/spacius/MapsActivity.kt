@@ -10,20 +10,19 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.coroutines.launch
-import com.example.spacius.data.AppDatabase
-import com.example.spacius.data.Lugar
+import com.example.spacius.data.FirestoreRepository
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
-    private lateinit var db: AppDatabase
+    private lateinit var firestoreRepository: FirestoreRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_map)
 
-        // Inicializamos la base de datos
-        db = AppDatabase.getDatabase(this)
+        // Inicializamos el repositorio de Firestore
+        firestoreRepository = FirestoreRepository()
 
         // Inicialización del mapa
         val mapFragment = supportFragmentManager
@@ -40,9 +39,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap.addMarker(MarkerOptions().position(guayaquil).title("Guayaquil, Ecuador"))
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(guayaquil, 12f))
 
-        // 🔹 Cargar todos los lugares de la base de datos y agregarlos al mapa
+        // � Cargar todos los lugares desde Firestore y agregarlos al mapa
         lifecycleScope.launch {
-            val lugares = db.lugarDao().getAllLugares()
+            val lugares = firestoreRepository.obtenerLugares()
             for (lugar in lugares) {
                 val coordenada = LatLng(lugar.latitud, lugar.longitud)
                 mMap.addMarker(

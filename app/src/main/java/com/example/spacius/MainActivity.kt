@@ -1,6 +1,7 @@
 package com.example.spacius
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -82,24 +83,16 @@ class MainActivity : AppCompatActivity() {
         bottomNavigation.selectedItemId = itemId
     }
 
-    // ✅ Función segura para marcar fecha desde ReservaFragment
+    // ✅ Función simplificada para cambiar a calendario (se actualiza automáticamente)
     fun marcarFechaEnCalendario(fecha: String) {
-        // Comprobar si el fragmento está agregado antes de llamar a la función
-        if (calendarFragment.isAdded) {
-            calendarFragment.marcarFechaDesdeReserva(fecha)
-        } else {
-            // Si aún no está agregado, lo agregamos primero
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, calendarFragment, "CALENDAR")
-                .commitNow()
-            calendarFragment.marcarFechaDesdeReserva(fecha)
-        }
-
-        // Cambiar pestaña a calendario
+        // El calendario se actualiza automáticamente en onResume, 
+        // solo necesitamos cambiar a la pestaña del calendario
         setSelectedBottomNav(R.id.nav_calendario)
+        
+        android.util.Log.d("MainActivity", "Navegando a calendario - se actualizará automáticamente")
     }
 
-    // 🔹 Nueva función para manejar reservas completas con más información
+    // 🔹 Función simplificada para procesar reservas completas
     fun procesarReservaCompleta(
         idLugar: Int,
         nombreLugar: String,
@@ -107,23 +100,15 @@ class MainActivity : AppCompatActivity() {
         horaInicio: String,
         horaFin: String
     ) {
-        // Comprobar si el fragmento está agregado antes de llamar a la función
-        if (calendarFragment.isAdded) {
-            calendarFragment.marcarReservaCompleta(idLugar, nombreLugar, fecha, horaInicio, horaFin)
-        } else {
-            // Si aún no está agregado, lo agregamos primero
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, calendarFragment, "CALENDAR")
-                .commitNow()
-            calendarFragment.marcarReservaCompleta(idLugar, nombreLugar, fecha, horaInicio, horaFin)
-        }
-
-        // Cambiar pestaña a calendario
+        // El calendario se actualiza automáticamente en onResume,
+        // solo necesitamos cambiar a la pestaña del calendario
         setSelectedBottomNav(R.id.nav_calendario)
         
         // Actualizar HomeFragment y MapsFragment para reflejar que el lugar ya no está disponible
         actualizarHomeFragment()
         actualizarMapsFragment()
+        
+        android.util.Log.d("MainActivity", "Reserva procesada - calendario se actualizará automáticamente")
     }
 
     // 🔹 Nueva función para actualizar calendario desde DetalleReservaFragment
