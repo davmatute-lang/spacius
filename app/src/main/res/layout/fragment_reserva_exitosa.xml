@@ -74,12 +74,16 @@
                     android:layout_height="wrap_content"
                     android:text="Fecha:"/>
 
-                <TextView
+                <Button
                     android:id="@+id/btnFecha"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="07/10/2025"
-                    android:textStyle="bold"/>
+                    android:text="📅 Seleccionar fecha"
+                    android:textStyle="bold"
+                    android:backgroundTint="@color/green_secondary"
+                    android:textColor="@color/white"
+                    android:minHeight="48dp"
+                    android:paddingHorizontal="16dp"/>
             </LinearLayout>
         </LinearLayout>
 
@@ -102,12 +106,16 @@
                     android:layout_height="wrap_content"
                     android:text="Desde:"/>
 
-                <TextView
+                <Button
                     android:id="@+id/btnHoraInicio"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="10h00"
-                    android:textStyle="bold"/>
+                    android:text="🕐 Inicio"
+                    android:textStyle="bold"
+                    android:backgroundTint="@color/green_secondary"
+                    android:textColor="@color/white"
+                    android:minHeight="48dp"
+                    android:paddingHorizontal="16dp"/>
             </LinearLayout>
 
             <LinearLayout
@@ -122,12 +130,16 @@
                     android:layout_height="wrap_content"
                     android:text="Hasta:"/>
 
-                <TextView
+                <Button
                     android:id="@+id/btnHoraFin"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="11h00"
-                    android:textStyle="bold"/>
+                    android:text="🕐 Fin"
+                    android:textStyle="bold"
+                    android:backgroundTint="@color/green_secondary"
+                    android:textColor="@color/white"
+                    android:minHeight="48dp"
+                    android:paddingHorizontal="16dp"/>
             </LinearLayout>
         </LinearLayout>
 

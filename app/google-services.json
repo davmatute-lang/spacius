@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "51182576457",
+    "project_id": "spacius-a6a48",
+    "storage_bucket": "spacius-a6a48.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:51182576457:android:ed2d0e4242487f39cfb098",
+        "android_client_info": {
+          "package_name": "com.example.spacius"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "51182576457-usrbsv33thtrqansc1k1grv1p1mcp67s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHgaBX91nHE08I7kQJe2GCeBLjVWcv3nM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "51182576457-usrbsv33thtrqansc1k1grv1p1mcp67s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
