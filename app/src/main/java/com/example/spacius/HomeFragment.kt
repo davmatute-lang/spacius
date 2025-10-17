@@ -59,9 +59,13 @@ class HomeFragment : Fragment() {
                 val inicializado = firestoreRepository.inicializarLugaresPredefinidos()
                 android.util.Log.d("HomeFragment", "Lugares inicializados: $inicializado")
                 
-                // Obtener todos los lugares primero
+                // Limpiar duplicados si existen
+                android.util.Log.d("HomeFragment", "Verificando y limpiando duplicados...")
+                firestoreRepository.limpiarDuplicadosManualmente()
+                
+                // Obtener todos los lugares después de la limpieza
                 val todosLugares = firestoreRepository.obtenerLugares()
-                android.util.Log.d("HomeFragment", "Total lugares encontrados: ${todosLugares.size}")
+                android.util.Log.d("HomeFragment", "Total lugares encontrados después de limpieza: ${todosLugares.size}")
                 
                 if (todosLugares.isNotEmpty()) {
                     android.util.Log.d("HomeFragment", "Ejemplo de lugar: ${todosLugares.first()}")
