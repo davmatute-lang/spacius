@@ -66,7 +66,17 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
             
             txtNombre.text = nombreLugar
             txtDescripcion.text = bundle.getString("descripcion")
-            txtCapacidad.text = "📅 ${bundle.getString("fecha")} | 🕐 ${bundle.getString("hora")}"
+            
+            // Mostrar información útil: disponibilidad y capacidad
+            val disponibilidad = bundle.getString("fecha") ?: "Disponible"
+            val capacidad = bundle.getInt("capacidad", 0)
+            val categoria = bundle.getString("categoria") ?: "deportivo"
+            
+            txtCapacidad.text = if (capacidad > 0) {
+                "👥 Capacidad: $capacidad personas • � $disponibilidad"
+            } else {
+                "📅 $disponibilidad"
+            }
 
             Glide.with(this).load(bundle.getString("imagenUrl"))
                 .placeholder(R.drawable.ic_launcher_background)
@@ -90,22 +100,20 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
         }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show()
         }
 
-        // Selección de hora inicio
+        // Selección de hora inicio (8:00 AM - 10:00 PM)
         btnHoraInicio.setOnClickListener {
-            val c = Calendar.getInstance()
-            TimePickerDialog(requireContext(), { _, h, m ->
-                horaInicioSeleccionada = String.format("%02d:%02d", h, m)
-                btnHoraInicio.text = horaInicioSeleccionada
-            }, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), true).show()
+            mostrarSelectorHora(true) { horaSeleccionada ->
+                horaInicioSeleccionada = horaSeleccionada
+                btnHoraInicio.text = horaSeleccionada
+            }
         }
 
-        // Selección de hora fin
+        // Selección de hora fin (8:00 AM - 10:00 PM)
         btnHoraFin.setOnClickListener {
-            val c = Calendar.getInstance()
-            TimePickerDialog(requireContext(), { _, h, m ->
-                horaFinSeleccionada = String.format("%02d:%02d", h, m)
-                btnHoraFin.text = horaFinSeleccionada
-            }, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), true).show()
+            mostrarSelectorHora(false) { horaSeleccionada ->
+                horaFinSeleccionada = horaSeleccionada
+                btnHoraFin.text = horaSeleccionada
+            }
         }
 
         // Botón Reservar con Firestore
@@ -128,7 +136,12 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
 
             // Validar que la hora de fin sea posterior a la de inicio
             if (horaInicioSeleccionada >= horaFinSeleccionada) {
-                Toast.makeText(requireContext(), "La hora de fin debe ser posterior a la de inicio", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "⏰ La hora de fin debe ser posterior a la de inicio", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            
+            // Validar rango de horas permitido (8:00 AM - 10:00 PM)
+            if (!validarRangoHorario(horaInicioSeleccionada, horaFinSeleccionada)) {
                 return@setOnClickListener
             }
 
@@ -186,6 +199,77 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
 
         return view
+    }
+
+    /**
+     * Mostrar selector de hora limitado de 8:00 AM a 10:00 PM
+     */
+    private fun mostrarSelectorHora(esHoraInicio: Boolean, onHoraSeleccionada: (String) -> Unit) {
+        // Hora inicial por defecto (8:00 AM para inicio, 9:00 AM para fin)
+        val horaInicial = if (esHoraInicio) 8 else 9
+        
+        val timePickerDialog = TimePickerDialog(
+            requireContext(),
+            { _, horaSeleccionada, minutoSeleccionado ->
+                // Validar rango de horas (8:00 AM - 10:00 PM)
+                when {
+                    horaSeleccionada < 8 -> {
+                        Toast.makeText(
+                            requireContext(),
+                            "⏰ La hora mínima es 8:00 AM",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@TimePickerDialog
+                    }
+                    horaSeleccionada > 22 -> {
+                        Toast.makeText(
+                            requireContext(),
+                            "⏰ La hora máxima es 10:00 PM",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@TimePickerDialog
+                    }
+                    else -> {
+                        val horaFormateada = String.format("%02d:%02d", horaSeleccionada, minutoSeleccionado)
+                        onHoraSeleccionada(horaFormateada)
+                    }
+                }
+            },
+            horaInicial, // Hora inicial
+            0, // Minuto inicial
+            true // Formato 24 horas
+        )
+        
+        timePickerDialog.show()
+    }
+
+    /**
+     * Validar que las horas estén en el rango permitido (8:00 AM - 10:00 PM)
+     */
+    private fun validarRangoHorario(horaInicio: String, horaFin: String): Boolean {
+        try {
+            val horaInicioInt = horaInicio.split(":")[0].toInt()
+            val horaFinInt = horaFin.split(":")[0].toInt()
+            
+            when {
+                horaInicioInt < 8 -> {
+                    Toast.makeText(requireContext(), "⏰ La hora de inicio debe ser desde las 8:00 AM", Toast.LENGTH_LONG).show()
+                    return false
+                }
+                horaFinInt > 22 -> {
+                    Toast.makeText(requireContext(), "⏰ La hora de fin debe ser hasta las 10:00 PM", Toast.LENGTH_LONG).show()
+                    return false
+                }
+                horaInicioInt > 22 -> {
+                    Toast.makeText(requireContext(), "⏰ La hora de inicio debe ser hasta las 10:00 PM", Toast.LENGTH_LONG).show()
+                    return false
+                }
+                else -> return true
+            }
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "⏰ Error al validar horarios", Toast.LENGTH_SHORT).show()
+            return false
+        }
     }
 
     /**

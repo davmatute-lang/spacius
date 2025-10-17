@@ -143,10 +143,11 @@ class HomeFragment : Fragment() {
             putString("nombreLugar", lugar.nombre)
             putString("descripcion", lugar.descripcion)
             putString("fecha", lugar.fechaDisponible)
-            putString("hora", lugar.horaDisponible)
+            putString("categoria", lugar.categoria)
             putString("imagenUrl", lugar.imagenUrl)
             putDouble("latitud", lugar.latitud)
             putDouble("longitud", lugar.longitud)
+            putInt("capacidad", lugar.capacidadMaxima)
         }
 
         requireActivity().supportFragmentManager.beginTransaction()
@@ -178,7 +179,16 @@ class HomeFragment : Fragment() {
             val lugar = lugares[position]
             holder.txtNombre.text = lugar.nombre
             holder.txtDescripcion.text = lugar.descripcion
-            holder.txtCapacidad.text = "📅 ${lugar.fechaDisponible} | 🕐 ${lugar.horaDisponible}"
+            
+            // Mostrar información útil: capacidad y disponibilidad general
+            val capacidadInfo = if (lugar.capacidadMaxima > 0) {
+                "� Capacidad: ${lugar.capacidadMaxima} personas"
+            } else {
+                "🏢 Espacio disponible"
+            }
+            
+            val disponibilidadInfo = lugar.fechaDisponible.takeIf { it.isNotEmpty() } ?: "Disponible"
+            holder.txtCapacidad.text = "$capacidadInfo • 📅 $disponibilidadInfo"
 
             Glide.with(holder.itemView.context)
                 .load(lugar.imagenUrl)
