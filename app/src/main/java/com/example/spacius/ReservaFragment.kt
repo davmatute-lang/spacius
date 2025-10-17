@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.spacius.CalendarFragment
+import com.example.spacius.MainActivity
 import com.example.spacius.R
 import com.example.spacius.data.FirestoreRepository
 import com.example.spacius.data.ReservaFirestore
@@ -152,11 +153,8 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
                     if (exito) {
                         Toast.makeText(requireContext(), "¡Reserva realizada exitosamente! 🎉", Toast.LENGTH_LONG).show()
                         
-                        // Notificar al calendario para que recargue las reservas
-                        notificarReservaCreada()
-                        
-                        // Mostrar fragment de confirmación
-                        mostrarReservaExitosa()
+                        // Volver al calendario para ver la nueva reserva
+                        navegarAlCalendario()
                     } else {
                         Toast.makeText(requireContext(), "Error al crear la reserva. Inténtalo nuevamente.", Toast.LENGTH_LONG).show()
                         btnReservar.isEnabled = true
@@ -164,6 +162,9 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
                     }
                 } catch (e: Exception) {
                     Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                    android.util.Log.e("ReservaFragment", "Error al crear reserva", e)
+                } finally {
+                    // Asegurar que el botón vuelva a su estado normal
                     btnReservar.isEnabled = true
                     btnReservar.text = "Reservar"
                 }
@@ -188,28 +189,21 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
     }
 
     /**
-     * Notificar al calendario que se creó una nueva reserva
-     * (El calendario también se recarga automáticamente en onResume)
+     * Navegar directamente al calendario después de una reserva exitosa
      */
-    private fun notificarReservaCreada() {
-        // Implementación simplificada - el calendario se recarga automáticamente en onResume
-        android.util.Log.d("ReservaFragment", "Reserva creada - el calendario se actualizará automáticamente")
+    private fun navegarAlCalendario() {
+        // Usar el método específico de MainActivity para navegar al calendario
+        (requireActivity() as? MainActivity)?.navegarACalendario()
+            ?: navegarManualmenteAlCalendario() // Fallback si no es MainActivity
     }
-
+    
     /**
-     * Mostrar fragmento de confirmación de reserva exitosa
+     * Navegación manual al calendario como fallback
      */
-    private fun mostrarReservaExitosa() {
-        val fragment = ReservaExitosaFragment()
-        fragment.arguments = Bundle().apply {
-            putString("nombreLugar", nombreLugar)
-            putString("fecha", arguments?.getString("fecha"))
-            putString("hora", arguments?.getString("hora"))
-        }
-
+    private fun navegarManualmenteAlCalendario() {
+        val calendarFragment = CalendarFragment()
         requireActivity().supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, fragment)
-            .addToBackStack(null)
+            .replace(R.id.fragment_container, calendarFragment)
             .commit()
     }
 

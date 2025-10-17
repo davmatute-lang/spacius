@@ -104,10 +104,14 @@ class RegisterActivity : AppCompatActivity() {
                             mostrarCargando(false)
                             
                             if (profileTask.isSuccessful) {
-                                Toast.makeText(this, "¡Cuenta creada exitosamente! Bienvenido $nombre", Toast.LENGTH_LONG).show()
+                                Toast.makeText(this, "¡Cuenta creada exitosamente! Ahora puedes iniciar sesión con tu cuenta", Toast.LENGTH_LONG).show()
+                                // Cerrar sesión para que el usuario tenga que iniciar sesión manualmente
+                                auth.signOut()
                                 irALogin()
                             } else {
-                                Toast.makeText(this, "Cuenta creada pero error al guardar el nombre", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this, "Cuenta creada. Ahora puedes iniciar sesión", Toast.LENGTH_SHORT).show()
+                                // Cerrar sesión para que el usuario tenga que iniciar sesión manualmente
+                                auth.signOut()
                                 irALogin()
                             }
                         }
@@ -133,6 +137,7 @@ class RegisterActivity : AppCompatActivity() {
 
     private fun irALogin() {
         val intent = Intent(this, LoginActivity::class.java)
+        intent.putExtra("mensaje_registro", "¡Registro exitoso! Ahora inicia sesión con tu cuenta")
         startActivity(intent)
         finish()
     }

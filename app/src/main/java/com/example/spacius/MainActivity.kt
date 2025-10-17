@@ -91,6 +91,19 @@ class MainActivity : AppCompatActivity() {
         
         android.util.Log.d("MainActivity", "Navegando a calendario - se actualizará automáticamente")
     }
+    
+    // ✅ Función para navegar al calendario después de una reserva exitosa
+    fun navegarACalendario() {
+        // Cambiar a la pestaña del calendario
+        setSelectedBottomNav(R.id.nav_calendario)
+        
+        // Asegurar que el calendario está cargado y se actualice
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, calendarFragment, "CALENDAR")
+            .commit()
+            
+        android.util.Log.d("MainActivity", "Navegando a calendario después de reserva exitosa")
+    }
 
     // 🔹 Función simplificada para procesar reservas completas
     fun procesarReservaCompleta(
