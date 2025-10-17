@@ -114,11 +114,54 @@ class FirestoreRepository {
                 Log.d(TAG, "Lugares predefinidos inicializados: ${lugaresPredefinidos.size}")
                 true
             } else {
-                Log.d(TAG, "Los lugares ya están inicializados")
+                Log.d(TAG, "Los lugares ya están inicializados: ${lugaresExistentes.size()} lugares encontrados")
+                
+                // Verificar y limpiar duplicados si existen
+                limpiarDuplicados()
                 false
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error al inicializar lugares: ${e.message}")
+            false
+        }
+    }
+    
+    /**
+     * Limpiar lugares duplicados por nombre
+     */
+    private suspend fun limpiarDuplicados() {
+        try {
+            val lugares = db.collection(COLLECTION_LUGARES).get().await()
+            val lugaresAgrupados = lugares.documents.groupBy { 
+                it.toObject(LugarFirestore::class.java)?.nombre 
+            }
+            
+            // Para cada grupo, mantener solo el primero y eliminar el resto
+            lugaresAgrupados.forEach { (nombre, documentos) ->
+                if (documentos.size > 1) {
+                    Log.d(TAG, "Encontrados ${documentos.size} duplicados de: $nombre")
+                    // Mantener el primero, eliminar el resto
+                    documentos.drop(1).forEach { documento ->
+                        db.collection(COLLECTION_LUGARES).document(documento.id).delete().await()
+                        Log.d(TAG, "Eliminado duplicado: ${documento.id}")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al limpiar duplicados: ${e.message}")
+        }
+    }
+    
+    /**
+     * Función pública para limpiar duplicados manualmente
+     */
+    suspend fun limpiarDuplicadosManualmente(): Boolean {
+        return try {
+            limpiarDuplicados()
+            Log.d(TAG, "Limpieza de duplicados completada")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error en limpieza manual: ${e.message}")
             false
         }
     }

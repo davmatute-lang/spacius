@@ -59,9 +59,13 @@ class HomeFragment : Fragment() {
                 val inicializado = firestoreRepository.inicializarLugaresPredefinidos()
                 android.util.Log.d("HomeFragment", "Lugares inicializados: $inicializado")
                 
-                // Obtener todos los lugares primero
+                // Limpiar duplicados si existen
+                android.util.Log.d("HomeFragment", "Verificando y limpiando duplicados...")
+                firestoreRepository.limpiarDuplicadosManualmente()
+                
+                // Obtener todos los lugares después de la limpieza
                 val todosLugares = firestoreRepository.obtenerLugares()
-                android.util.Log.d("HomeFragment", "Total lugares encontrados: ${todosLugares.size}")
+                android.util.Log.d("HomeFragment", "Total lugares encontrados después de limpieza: ${todosLugares.size}")
                 
                 if (todosLugares.isNotEmpty()) {
                     android.util.Log.d("HomeFragment", "Ejemplo de lugar: ${todosLugares.first()}")
@@ -143,10 +147,11 @@ class HomeFragment : Fragment() {
             putString("nombreLugar", lugar.nombre)
             putString("descripcion", lugar.descripcion)
             putString("fecha", lugar.fechaDisponible)
-            putString("hora", lugar.horaDisponible)
+            putString("categoria", lugar.categoria)
             putString("imagenUrl", lugar.imagenUrl)
             putDouble("latitud", lugar.latitud)
             putDouble("longitud", lugar.longitud)
+            putInt("capacidad", lugar.capacidadMaxima)
         }
 
         requireActivity().supportFragmentManager.beginTransaction()
@@ -178,7 +183,16 @@ class HomeFragment : Fragment() {
             val lugar = lugares[position]
             holder.txtNombre.text = lugar.nombre
             holder.txtDescripcion.text = lugar.descripcion
-            holder.txtCapacidad.text = "📅 ${lugar.fechaDisponible} | 🕐 ${lugar.horaDisponible}"
+            
+            // Mostrar información útil: capacidad y disponibilidad general
+            val capacidadInfo = if (lugar.capacidadMaxima > 0) {
+                "� Capacidad: ${lugar.capacidadMaxima} personas"
+            } else {
+                "🏢 Espacio disponible"
+            }
+            
+            val disponibilidadInfo = lugar.fechaDisponible.takeIf { it.isNotEmpty() } ?: "Disponible"
+            holder.txtCapacidad.text = "$capacidadInfo • 📅 $disponibilidadInfo"
 
             Glide.with(holder.itemView.context)
                 .load(lugar.imagenUrl)

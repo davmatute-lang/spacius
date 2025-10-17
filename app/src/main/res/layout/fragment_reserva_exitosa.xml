@@ -87,60 +87,42 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Horario -->
+        <!-- Horario - Sistema de bloques -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:layout_marginBottom="12dp">
 
-            <LinearLayout
-                android:layout_width="0dp"
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:paddingEnd="8dp">
+                android:text="Horario:"
+                android:layout_marginBottom="8dp"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Desde:"/>
-
-                <Button
-                    android:id="@+id/btnHoraInicio"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="🕐 Inicio"
-                    android:textStyle="bold"
-                    android:backgroundTint="@color/green_secondary"
-                    android:textColor="@color/white"
-                    android:minHeight="48dp"
-                    android:paddingHorizontal="16dp"/>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
+            <Button
+                android:id="@+id/btnHoraInicio"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:paddingStart="8dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Hasta:"/>
-
-                <Button
-                    android:id="@+id/btnHoraFin"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="🕐 Fin"
-                    android:textStyle="bold"
-                    android:backgroundTint="@color/green_secondary"
-                    android:textColor="@color/white"
-                    android:minHeight="48dp"
-                    android:paddingHorizontal="16dp"/>
-            </LinearLayout>
+                android:text="🕐 Seleccionar bloque horario"
+                android:textStyle="bold"
+                android:backgroundTint="@color/green_secondary"
+                android:textColor="@color/white"
+                android:minHeight="48dp"
+                android:paddingHorizontal="16dp"/>
+                
+            <!-- Botón hora fin oculto por código -->
+            <Button
+                android:id="@+id/btnHoraFin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🕐 Fin"
+                android:visibility="gone"
+                android:textStyle="bold"
+                android:backgroundTint="@color/green_secondary"
+                android:textColor="@color/white"
+                android:minHeight="48dp"
+                android:paddingHorizontal="16dp"/>
         </LinearLayout>
 
         <!-- Ubicación -->

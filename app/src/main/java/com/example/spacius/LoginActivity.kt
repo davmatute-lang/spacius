@@ -58,6 +58,12 @@ class LoginActivity : AppCompatActivity() {
             val intent = Intent(this, RegisterActivity::class.java)
             startActivity(intent)
         }
+        
+        // Verificar si viene del registro y mostrar mensaje
+        val mensajeRegistro = intent.getStringExtra("mensaje_registro")
+        if (!mensajeRegistro.isNullOrEmpty()) {
+            Toast.makeText(this, mensajeRegistro, Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onStart() {
