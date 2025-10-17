@@ -2,6 +2,7 @@ package com.example.spacius.ui
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -26,6 +27,16 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.coroutines.launch
 import java.util.Calendar
+
+/**
+ * Data class para representar un bloque horario de reserva
+ */
+data class BloqueHorario(
+    val id: Int,
+    val horaInicio: String,
+    val horaFin: String,
+    val descripcion: String
+)
 
 class ReservaFragment : Fragment(), OnMapReadyCallback {
 
@@ -100,19 +111,14 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
         }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show()
         }
 
-        // Selección de hora inicio (8:00 AM - 10:00 PM)
+        // Selección de bloque horario (sistema de bloques de 1h45min)
         btnHoraInicio.setOnClickListener {
-            mostrarSelectorHora(true) { horaSeleccionada ->
-                horaInicioSeleccionada = horaSeleccionada
-                btnHoraInicio.text = horaSeleccionada
-            }
-        }
-
-        // Selección de hora fin (8:00 AM - 10:00 PM)
-        btnHoraFin.setOnClickListener {
-            mostrarSelectorHora(false) { horaSeleccionada ->
-                horaFinSeleccionada = horaSeleccionada
-                btnHoraFin.text = horaSeleccionada
+            android.util.Log.d("ReservaFragment", "Botón seleccionar bloque horario presionado")
+            mostrarSelectorBloqueHorario { bloqueSeleccionado ->
+                horaInicioSeleccionada = bloqueSeleccionado.horaInicio
+                horaFinSeleccionada = bloqueSeleccionado.horaFin
+                btnHoraInicio.text = "${bloqueSeleccionado.horaInicio} - ${bloqueSeleccionado.horaFin}"
+                android.util.Log.d("ReservaFragment", "Bloque seleccionado: ${bloqueSeleccionado.descripcion}")
             }
         }
 
@@ -125,25 +131,16 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
             }
 
             if (horaInicioSeleccionada.isBlank()) {
-                Toast.makeText(requireContext(), "Por favor, selecciona hora de inicio", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Por favor, selecciona un bloque horario", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             if (horaFinSeleccionada.isBlank()) {
-                Toast.makeText(requireContext(), "Por favor, selecciona hora de fin", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Error: No se pudo determinar la hora de fin", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // Validar que la hora de fin sea posterior a la de inicio
-            if (horaInicioSeleccionada >= horaFinSeleccionada) {
-                Toast.makeText(requireContext(), "⏰ La hora de fin debe ser posterior a la de inicio", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            
-            // Validar rango de horas permitido (8:00 AM - 10:00 PM)
-            if (!validarRangoHorario(horaInicioSeleccionada, horaFinSeleccionada)) {
-                return@setOnClickListener
-            }
+            // Los bloques ya están validados, no necesitamos validaciones adicionales de rango
 
             // Crear reserva con Firestore
             val reserva = ReservaFirestore(
@@ -241,6 +238,70 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
         )
         
         timePickerDialog.show()
+    }
+
+    /**
+     * Obtener bloques horarios disponibles (1h45min cada uno)
+     */
+    private fun obtenerBloquesHorarios(): List<BloqueHorario> {
+        return listOf(
+            BloqueHorario(1, "08:00", "09:45", "8:00 AM - 9:45 AM"),
+            BloqueHorario(2, "10:00", "11:45", "10:00 AM - 11:45 AM"),
+            BloqueHorario(3, "12:00", "13:45", "12:00 PM - 1:45 PM"),
+            BloqueHorario(4, "14:00", "15:45", "2:00 PM - 3:45 PM"),
+            BloqueHorario(5, "16:00", "17:45", "4:00 PM - 5:45 PM"),
+            BloqueHorario(6, "18:00", "19:45", "6:00 PM - 7:45 PM"),
+            BloqueHorario(7, "20:00", "21:45", "8:00 PM - 9:45 PM")
+        )
+    }
+
+    /**
+     * Mostrar selector de bloques horarios - versión simplificada
+     */
+    private fun mostrarSelectorBloqueHorario(onBloqueSeleccionado: (BloqueHorario) -> Unit) {
+        android.util.Log.d("ReservaFragment", "Iniciando mostrarSelectorBloqueHorario")
+        
+        val bloques = obtenerBloquesHorarios()
+        val opciones = bloques.map { "${it.descripcion}" }.toTypedArray()
+        
+        android.util.Log.d("ReservaFragment", "Opciones: ${opciones.joinToString()}")
+        
+        try {
+            val builder = AlertDialog.Builder(requireContext())
+            builder.setTitle("⏰ Selecciona tu bloque horario")
+            builder.setItems(opciones) { dialog, which ->
+                android.util.Log.d("ReservaFragment", "Seleccionado índice: $which")
+                if (which >= 0 && which < bloques.size) {
+                    val bloqueSeleccionado = bloques[which]
+                    onBloqueSeleccionado(bloqueSeleccionado)
+                    Toast.makeText(
+                        requireContext(), 
+                        "✅ ${bloqueSeleccionado.descripcion}", 
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                dialog.dismiss()
+            }
+            builder.setNegativeButton("Cancelar") { dialog, _ -> dialog.dismiss() }
+            
+            val dialog = builder.create()
+            dialog.show()
+            
+            android.util.Log.d("ReservaFragment", "Dialog creado y mostrado")
+        } catch (e: Exception) {
+            android.util.Log.e("ReservaFragment", "Error: ${e.message}", e)
+            // Fallback: mostrar Toast con las opciones
+            mostrarFallbackSelector(bloques, onBloqueSeleccionado)
+        }
+    }
+    
+    /**
+     * Selector de fallback usando Toast
+     */
+    private fun mostrarFallbackSelector(bloques: List<BloqueHorario>, onBloqueSeleccionado: (BloqueHorario) -> Unit) {
+        // Por ahora, seleccionar automáticamente el primer bloque como prueba
+        Toast.makeText(requireContext(), "Problema con el selector. Usando Bloque 1 por defecto.", Toast.LENGTH_LONG).show()
+        onBloqueSeleccionado(bloques[0])
     }
 
     /**
