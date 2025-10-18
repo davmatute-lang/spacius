@@ -1,12 +1,14 @@
 package com.example.spacius
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.GridView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.spacius.data.FirestoreRepository
@@ -220,21 +222,36 @@ class CalendarFragment : Fragment() {
 
     // 🔹 Nueva función para abrir el detalle de una reserva de Firestore
     private fun abrirDetalleReserva(reserva: ReservaFirestore) {
-        val fragment = DetalleReservaFragment()
-        fragment.arguments = Bundle().apply {
-            putString("reservaId", reserva.id)
-            putString("nombreLugar", reserva.lugarNombre)
-            putString("fecha", formatearFechaParaMostrar(reserva.fecha))
-            putString("horaInicio", reserva.horaInicio)
-            putString("horaFin", reserva.horaFin)
-            putString("usuario", reserva.usuarioNombre)
-            putString("estado", reserva.estado)
-        }
+        // Primero necesitamos obtener los datos del lugar desde Firestore
+        lifecycleScope.launch {
+            try {
+                val lugar = firestoreRepository.obtenerLugarPorId(reserva.lugarId)
+                
+                val fragment = DetalleReservaFragment()
+                fragment.arguments = Bundle().apply {
+                    putString("reservaId", reserva.id)
+                    putString("nombreLugar", reserva.lugarNombre)
+                    putString("descripcionLugar", lugar?.descripcion ?: "Descripción no disponible")
+                    putString("fecha", formatearFechaParaMostrar(reserva.fecha))
+                    putString("horaInicio", reserva.horaInicio)
+                    putString("horaFin", reserva.horaFin)
+                    putString("usuario", reserva.usuarioNombre)
+                    putString("estado", reserva.estado)
+                    putString("imagenUrl", lugar?.imagenUrl ?: "")
+                    putDouble("latitud", lugar?.latitud ?: -2.170998)
+                    putDouble("longitud", lugar?.longitud ?: -79.922359)
+                }
 
-        requireActivity().supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, fragment)
-            .addToBackStack(null)
-            .commit()
+                requireActivity().supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .addToBackStack(null)
+                    .commit()
+                    
+            } catch (e: Exception) {
+                Log.e("CalendarFragment", "Error al obtener datos del lugar: ${e.message}")
+                Toast.makeText(requireContext(), "Error al cargar detalles del lugar", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     // 🔹 Nueva función para actualizar después de cancelar una reserva
