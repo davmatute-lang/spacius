@@ -4,6 +4,7 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.app.AlertDialog
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,6 +19,8 @@ import com.example.spacius.CalendarFragment
 import com.example.spacius.MainActivity
 import com.example.spacius.R
 import com.example.spacius.data.FirestoreRepository
+import java.text.SimpleDateFormat
+import java.util.Locale
 import com.example.spacius.data.ReservaFirestore
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -84,7 +87,7 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
             val categoria = bundle.getString("categoria") ?: "deportivo"
             
             txtCapacidad.text = if (capacidad > 0) {
-                "👥 Capacidad: $capacidad personas • � $disponibilidad"
+                "👥 Capacidad: $capacidad personas • 📅 $disponibilidad"
             } else {
                 "📅 $disponibilidad"
             }
@@ -102,13 +105,29 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
         var horaInicioSeleccionada = ""
         var horaFinSeleccionada = ""
 
-        // Selección de fecha
+        // Selección de fecha (solo fechas presentes y futuras)
         btnSeleccionarFecha.setOnClickListener {
             val c = Calendar.getInstance()
-            DatePickerDialog(requireContext(), { _, y, m, d ->
-                fechaSeleccionada = String.format("%04d-%02d-%02d", y, m + 1, d)
-                btnSeleccionarFecha.text = "$d/${m + 1}/$y"
-        }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show()
+            val fechaPickerDialog = DatePickerDialog(
+                requireContext(), 
+                { _, y, m, d ->
+                    fechaSeleccionada = String.format("%04d-%02d-%02d", y, m + 1, d)
+                    btnSeleccionarFecha.text = "$d/${m + 1}/$y"
+                }, 
+                c.get(Calendar.YEAR), 
+                c.get(Calendar.MONTH), 
+                c.get(Calendar.DAY_OF_MONTH)
+            )
+            
+            // Establecer fecha mínima (hoy) - no permitir fechas pasadas
+            fechaPickerDialog.datePicker.minDate = System.currentTimeMillis()
+            
+            // Opcional: Establecer fecha máxima (por ejemplo, 3 meses en el futuro)
+            val fechaMaxima = Calendar.getInstance()
+            fechaMaxima.add(Calendar.MONTH, 3)
+            fechaPickerDialog.datePicker.maxDate = fechaMaxima.timeInMillis
+            
+            fechaPickerDialog.show()
         }
 
         // Selección de bloque horario (sistema de bloques de 1h45min)
@@ -124,21 +143,37 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
 
         // Botón Reservar con Firestore
         btnReservar.setOnClickListener {
+            android.util.Log.d("ReservaFragment", "Botón Reservar clickeado")
+            
             // Validaciones
             if (fechaSeleccionada.isBlank()) {
+                android.util.Log.d("ReservaFragment", "Error: Fecha no seleccionada")
                 Toast.makeText(requireContext(), "Por favor, selecciona una fecha", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             if (horaInicioSeleccionada.isBlank()) {
+                android.util.Log.d("ReservaFragment", "Error: Hora no seleccionada")
                 Toast.makeText(requireContext(), "Por favor, selecciona un bloque horario", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             if (horaFinSeleccionada.isBlank()) {
+                android.util.Log.d("ReservaFragment", "Error: Hora fin no determinada")
                 Toast.makeText(requireContext(), "Error: No se pudo determinar la hora de fin", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+
+            android.util.Log.d("ReservaFragment", "Validaciones básicas pasadas - Fecha: $fechaSeleccionada, Hora inicio: $horaInicioSeleccionada, Hora fin: $horaFinSeleccionada")
+
+            // Validar que la fecha y hora no sean del pasado
+            android.util.Log.d("ReservaFragment", "Iniciando validación de fecha y hora...")
+            if (!validarFechaYHoraNoEsPasada(fechaSeleccionada, horaInicioSeleccionada)) {
+                android.util.Log.d("ReservaFragment", "Validación de fecha y hora falló")
+                return@setOnClickListener
+            }
+            
+            android.util.Log.d("ReservaFragment", "Todas las validaciones pasaron, creando reserva...")
 
             // Los bloques ya están validados, no necesitamos validaciones adicionales de rango
 
@@ -151,6 +186,8 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
                 horaFin = horaFinSeleccionada,
                 estado = "activa"
             )
+
+            android.util.Log.d("ReservaFragment", "Reserva creada, iniciando guardado en Firestore...")
 
             // Guardar en Firestore
             lifecycleScope.launch {
@@ -350,6 +387,142 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
         requireActivity().supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, calendarFragment)
             .commit()
+    }
+
+    /**
+     * Validar que la fecha seleccionada no sea una fecha del pasado
+     */
+    private fun validarFechaNoEsPasada(fechaSeleccionada: String): Boolean {
+        try {
+            val formatoFecha = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+            val fechaElegida = formatoFecha.parse(fechaSeleccionada)
+            val fechaActual = Calendar.getInstance()
+            
+            // Normalizar fechas para comparar solo día, mes y año (ignorar horas)
+            val fechaElegidaCalendar = Calendar.getInstance()
+            fechaElegidaCalendar.time = fechaElegida
+            fechaElegidaCalendar.set(Calendar.HOUR_OF_DAY, 0)
+            fechaElegidaCalendar.set(Calendar.MINUTE, 0)
+            fechaElegidaCalendar.set(Calendar.SECOND, 0)
+            fechaElegidaCalendar.set(Calendar.MILLISECOND, 0)
+            
+            fechaActual.set(Calendar.HOUR_OF_DAY, 0)
+            fechaActual.set(Calendar.MINUTE, 0)
+            fechaActual.set(Calendar.SECOND, 0)
+            fechaActual.set(Calendar.MILLISECOND, 0)
+            
+            if (fechaElegidaCalendar.before(fechaActual)) {
+                Toast.makeText(requireContext(), "📅 No puedes reservar en fechas pasadas. Por favor selecciona una fecha actual o futura.", Toast.LENGTH_LONG).show()
+                return false
+            }
+            
+            return true
+            
+        } catch (e: Exception) {
+            Log.e("ReservaFragment", "Error al validar fecha: ${e.message}")
+            Toast.makeText(requireContext(), "📅 Error al validar la fecha seleccionada", Toast.LENGTH_SHORT).show()
+            return false
+        }
+    }
+
+    /**
+     * Validar que la fecha y hora seleccionadas no sean del pasado
+     */
+    private fun validarFechaYHoraNoEsPasada(fechaSeleccionada: String, horaInicioSeleccionada: String): Boolean {
+        android.util.Log.d("ReservaFragment", "=== INICIO VALIDACIÓN ===")
+        android.util.Log.d("ReservaFragment", "Validando fecha: '$fechaSeleccionada', hora: '$horaInicioSeleccionada'")
+        
+        try {
+            
+            // Crear Calendar para fecha y hora seleccionadas
+            val fechaHoraSeleccionada = Calendar.getInstance()
+            
+            // Parsear fecha - puede venir en formato DD/MM/YYYY o YYYY-MM-DD
+            val dia: Int
+            val mes: Int
+            val año: Int
+            
+            if (fechaSeleccionada.contains("/")) {
+                // Formato DD/MM/YYYY
+                val partesFecha = fechaSeleccionada.split("/")
+                if (partesFecha.size != 3) {
+                    Log.e("ReservaFragment", "Formato de fecha inválido: $fechaSeleccionada")
+                    return false
+                }
+                dia = partesFecha[0].toInt()
+                mes = partesFecha[1].toInt() - 1 // Calendar usa meses 0-11
+                año = partesFecha[2].toInt()
+            } else if (fechaSeleccionada.contains("-")) {
+                // Formato YYYY-MM-DD
+                val partesFecha = fechaSeleccionada.split("-")
+                if (partesFecha.size != 3) {
+                    Log.e("ReservaFragment", "Formato de fecha inválido: $fechaSeleccionada")
+                    return false
+                }
+                año = partesFecha[0].toInt()
+                mes = partesFecha[1].toInt() - 1 // Calendar usa meses 0-11
+                dia = partesFecha[2].toInt()
+            } else {
+                Log.e("ReservaFragment", "Formato de fecha no reconocido: $fechaSeleccionada")
+                return false
+            }
+            
+            // Parsear hora
+            val partesHora = horaInicioSeleccionada.split(":")
+            if (partesHora.size != 2) {
+                Log.e("ReservaFragment", "Formato de hora inválido: $horaInicioSeleccionada")
+                return false
+            }
+            
+            val hora = partesHora[0].toInt()
+            val minuto = partesHora[1].toInt()
+            
+            // Establecer fecha y hora seleccionadas
+            fechaHoraSeleccionada.set(año, mes, dia, hora, minuto, 0)
+            fechaHoraSeleccionada.set(Calendar.MILLISECOND, 0)
+            
+            // Obtener fecha y hora actuales en zona horaria local
+            val fechaHoraActual = Calendar.getInstance()
+            Log.d("ReservaFragment", "Zona horaria del dispositivo: ${fechaHoraActual.timeZone.displayName}")
+            Log.d("ReservaFragment", "Offset de zona horaria: ${fechaHoraActual.timeZone.rawOffset / (1000 * 60 * 60)} horas")
+            
+            Log.d("ReservaFragment", "=== COMPARACIÓN DE TIEMPOS ===")
+            Log.d("ReservaFragment", "Fecha/hora seleccionada: ${fechaHoraSeleccionada.time}")
+            Log.d("ReservaFragment", "Fecha/hora actual: ${fechaHoraActual.time}")
+            Log.d("ReservaFragment", "Hora actual del sistema: ${fechaHoraActual.get(Calendar.HOUR_OF_DAY)}:${fechaHoraActual.get(Calendar.MINUTE)}")
+            Log.d("ReservaFragment", "Hora seleccionada: $hora:$minuto")
+            Log.d("ReservaFragment", "Comparación (seleccionada < actual): ${fechaHoraSeleccionada.before(fechaHoraActual)}")
+            
+            // Comparar fechas y horas
+            if (fechaHoraSeleccionada.before(fechaHoraActual)) {
+                // Verificar si es el mismo día para dar mensaje específico
+                val fechaActualSinHora = Calendar.getInstance()
+                fechaActualSinHora.set(Calendar.HOUR_OF_DAY, 0)
+                fechaActualSinHora.set(Calendar.MINUTE, 0)
+                fechaActualSinHora.set(Calendar.SECOND, 0)
+                fechaActualSinHora.set(Calendar.MILLISECOND, 0)
+                
+                val fechaSeleccionadaSinHora = Calendar.getInstance()
+                fechaSeleccionadaSinHora.set(año, mes, dia, 0, 0, 0)
+                fechaSeleccionadaSinHora.set(Calendar.MILLISECOND, 0)
+                
+                if (fechaSeleccionadaSinHora.equals(fechaActualSinHora)) {
+                    Toast.makeText(requireContext(), "⏰ No puedes reservar en horas que ya pasaron. Selecciona una hora futura.", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(requireContext(), "📅 No puedes reservar en fechas pasadas. Selecciona una fecha futura.", Toast.LENGTH_LONG).show()
+                }
+                return false
+            }
+            
+            Log.d("ReservaFragment", "Validación exitosa: fecha y hora son válidas")
+            android.util.Log.d("ReservaFragment", "=== FIN VALIDACIÓN: ÉXITO ===")
+            return true
+            
+        } catch (e: Exception) {
+            Log.e("ReservaFragment", "Error al validar fecha y hora: ${e.message}", e)
+            Toast.makeText(requireContext(), "📅 Error al validar la fecha y hora. Inténtalo de nuevo.", Toast.LENGTH_SHORT).show()
+            return false
+        }
     }
 
     override fun onMapReady(googleMap: GoogleMap) {

@@ -1,170 +1,297 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
-    android:padding="16dp"
+    android:background="#F8F9FA"
+    android:fillViewport="true"
     tools:context=".ui.ReservaFragment">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <!-- Título del lugar y capacidad -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:weightSum="2"
-            android:layout_marginBottom="8dp">
-
-            <TextView
-                android:id="@+id/btnNombreLugar"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Estadio Monumental"
-                android:textStyle="bold"
-                android:textSize="18sp"/>
-
-            <TextView
-                android:id="@+id/btnCapacidad"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Capacidad: 100"
-                android:textAlignment="textEnd"
-                android:textSize="16sp"/>
-        </LinearLayout>
-
-        <!-- Imagen y descripción -->
-        <ImageView
-            android:id="@+id/imgLugar"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:scaleType="centerCrop"
-            android:background="@android:color/darker_gray"
-            android:layout_marginBottom="8dp"/>
-
-        <TextView
-            android:id="@+id/btnDescripcionLugar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Tipo: Lugar de Boda\nUn lugar mágico donde cada detalle..."
-            android:layout_marginBottom="12dp"/>
-
-        <!-- Fecha -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="12dp">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:paddingEnd="8dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Fecha:"/>
-
-                <Button
-                    android:id="@+id/btnFecha"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="📅 Seleccionar fecha"
-                    android:textStyle="bold"
-                    android:backgroundTint="@color/green_secondary"
-                    android:textColor="@color/white"
-                    android:minHeight="48dp"
-                    android:paddingHorizontal="16dp"/>
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Horario - Sistema de bloques -->
+        <!-- Header con título elegante -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginBottom="12dp">
+            android:background="@drawable/button_rounded"
+            android:backgroundTint="@color/green_primary"
+            android:padding="20dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="6dp">
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Horario:"
-                android:layout_marginBottom="8dp"/>
-
-            <Button
-                android:id="@+id/btnHoraInicio"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="🕐 Seleccionar bloque horario"
+                android:text="🏟️ Nueva Reserva"
+                android:textSize="24sp"
                 android:textStyle="bold"
-                android:backgroundTint="@color/green_secondary"
                 android:textColor="@color/white"
-                android:minHeight="48dp"
-                android:paddingHorizontal="16dp"/>
-                
-            <!-- Botón hora fin oculto por código -->
-            <Button
-                android:id="@+id/btnHoraFin"
-                android:layout_width="wrap_content"
+                android:gravity="center"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="🕐 Fin"
-                android:visibility="gone"
-                android:textStyle="bold"
-                android:backgroundTint="@color/green_secondary"
+                android:text="Completa los datos para reservar tu espacio"
+                android:textSize="14sp"
                 android:textColor="@color/white"
-                android:minHeight="48dp"
-                android:paddingHorizontal="16dp"/>
+                android:alpha="0.9"
+                android:gravity="center" />
+
         </LinearLayout>
 
-        <!-- Ubicación -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Ubicación del Lugar:"
-            android:textStyle="bold"
-            android:layout_marginBottom="4dp"/>
-
-        <!-- Aquí reemplazamos ImageView por FrameLayout para el mapa -->
-        <FrameLayout
-            android:id="@+id/mapFragmentContainer"
+        <!-- Tarjeta principal del lugar -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:layout_marginBottom="16dp"/>
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="8dp"
+            app:cardBackgroundColor="@color/white">
 
-        <!-- Botones Cancelar y Reservar -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <!-- Imagen del lugar con overlay -->
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="220dp"
+                    android:layout_marginBottom="16dp">
+
+                    <ImageView
+                        android:id="@+id/imgLugar"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:background="@drawable/button_rounded"
+                        android:backgroundTint="#E0E0E0" />
+
+                    <!-- Overlay con información básica -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom"
+                        android:background="@drawable/gradient_overlay"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:id="@+id/btnNombreLugar"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Estadio Monumental"
+                            android:textStyle="bold"
+                            android:textSize="20sp"
+                            android:textColor="@color/white"
+                            android:layout_marginBottom="4dp" />
+
+                        <TextView
+                            android:id="@+id/btnCapacidad"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="👥 Capacidad: 100 personas"
+                            android:textSize="14sp"
+                            android:textColor="@color/white"
+                            android:alpha="0.9" />
+
+                    </LinearLayout>
+                </FrameLayout>
+
+                <!-- Descripción del lugar -->
+                <TextView
+                    android:id="@+id/btnDescripcionLugar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Un lugar mágico donde cada detalle está pensado para hacer de tu evento una experiencia inolvidable..."
+                    android:textSize="15sp"
+                    android:textColor="#666666"
+                    android:lineSpacingExtra="2dp" />
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Tarjeta de selección de fecha y hora -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="8dp"
+            app:cardBackgroundColor="@color/white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="📅 Fecha y Horario"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Selector de fecha mejorado -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Selecciona la fecha:"
+                        android:textSize="14sp"
+                        android:textColor="#666666"
+                        android:layout_marginBottom="8dp" />
+
+                    <Button
+                        android:id="@+id/btnFecha"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:text="📅 Seleccionar fecha"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:backgroundTint="@color/green_secondary"
+                        android:textColor="@color/white"
+                        android:drawablePadding="8dp"
+                        app:cornerRadius="12dp"
+                        android:elevation="4dp" />
+                </LinearLayout>
+
+                <!-- Selector de horario mejorado -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Selecciona el bloque horario:"
+                        android:textSize="14sp"
+                        android:textColor="#666666"
+                        android:layout_marginBottom="8dp" />
+
+                    <Button
+                        android:id="@+id/btnHoraInicio"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:text="🕐 Seleccionar bloque horario"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:backgroundTint="@color/green_secondary"
+                        android:textColor="@color/white"
+                        android:drawablePadding="8dp"
+                        app:cornerRadius="12dp"
+                        android:elevation="4dp" />
+
+                    <!-- Botón hora fin oculto por código -->
+                    <Button
+                        android:id="@+id/btnHoraFin"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🕐 Fin"
+                        android:visibility="gone"
+                        android:textStyle="bold"
+                        android:backgroundTint="@color/green_secondary"
+                        android:textColor="@color/white"
+                        android:minHeight="48dp"
+                        android:paddingHorizontal="16dp" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Tarjeta del mapa -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="8dp"
+            app:cardBackgroundColor="@color/white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📍 Ubicación del Lugar"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- Mapa con bordes redondeados -->
+                <FrameLayout
+                    android:id="@+id/mapFragmentContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="220dp"
+                    android:background="@drawable/button_rounded"
+                    android:backgroundTint="#F0F0F0"
+                    android:elevation="2dp" />
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Botones de acción mejorados -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:weightSum="2">
+            android:layout_marginBottom="16dp"
+            android:gravity="center"
+            android:baselineAligned="false">
 
             <Button
                 android:id="@+id/btnCancelar"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="56dp"
                 android:layout_weight="1"
+                android:layout_marginEnd="6dp"
                 android:text="Cancelar"
-                android:backgroundTint="#4CAF50"
-                android:textColor="#FFFFFF"/>
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textAllCaps="false"
+                android:backgroundTint="#FF5252"
+                android:textColor="@color/white"
+                app:cornerRadius="12dp"
+                android:elevation="4dp"
+                android:gravity="center" />
 
             <Button
                 android:id="@+id/btnReservar"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="56dp"
                 android:layout_weight="1"
-                android:text="Reservar"
-                android:layout_marginStart="8dp"
-                android:backgroundTint="#4CAF50"
-                android:textColor="#FFFFFF"/>
+                android:layout_marginStart="6dp"
+                android:text="Confirmar Reserva"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textAllCaps="false"
+                android:backgroundTint="@color/green_primary"
+                android:textColor="@color/white"
+                app:cornerRadius="12dp"
+                android:elevation="4dp"
+                android:gravity="center" />
         </LinearLayout>
 
     </LinearLayout>
