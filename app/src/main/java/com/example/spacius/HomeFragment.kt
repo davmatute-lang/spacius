@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.spacius.R
-import com.example.spacius.ui.ReservaFragment
+import com.example.spacius.ReservaFragment
 import com.example.spacius.data.*
 import kotlinx.coroutines.launch
 

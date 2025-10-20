@@ -9,6 +9,7 @@ import android.widget.GridView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.spacius.data.FirestoreRepository
@@ -79,7 +80,7 @@ class CalendarFragment : Fragment() {
         calendarGridView.setOnItemClickListener { _, _, position, _ ->
             val selectedDate = calendarAdapter.getItem(position)
             selectedDate?.let {
-                val dateString = "${it.get(Calendar.DAY_OF_MONTH)}/${it.get(Calendar.MONTH) + 1}/${it.get(Calendar.YEAR)}"
+                mostrarDetalleReserva(it)
             }
         }
 
@@ -106,13 +107,19 @@ class CalendarFragment : Fragment() {
         lifecycleScope.launch {
             android.util.Log.d("CalendarFragment", "Cargando reservas desde Firestore...")
             
-            val reservas: List<ReservaFirestore> = firestoreRepository.obtenerReservasUsuario()
-            android.util.Log.d("CalendarFragment", "Reservas encontradas: ${reservas.size}")
+            // Obtener reservas del usuario actual para poder editarlas/cancelarlas
+            val reservasUsuario: List<ReservaFirestore> = firestoreRepository.obtenerReservasUsuario()
+            
+            // Obtener todas las reservas para mostrar ocupación general
+            val todasLasReservas: List<ReservaFirestore> = firestoreRepository.obtenerTodasLasReservasParaCalendario()
+            
+            android.util.Log.d("CalendarFragment", "Reservas del usuario: ${reservasUsuario.size}, Total reservas: ${todasLasReservas.size}")
             
             // 🔹 Limpiar fechas reservadas anteriores antes de recargar
             calendarAdapter.limpiarFechasReservadas()
             
-            reservas.forEach { reserva ->
+            // Marcar todas las reservas en el calendario
+            todasLasReservas.forEach { reserva ->
                 android.util.Log.d("CalendarFragment", "Procesando reserva: ${reserva.fecha}")
                 // Las fechas en Firestore están en formato YYYY-MM-DD
                 val parts = reserva.fecha.split("-")
@@ -123,7 +130,7 @@ class CalendarFragment : Fragment() {
                 }
             }
             calendarAdapter.notifyDataSetChanged()
-            android.util.Log.d("CalendarFragment", "Calendario actualizado con reservas")
+            android.util.Log.d("CalendarFragment", "Calendario actualizado con todas las reservas")
         }
     }
 
@@ -260,6 +267,56 @@ class CalendarFragment : Fragment() {
             // Recargar reservas y actualizar calendario
             cargarReservasPersistentes()
             cargarEventosDelMes()
+        }
+    }
+
+    // 🔹 Función para mostrar detalle de reserva al hacer clic
+    private fun mostrarDetalleReserva(fecha: Calendar) {
+        lifecycleScope.launch {
+            val fechaStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(fecha.time)
+            
+            // Solo obtener reservas del usuario actual para mostrar detalles
+            val reservasUsuario: List<ReservaFirestore> = firestoreRepository.obtenerReservasUsuario()
+            val reservasEnFecha = reservasUsuario.filter { it.fecha == fechaStr }
+            
+            if (reservasEnFecha.isNotEmpty()) {
+                // Mostrar las reservas del usuario
+                val detalles = reservasEnFecha.joinToString("\n\n") { reserva ->
+                    "📍 ${reserva.lugarNombre}\n⏰ ${reserva.horaInicio} - ${reserva.horaFin}\n💬 ${reserva.notas}"
+                }
+                
+                AlertDialog.Builder(requireContext())
+                    .setTitle("📅 Tus Reservas - $fechaStr")
+                    .setMessage(detalles)
+                    .setPositiveButton("Cerrar", null)
+                    .show()
+            } else {
+                // Verificar si hay reservas de otros usuarios en esta fecha
+                val todasLasReservas: List<ReservaFirestore> = firestoreRepository.obtenerTodasLasReservasParaCalendario()
+                val hayReservasOtros = todasLasReservas.any { it.fecha == fechaStr }
+                
+                if (hayReservasOtros) {
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("📅 Fecha Ocupada - $fechaStr")
+                        .setMessage("Esta fecha tiene reservas de otros usuarios.\n\n¿Quieres hacer una nueva reserva?")
+                        .setPositiveButton("📝 Reservar") { _, _ ->
+                            // Navegar a fragmento de reserva
+                            Toast.makeText(requireContext(), "Función de reserva disponible próximamente", Toast.LENGTH_SHORT).show()
+                        }
+                        .setNegativeButton("Cancelar", null)
+                        .show()
+                } else {
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("📅 Fecha Disponible - $fechaStr")
+                        .setMessage("No hay reservas en esta fecha.\n\n¿Quieres hacer una reserva?")
+                        .setPositiveButton("📝 Reservar") { _, _ ->
+                            // Navegar a fragmento de reserva
+                            Toast.makeText(requireContext(), "Función de reserva disponible próximamente", Toast.LENGTH_SHORT).show()
+                        }
+                        .setNegativeButton("Cancelar", null)
+                        .show()
+                }
+            }
         }
     }
 }

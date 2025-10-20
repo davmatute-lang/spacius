@@ -10,6 +10,16 @@ import kotlinx.coroutines.tasks.await
 import kotlin.Exception
 
 /**
+ * Data class para representar un bloque horario de reserva
+ */
+data class BloqueHorario(
+    val id: Int,
+    val horaInicio: String,
+    val horaFin: String,
+    val descripcion: String
+)
+
+/**
  * Repositorio para manejar operaciones de Firestore
  * Centraliza toda la lógica de base de datos en la nube
  */
@@ -387,4 +397,166 @@ class FirestoreRepository {
             capacidadMaxima = 50
         )
     )
+
+    // ============================================
+    // SISTEMA DE DISPONIBILIDAD
+    // ============================================
+    
+    /**
+     * Verificar si un lugar está disponible en una fecha y horario específicos
+     */
+    suspend fun verificarDisponibilidad(lugarId: String, fecha: String, horaInicio: String, horaFin: String): Boolean {
+        return try {
+            Log.d(TAG, "Verificando disponibilidad para lugar: $lugarId, fecha: $fecha, hora: $horaInicio-$horaFin")
+            
+            val snapshot = db.collection(COLLECTION_RESERVAS)
+                .whereEqualTo("lugarId", lugarId)
+                .whereEqualTo("fecha", fecha)
+                .whereEqualTo("estado", "activa")
+                .get()
+                .await()
+            
+            val reservasExistentes = snapshot.toObjects(ReservaFirestore::class.java)
+            
+            // Verificar si hay conflicto de horarios
+            for (reserva in reservasExistentes) {
+                if (hayConflictoHorario(horaInicio, horaFin, reserva.horaInicio, reserva.horaFin)) {
+                    Log.d(TAG, "Conflicto encontrado con reserva: ${reserva.id} (${reserva.horaInicio}-${reserva.horaFin})")
+                    return false
+                }
+            }
+            
+            Log.d(TAG, "Lugar disponible")
+            return true
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al verificar disponibilidad: ${e.message}")
+            false
+        }
+    }
+    
+    /**
+     * Verificar si dos rangos de horarios se solapan
+     */
+    private fun hayConflictoHorario(nuevaInicio: String, nuevaFin: String, existenteInicio: String, existenteFin: String): Boolean {
+        try {
+            val nuevaInicioMin = convertirHoraAMinutos(nuevaInicio)
+            val nuevaFinMin = convertirHoraAMinutos(nuevaFin)
+            val existenteInicioMin = convertirHoraAMinutos(existenteInicio)
+            val existenteFinMin = convertirHoraAMinutos(existenteFin)
+            
+            // Verificar si hay solapamiento
+            // No hay conflicto si: nueva termina antes de que existent comience O nueva comienza después de que existente termine
+            val noHayConflicto = (nuevaFinMin <= existenteInicioMin) || (nuevaInicioMin >= existenteFinMin)
+            
+            return !noHayConflicto
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al verificar conflicto de horario: ${e.message}")
+            return true // En caso de error, asumir que hay conflicto para seguridad
+        }
+    }
+    
+    /**
+     * Convertir hora en formato HH:MM a minutos desde medianoche
+     */
+    private fun convertirHoraAMinutos(hora: String): Int {
+        val partes = hora.split(":")
+        val horas = partes[0].toInt()
+        val minutos = partes[1].toInt()
+        return horas * 60 + minutos
+    }
+    
+    /**
+     * Obtener todas las reservas activas para una fecha específica (todos los usuarios)
+     */
+    suspend fun obtenerReservasPorFecha(fecha: String): List<ReservaFirestore> {
+        return try {
+            Log.d(TAG, "Obteniendo todas las reservas para fecha: $fecha")
+            
+            val snapshot = db.collection(COLLECTION_RESERVAS)
+                .whereEqualTo("fecha", fecha)
+                .whereEqualTo("estado", "activa")
+                .get()
+                .await()
+            
+            val reservas = snapshot.toObjects(ReservaFirestore::class.java)
+            Log.d(TAG, "Encontradas ${reservas.size} reservas para la fecha $fecha")
+            
+            reservas
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al obtener reservas por fecha: ${e.message}")
+            emptyList()
+        }
+    }
+    
+    /**
+     * Obtener bloques horarios disponibles para un lugar en una fecha específica
+     */
+    suspend fun obtenerBloquesDisponibles(lugarId: String, fecha: String): List<BloqueHorario> {
+        return try {
+            val todosLosBloques = generarBloquesHorarios()
+            val reservasDelDia = obtenerReservasPorFecha(fecha)
+            val reservasDelLugar = reservasDelDia.filter { it.lugarId == lugarId }
+            
+            // Filtrar bloques que no están reservados
+            val bloquesDisponibles = todosLosBloques.filter { bloque ->
+                reservasDelLugar.none { reserva ->
+                    hayConflictoHorario(bloque.horaInicio, bloque.horaFin, reserva.horaInicio, reserva.horaFin)
+                }
+            }
+            
+            Log.d(TAG, "Bloques disponibles para lugar $lugarId en $fecha: ${bloquesDisponibles.size}/${todosLosBloques.size}")
+            bloquesDisponibles
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al obtener bloques disponibles: ${e.message}")
+            generarBloquesHorarios() // En caso de error, devolver todos los bloques
+        }
+    }
+    
+    /**
+     * Generar lista de bloques horarios disponibles (8:00 AM - 9:45 PM en bloques de 1h45min)
+     */
+    private fun generarBloquesHorarios(): List<BloqueHorario> {
+        return listOf(
+            BloqueHorario(1, "08:00", "09:45", "8:00 AM - 9:45 AM"),
+            BloqueHorario(2, "10:00", "11:45", "10:00 AM - 11:45 AM"),
+            BloqueHorario(3, "12:00", "13:45", "12:00 PM - 1:45 PM"),
+            BloqueHorario(4, "14:00", "15:45", "2:00 PM - 3:45 PM"),
+            BloqueHorario(5, "16:00", "17:45", "4:00 PM - 5:45 PM"),
+            BloqueHorario(6, "18:00", "19:45", "6:00 PM - 7:45 PM"),
+            BloqueHorario(7, "20:00", "21:45", "8:00 PM - 9:45 PM")
+        )
+    }
+    
+    /**
+     * Obtener todas las reservas activas (de todos los usuarios) para mostrar ocupación en calendario
+     * Sin mostrar información privada como nombres de usuario
+     */
+    suspend fun obtenerTodasLasReservasParaCalendario(): List<ReservaFirestore> {
+        return try {
+            Log.d(TAG, "Obteniendo todas las reservas para calendario")
+            
+            val snapshot = db.collection(COLLECTION_RESERVAS)
+                .whereEqualTo("estado", "activa")
+                .get()
+                .await()
+            
+            val reservas = snapshot.toObjects(ReservaFirestore::class.java)
+            
+            // Limpiar información privada antes de devolver
+            reservas.map { reserva ->
+                reserva.copy(
+                    usuarioNombre = "Usuario", // Ocultar nombre real
+                    usuarioId = "" // Limpiar ID de usuario
+                )
+            }
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al obtener todas las reservas: ${e.message}")
+            emptyList()
+        }
+    }
 }
