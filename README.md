@@ -4,24 +4,25 @@
 
 ## ✨ Características Principales
 
-- 🔐 **Sistema de Autenticación**: Registro e inicio de sesión seguro
+- 🔐 **Autenticación con Firebase**: Registro e inicio de sesión seguro en la nube
 - 📍 **Exploración de Lugares**: 10 espacios públicos predefinidos de Guayaquil
 - 📅 **Sistema de Reservas**: Reserva lugares con fecha y horario específico
 - 🗓️ **Calendario Interactivo**: Visualización mensual de reservas activas
 - 🗺️ **Mapa de Reservas**: Geolocalización de tus lugares reservados
-- 🔄 **Sincronización en Tiempo Real**: Actualización automática entre secciones
-- 💾 **Persistencia Local**: Base de datos Room para almacenamiento offline
+- 🔄 **Sincronización en Tiempo Real**: Firestore actualiza todas las vistas automáticamente
+- ☁️ **Persistencia en la Nube**: Firebase Firestore para almacenamiento sincronizado
 
 ## 🎯 Funcionalidades Detalladas
 
 ### 🔐 Autenticación
-- Registro de nuevos usuarios (nombre, email, contraseña)
-- Inicio de sesión con validación de credenciales
-- Base de datos SQLite para gestión de usuarios
-- Persistencia de sesión activa
+- Registro de nuevos usuarios con **Firebase Authentication**
+- Inicio de sesión con validación de credenciales en la nube
+- Gestión segura de sesiones con Firebase Auth
+- Persistencia automática de sesión activa
+- Manejo de errores específicos (formato, contraseña incorrecta, conexión)
 
 ### 🏛️ Exploración de Lugares
-- **10 lugares públicos de Guayaquil**:
+- **10 lugares públicos de Guayaquil** almacenados en **Firestore**:
   - Canchas del Parque Samanes
   - Canchas de Handball
   - Área de Picnic Parque Samanes
@@ -31,7 +32,8 @@
   - Estadios (Capwell, Monumental) para bodas colectivas
 - Vista en lista con imágenes (Glide)
 - Información detallada de cada lugar (descripción, horarios, ubicación)
-- **Filtrado inteligente**: Solo muestra lugares disponibles (no reservados)
+- **Filtrado inteligente**: Solo muestra lugares no reservados por el usuario actual
+- **Inicialización automática**: Los lugares se crean en Firestore al primer uso
 
 ### 📅 Sistema de Reservas
 - **Selección de fecha**: DatePicker para elegir día de reserva
@@ -39,6 +41,8 @@
 - **Vista previa en mapa**: Ubicación del lugar antes de reservar
 - **Confirmación instantánea**: Feedback visual al completar reserva
 - **Validación de formulario**: Verifica que todos los campos estén completos
+- **Guardado en Firestore**: Sincronización automática con la nube
+- **Sistema de disponibilidad**: Verifica conflictos de horario antes de confirmar
 
 ### 🗓️ Calendario Interactivo
 - **Vista mensual** con navegación entre meses (anterior/siguiente)
@@ -73,66 +77,62 @@
 - Opción de cerrar sesión
 - Interfaz Material Design moderna
 
-## 🏗️ Arquitectura y Estructura
-
 ### Arquitectura de Datos
 ```
-📦 Base de Datos Room (spacius_db)
-├── 📊 Tabla: lugares
-│   ├── id (PK, autoincrement)
-│   ├── nombre
-│   ├── descripcion
-│   ├── latitud / longitud
-│   ├── imagenUrl
-│   ├── fechaDisponible
-│   └── horaDisponible
+☁️ Firebase (Backend)
+├── 🔐 Firebase Authentication
+│   ├── Registro de usuarios
+│   ├── Inicio de sesión
+│   └── Gestión de sesiones
 │
-└── 📊 Tabla: reservas
-    ├── id (PK, autoincrement)
-    ├── idLugar (FK a lugares)
-    ├── fecha
-    ├── horaInicio / horaFin
-    └── nombreUsuario
-
-📦 Base de Datos SQLite (spacius.db)
-└── 📊 Tabla: usuarios
-    ├── id (PK, autoincrement)
-    ├── nombre
-    ├── email (UNIQUE)
-    └── password
+└── 🔥 Cloud Firestore
+    ├── 📊 Colección: lugares
+    │   ├── id (auto-generado)
+    │   ├── nombre
+    │   ├── descripcion
+    │   ├── latitud / longitud
+    │   ├── imagenUrl
+    │   ├── capacidad
+    │   └── disponible (boolean)
+    │
+    └── 📊 Colección: reservas
+        ├── id (auto-generado)
+        ├── lugarId (referencia)
+        ├── nombreLugar
+        ├── fecha (YYYY-MM-DD)
+        ├── horaInicio / horaFin
+        ├── usuarioId (Firebase Auth UID)
+        ├── usuarioEmail
+        └── estado (activa/cancelada)
 ```
 
 ### Estructura del Proyecto
 ```
 app/src/main/java/com/example/spacius/
 ├── 🔐 Autenticación
-│   ├── LoginActivity.kt           # Pantalla de inicio de sesión
-│   ├── RegisterActivity.kt        # Registro de nuevos usuarios
-│   └── UserDatabaseHelper.kt      # SQLite para usuarios
+│   ├── LoginActivity.kt           # Pantalla de inicio de sesión (Firebase Auth)
+│   ├── RegisterActivity.kt        # Registro de nuevos usuarios (Firebase Auth)
+│   └── SpaciusApplication.kt      # Inicialización de Firebase
 │
 ├── 🏠 Navegación Principal
 │   └── MainActivity.kt             # Activity principal con BottomNav
 │
 ├── 📱 Fragments (UI)
-│   ├── ui/
-│   │   ├── HomeFragment.kt        # Lista de lugares disponibles
-│   │   └── ReservaFragment.kt     # Formulario de reserva
+│   ├── HomeFragment.kt            # Lista de lugares disponibles
+│   ├── ReservaFragment.kt         # Formulario de reserva
+│   ├── ReservaExitosaFragment.kt  # Confirmación de reserva
 │   ├── CalendarFragment.kt        # Calendario con eventos
 │   ├── MapsFragment.kt            # Mapa de reservas
 │   ├── SettingsFragment.kt        # Configuración de usuario
 │   └── DetalleReservaFragment.kt  # Detalle y cancelación
 │
-├── 💾 Base de Datos (Room)
+├── ☁️ Repositorio de Datos (Firestore)
 │   └── data/
-│       ├── AppDatabase.kt         # Configuración Room
-│       ├── Lugar.kt               # Entity de lugares
-│       ├── Reserva.kt             # Entity de reservas
-│       ├── LugarDao.kt            # Queries de lugares
-│       └── ReservaDao.kt          # Queries de reservas
+│       ├── FirestoreRepository.kt # Operaciones CRUD con Firestore
+│       └── FirestoreModels.kt     # Data classes (LugarFirestore, ReservaFirestore)
 │
 └── 🎨 Adaptadores
-    ├── CalendarAdapter.kt         # GridView del calendario
-    └── LugarAdapter.kt            # RecyclerView de lugares
+    └── CalendarAdapter.kt         # GridView del calendario
 ```
 
 ### Layouts
@@ -140,15 +140,15 @@ app/src/main/java/com/example/spacius/
 app/src/main/res/layout/
 ├── activity_login.xml              # Pantalla de login
 ├── activity_register.xml           # Pantalla de registro
-├── activity_main.xml               # Contenedor principal
+├── activity_main.xml               # Contenedor principal con BottomNav
 ├── fragment_home.xml               # Lista de lugares
 ├── fragment_calendar.xml           # Vista de calendario
 ├── fragment_maps.xml               # Contenedor del mapa
 ├── fragment_reserva_exitosa.xml    # Formulario de reserva
 ├── fragment_detalle_reserva.xml    # Detalles de reserva
 ├── fragment_settings.xml           # Configuración
-├── item_lugar.xml                  # Item de lugar en lista
 ├── item_evento.xml                 # Item de evento en calendario
+├── item_lugar.xml                  # Item de lugar en lista
 └── calendar_day_item.xml           # Día individual del calendario
 ```
 
@@ -160,10 +160,12 @@ app/src/main/res/layout/
 - **Min SDK 24**: Android 7.0+ (Nougat)
 - **Gradle (Kotlin DSL)**: Sistema de build
 
-### Base de Datos
-- **Room 2.6.1**: ORM para SQLite
-- **SQLite**: Base de datos local
+### Backend y Base de Datos
+- **Firebase Authentication**: Autenticación de usuarios en la nube
+- **Cloud Firestore**: Base de datos NoSQL en tiempo real
+- **Firebase BOM 33.4.0**: Gestión de versiones de Firebase
 - **Kotlin Coroutines**: Operaciones asíncronas
+- **Firebase Analytics**: Analíticas de uso (opcional)
 
 ### UI/UX
 - **Material Design 3**: Componentes de UI modernos
@@ -187,12 +189,13 @@ app/src/main/res/layout/
 - **Android Studio** Hedgehog (2023.1.1) o superior
 - **JDK 11** o superior
 - **Gradle 8.0+**
+- **Cuenta de Firebase** (se incluye google-services.json en el proyecto)
 - **API Key de Google Maps** (incluida en el proyecto)
 
 ### Dispositivo/Emulador
 - **Android 7.0 (API 24)** o superior
-- **Conexión a Internet** (para cargar imágenes y mapas)
-- **Servicios de Google Play** (para Google Maps)
+- **Conexión a Internet** (requerida para Firebase, imágenes y mapas)
+- **Servicios de Google Play** (para Google Maps y Firebase)
 
 ## 🚀 Instalación y Configuración
 
@@ -206,7 +209,16 @@ cd spacius
 - File → Open → Seleccionar carpeta del proyecto
 - Esperar sincronización automática de Gradle
 
-### 3. Configurar Google Maps (Opcional)
+### 3. Configurar Firebase (Opcional - ya configurado)
+El proyecto ya incluye `google-services.json`. Si necesitas tu propio proyecto:
+
+1. Crear proyecto en [Firebase Console](https://console.firebase.google.com/)
+2. Agregar app Android con package `com.example.spacius`
+3. Descargar `google-services.json` y colocarlo en `app/`
+4. Habilitar Authentication (Email/Password)
+5. Crear base de datos Firestore
+
+### 4. Configurar Google Maps (Opcional)
 Si necesitas tu propia API Key:
 ```xml
 <!-- AndroidManifest.xml -->
@@ -215,7 +227,7 @@ Si necesitas tu propia API Key:
     android:value="TU_API_KEY_AQUI" />
 ```
 
-### 4. Ejecutar la Aplicación
+### 5. Ejecutar la Aplicación
 - Conectar dispositivo Android o iniciar emulador
 - Click en Run (▶️) o `Shift + F10`
 
@@ -247,18 +259,6 @@ Si necesitas tu propia API Key:
 - **🗺️ Mapa**: Ver ubicaciones reservadas
 - **⚙️ Perfil**: Ajustes y cerrar sesión
 
-## 🔄 Flujo de Datos
-
-```mermaid
-Usuario → Home → Selecciona Lugar → Formulario Reserva
-                                          ↓
-                                    Guarda en Room DB
-                                          ↓
-                    ┌─────────────────────┼─────────────────────┐
-                    ↓                     ↓                     ↓
-              HomeFragment          CalendarFragment      MapsFragment
-           (oculta lugar)        (marca fecha + evento)  (agrega marcador)
-```
 
 ## 🎨 Capturas y Demos
 
@@ -295,16 +295,19 @@ Usuario → Home → Selecciona Lugar → Formulario Reserva
 
 ## 🚧 Estado del Proyecto
 
-- ✅ **Sistema de autenticación** - Completo
-- ✅ **Base de datos Room** - Completo
+- ✅ **Autenticación con Firebase** - Completo
+- ✅ **Base de datos Firestore** - Completo
 - ✅ **Exploración de lugares** - Completo
 - ✅ **Sistema de reservas** - Completo
 - ✅ **Calendario con eventos** - Completo
 - ✅ **Mapa de reservas** - Completo
-- ✅ **Sincronización entre vistas** - Completo
+- ✅ **Sincronización en tiempo real** - Completo
 - ✅ **Filtrado inteligente** - Completo
+- ✅ **Sistema de disponibilidad** - Completo
+- ✅ **Cancelación de reservas** - Completo
+- ✅ **Código optimizado** - Limpieza realizada (Oct 2025)
 - 🚧 **Perfil de usuario completo** - En desarrollo
-- 🚧 **Notificaciones** - Planeado
+- 🚧 **Notificaciones push** - Planeado
 - 🚧 **Historial de reservas** - Planeado
 
 ## 🎨 Características de UI/UX
@@ -331,26 +334,26 @@ Usuario → Home → Selecciona Lugar → Formulario Reserva
 - Contraste adecuado en colores
 - Navegación intuitiva
 
-### Estados de Carga y Vacío
-- **Sin lugares disponibles**: Mensaje amigable invitando a revisar calendario
-- **Sin reservas en mapa**: Texto motivacional para hacer primera reserva
-- **Sin eventos en calendario**: Indicador de mes sin actividad
-- **Carga de imágenes**: Placeholders mientras cargan
 
 ## 🔧 Detalles Técnicos Avanzados
 
 ### Gestión de Estado
 - **Kotlin Coroutines**: Para operaciones asíncronas eficientes
-- **LiveData Pattern**: Observación de cambios en datos
+- **Firebase Listeners**: Observación de cambios en tiempo real
 - **Singleton Pattern**: Instancia única del calendario
 - **Fragment Tag Management**: Gestión inteligente de fragments
+- **Lifecycle Scope**: Coroutines atadas al ciclo de vida de components
 
 ### Optimizaciones
 - **Lazy Loading**: Carga perezosa de fragments
 - **View Recycling**: RecyclerView para listas eficientes
 - **Image Caching**: Glide con caché de imágenes
-- **Database Singleton**: Una sola instancia de Room
+- **Firestore Queries Optimizadas**: Índices y consultas eficientes
 - **Coroutine Lifecycle**: Scope atado al ciclo de vida
+- **Código limpio**: Eliminación de archivos sin usar (Oct 2025)
+  - Removidas activities obsoletas (CalendarActivity, MapsActivity, MapsScreenFragment)
+  - Eliminados layouts no utilizados
+  - Logs de debug optimizados
 
 ### Validaciones
 - **Formulario de registro**: Validación de email y contraseña
@@ -362,15 +365,17 @@ Usuario → Home → Selecciona Lugar → Formulario Reserva
 
 ### Sincronización
 ```kotlin
-Flujo de Sincronización Automática:
+Flujo de Sincronización Automática con Firebase:
 1. Usuario realiza acción (reservar/cancelar)
-2. Se guarda en Room Database
-3. Se notifica a MainActivity
-4. MainActivity actualiza:
-   - HomeFragment (onResume)
-   - CalendarFragment (función específica)
-   - MapsFragment (onResume)
-5. UI se actualiza automáticamente
+2. Se guarda en Firestore (nube)
+3. Firestore actualiza en tiempo real
+4. MainActivity se notifica del cambio
+5. MainActivity actualiza fragments:
+   - HomeFragment (onResume - recarga lugares)
+   - CalendarFragment (listener de Firestore)
+   - MapsFragment (onResume - recarga marcadores)
+6. UI se actualiza automáticamente
+7. Cambios sincronizados entre todos los dispositivos
 ```
 
 ## 🧪 Testing y CI/CD
@@ -382,74 +387,56 @@ Flujo de Sincronización Automática:
   - `Ashlee_Coello`
   - `Dani-Freire`
   - `Diego_Rubio`
-- **Tests en cada push/PR**: Ejecuta tests instrumentados
-- **Emulador**: API 30, Google APIs, x86_64
 
-### Tests Implementados
-```kotlin
-// Tests Instrumentados
-- LoginActivityTest.kt
-  ✓ Validación de credenciales
-  ✓ Navegación post-login
-  ✓ Mensajes de error
-
-// Tests Unitarios
-- ExampleUnitTest.kt
-  ✓ Operaciones básicas
-  ✓ Lógica de negocio
-```
-
-### Ejecutar Tests Localmente
-```bash
-# Tests unitarios
-./gradlew test
-
-# Tests instrumentados (requiere emulador/dispositivo)
-./gradlew connectedAndroidTest
-
-# Todos los tests
-./gradlew check
-
-# Build de release
-./gradlew assembleRelease
-```
 
 ## 🔒 Consideraciones de Seguridad
 
 ### Implementadas
 - ✅ Validación de inputs en formularios
-- ✅ Consultas SQL parametrizadas (Room)
-- ✅ Base de datos local (no expuesta)
+- ✅ Autenticación con Firebase (encriptación en la nube)
+- ✅ Reglas de seguridad de Firestore
+- ✅ Consultas parametrizadas (Firestore SDK)
 
 ### Pendientes (Recomendadas)
-- ⚠️ **Encriptación de contraseñas**: Actualmente en texto plano
 - ⚠️ **API Key de Google Maps**: Expuesta en AndroidManifest
 - ⚠️ **Ofuscación de código**: ProGuard/R8 en release
+- ⚠️ **Reglas de Firestore más estrictas**: Validación de datos en backend
 
 ### Mejoras de Seguridad Sugeridas
 ```kotlin
-// Implementar BCrypt para contraseñas
-implementation("org.mindrot:jbcrypt:0.4")
-
 // Mover API Keys a local.properties
 // y usar BuildConfig
+
+// Implementar reglas de Firestore más estrictas:
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /reservas/{reservaId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && 
+                      request.resource.data.usuarioId == request.auth.uid;
+      allow update, delete: if request.auth != null && 
+                              resource.data.usuarioId == request.auth.uid;
+    }
+  }
+}
 ```
 
 ## 📊 Métricas del Proyecto
 
 ### Estadísticas de Código
-- **Total de archivos Kotlin**: 18 clases principales
-- **Líneas de código**: ~3,500+ líneas
-- **Activities**: 4 (Login, Register, Main, Calendar)
-- **Fragments**: 8 (Home, Reserva, Calendar, Maps, Settings, Detalle, etc.)
-- **Layouts XML**: 15+ archivos
-- **Base de datos**: 2 tablas Room + 1 tabla SQLite
+- **Total de archivos Kotlin**: 15 clases principales (optimizado Oct 2025)
+- **Líneas de código**: ~3,000+ líneas (reducido tras limpieza)
+- **Activities**: 3 (Login, Register, Main)
+- **Fragments**: 7 (Home, Reserva, ReservaExitosa, Calendar, Maps, Settings, Detalle)
+- **Layouts XML**: 12 archivos (optimizado)
+- **Base de datos**: Firebase Firestore + Firebase Authentication
 
 ### Performance
 - **Min SDK**: 24 (Android 7.0+) - ~92% de dispositivos
 - **Target SDK**: 36 (Android 14)
-- **Tamaño de APK**: ~8-12 MB (estimado)
-- **Tiempo de inicio**: <2 segundos
+- **Tamaño de APK**: ~10-14 MB (con Firebase incluido)
+- **Tiempo de inicio**: <2 segundos (requiere conexión inicial a Firebase)
 
 ### Compatibilidad
 - ✅ Android 7.0 (Nougat) - Android 14
@@ -457,41 +444,15 @@ implementation("org.mindrot:jbcrypt:0.4")
 - ✅ Orientación portrait y landscape
 - ✅ Diferentes tamaños de pantalla
 
-## 🌐 Configuración de Google Maps
 
-### Obtener tu Propia API Key
-
-1. **Google Cloud Console**:
-   ```
-   https://console.cloud.google.com/
-   ```
-
-2. **Crear proyecto** y habilitar APIs:
-   - Maps SDK for Android
-   - Places API (si se necesita)
-
-3. **Crear credenciales** (API Key)
-
-4. **Agregar a tu proyecto**:
-   ```xml
-   <!-- AndroidManifest.xml -->
-   <meta-data
-       android:name="com.google.android.geo.API_KEY"
-       android:value="TU_API_KEY_AQUI" />
-   ```
-
-5. **Restricciones de seguridad**:
-   - Restringir por aplicación (SHA-1)
-   - Limitar APIs habilitadas
-
-## 🔮 Roadmap y Próximas Mejoras
 
 ### Corto Plazo (v1.1)
-- [ ] Encriptación de contraseñas con BCrypt
+- [ ] Reglas de seguridad Firestore más estrictas
 - [ ] Validación mejorada de emails (formato completo)
 - [ ] Modo oscuro
 - [ ] Animaciones de transición mejoradas
 - [ ] Mensajes de confirmación antes de cancelar
+- [ ] Manejo de estado offline mejorado
 
 ### Medio Plazo (v1.5)
 - [ ] Edición de reservas existentes
@@ -499,32 +460,24 @@ implementation("org.mindrot:jbcrypt:0.4")
 - [ ] Historial completo de reservas pasadas
 - [ ] Búsqueda y filtros por tipo de lugar
 - [ ] Compartir reservas (Share Intent)
-- [ ] Notificaciones locales de recordatorio
+- [ ] Notificaciones push con Firebase Cloud Messaging
+- [ ] Sistema de verificación de disponibilidad en tiempo real
 
 ### Largo Plazo (v2.0)
-- [ ] Arquitectura MVVM + Repository Pattern
-- [ ] Backend con API REST
-- [ ] Autenticación con Firebase
-- [ ] Sincronización en la nube
-- [ ] Sistema de puntuación/reviews
+- [ ] Arquitectura MVVM + Repository Pattern completo
+- [ ] Firebase Cloud Functions para lógica de backend
+- [ ] Sistema de puntuación/reviews de lugares
 - [ ] Chat o comentarios en lugares
 - [ ] Integración con Google Calendar
 - [ ] Widget de próximas reservas
-- [ ] Múltiples usuarios por cuenta
+- [ ] Múltiples usuarios por cuenta (familias)
+- [ ] Panel de administración web
 
 ## 🐛 Problemas Conocidos
 
 ### Issues Actuales
-- Contraseñas almacenadas sin encriptar (alta prioridad)
-- API Key de Google Maps visible en código fuente
-- Sin recuperación de contraseña
-
-### Limitaciones
-- Sin modo offline completo (mapas requieren internet)
-- Sin sincronización entre dispositivos
-- Límite de una reserva por lugar
-
-## 🤝 Contribuir
+- API Key de Google Maps visible en código fuente (baja prioridad)
+- Requiere conexión a internet constante para Firebase
 
 ### Guía para Contribuidores
 
@@ -532,49 +485,11 @@ Este proyecto sigue GitFlow con múltiples branches de desarrollo:
 
 **Branches principales:**
 - `main`: Código estable en producción
+- `Sistema-de-Disponibilidad-Fire-Base`: Branch activo con Firebase (actual)
 - `Ashlee_Coello`: Desarrollo por Ashlee
 - `Dani-Freire`: Desarrollo por Dani
 - `Diego_Rubio`: Desarrollo por Diego
 
-**Proceso de contribución:**
-
-1. **Fork** el proyecto
-
-2. **Clonar** tu fork:
-   ```bash
-   git clone https://github.com/TU-USUARIO/spacius.git
-   ```
-
-3. **Crear branch** para tu feature:
-   ```bash
-   git checkout -b feature/NombreFeature
-   ```
-
-4. **Desarrollar** y hacer commits:
-   ```bash
-   git commit -m "feat: descripción del cambio"
-   ```
-
-5. **Push** a tu fork:
-   ```bash
-   git push origin feature/NombreFeature
-   ```
-
-6. **Abrir Pull Request** a la rama correspondiente
-
-### Convenciones de Código
-- **Kotlin Style Guide**: Seguir convenciones oficiales de Kotlin
-- **Comentarios**: Usar español para comentarios del equipo
-- **Commits**: Usar conventional commits (feat, fix, docs, etc.)
-- **Nombres**: CamelCase para clases, camelCase para funciones
-
-### Áreas para Contribuir
-- 🐛 Corrección de bugs
-- ✨ Nuevas funcionalidades
-- 📝 Mejoras en documentación
-- 🎨 Mejoras de UI/UX
-- 🧪 Agregar más tests
-- 🔒 Mejoras de seguridad
 
 ## 👥 Equipo de Desarrollo
 
@@ -587,12 +502,6 @@ Este proyecto sigue GitFlow con múltiples branches de desarrollo:
 - Dani Freire
 - Diego Rubio
 
-## 📞 Soporte y Contacto
-
-- **Issues**: [GitHub Issues](https://github.com/davmatute-lang/spacius/issues)
-- **Documentación**: Ver este README
-- **Wiki**: (Próximamente)
-
 ## 📄 Licencia
 
 Este proyecto es de uso educativo y personal. Desarrollado como proyecto académico.
@@ -604,6 +513,25 @@ Este proyecto es de uso educativo y personal. Desarrollado como proyecto académ
 
 ### Créditos
 Si usas este código, por favor da crédito al equipo original.
+
+---
+
+## 📋 Changelog
+
+### v1.0.1 - Octubre 20, 2025
+**🔄 Migración a Firebase y Optimización del Código**
+
+**Nuevas Características:**
+- ✅ Migración completa de Room a **Firebase Firestore**
+- ✅ Implementación de **Firebase Authentication**
+- ✅ Sincronización en tiempo real entre dispositivos
+- ✅ Sistema de disponibilidad de lugares mejorado
+
+**Mejoras Técnicas:**
+- ✅ Código más limpio y mantenible
+- ✅ Build más rápido
+- ✅ APK optimizado
+- ✅ Estructura de proyecto consistente
 
 ---
 

@@ -1,4 +1,4 @@
-package com.example.spacius.ui
+package com.example.spacius
 
 import android.os.Bundle
 import android.view.LayoutInflater

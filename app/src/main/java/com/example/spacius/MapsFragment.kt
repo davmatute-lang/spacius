@@ -6,8 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.example.spacius.data.AppDatabase
-import com.example.spacius.data.Reserva
+import com.example.spacius.data.FirestoreRepository
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -19,7 +18,7 @@ import kotlinx.coroutines.launch
 class MapsFragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
-    private lateinit var db: AppDatabase
+    private lateinit var firestoreRepository: FirestoreRepository
     private var rootView: View? = null
 
     override fun onCreateView(
@@ -28,7 +27,7 @@ class MapsFragment : Fragment(), OnMapReadyCallback {
     ): View? {
         rootView = inflater.inflate(R.layout.fragment_maps, container, false)
 
-        db = AppDatabase.getDatabase(requireContext())
+        firestoreRepository = FirestoreRepository()
 
         val mapFragment = childFragmentManager.findFragmentById(R.id.mapFragmentContainer) as? SupportMapFragment
             ?: SupportMapFragment.newInstance().also {
@@ -61,14 +60,14 @@ class MapsFragment : Fragment(), OnMapReadyCallback {
         }
     }
     
-    // 🔹 Nueva función para cargar solo lugares con reservas activas
+    // � Nueva función para cargar solo lugares con reservas activas desde Firestore
     private fun cargarReservasEnMapa() {
         lifecycleScope.launch {
             // Limpiar marcadores anteriores
             mMap.clear()
             
-            // Obtener todas las reservas activas
-            val reservas = db.reservaDao().getAllReservas()
+            // Obtener todas las reservas activas del usuario desde Firestore
+            val reservas = firestoreRepository.obtenerLugaresReservados()
             
             // Controlar visibilidad del mensaje y mapa
             val tvSinReservas = rootView?.findViewById<android.widget.TextView>(R.id.tvSinReservas)
@@ -85,10 +84,14 @@ class MapsFragment : Fragment(), OnMapReadyCallback {
                 mapContainer?.visibility = View.VISIBLE
             }
             
-            // Para cada reserva, obtener el lugar y crear marcador
+            // Obtener todos los lugares para buscar coordenadas
+            val lugares = firestoreRepository.obtenerLugares()
+            
+            // Para cada reserva, crear marcador
             var primeraReserva = true
             for (reserva in reservas) {
-                val lugar = db.lugarDao().getLugarById(reserva.idLugar)
+                // Buscar el lugar correspondiente por ID
+                val lugar = lugares.find { it.id == reserva.lugarId }
                 
                 lugar?.let {
                     val coordenada = LatLng(it.latitud, it.longitud)
@@ -96,12 +99,12 @@ class MapsFragment : Fragment(), OnMapReadyCallback {
                     // Crear snippet con información de la reserva
                     val snippetInfo = "📅 ${reserva.fecha}\n" +
                                      "🕐 ${reserva.horaInicio} - ${reserva.horaFin}\n" +
-                                     "👤 ${reserva.nombreUsuario}"
+                                     "👤 ${reserva.usuarioNombre}"
                     
                     mMap.addMarker(
                         MarkerOptions()
                             .position(coordenada)
-                            .title("📍 ${it.nombre}")
+                            .title("📍 ${reserva.lugarNombre}")
                             .snippet(snippetInfo)
                     )
                     

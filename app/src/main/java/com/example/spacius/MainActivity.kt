@@ -6,8 +6,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
-import com.example.spacius.ui.HomeFragment
-import com.example.spacius.CalendarFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
@@ -82,24 +80,25 @@ class MainActivity : AppCompatActivity() {
         bottomNavigation.selectedItemId = itemId
     }
 
-    // ✅ Función segura para marcar fecha desde ReservaFragment
+    // ✅ Función simplificada para cambiar a calendario (se actualiza automáticamente)
     fun marcarFechaEnCalendario(fecha: String) {
-        // Comprobar si el fragmento está agregado antes de llamar a la función
-        if (calendarFragment.isAdded) {
-            calendarFragment.marcarFechaDesdeReserva(fecha)
-        } else {
-            // Si aún no está agregado, lo agregamos primero
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, calendarFragment, "CALENDAR")
-                .commitNow()
-            calendarFragment.marcarFechaDesdeReserva(fecha)
-        }
-
-        // Cambiar pestaña a calendario
+        // El calendario se actualiza automáticamente en onResume, 
+        // solo necesitamos cambiar a la pestaña del calendario
         setSelectedBottomNav(R.id.nav_calendario)
     }
+    
+    // ✅ Función para navegar al calendario después de una reserva exitosa
+    fun navegarACalendario() {
+        // Cambiar a la pestaña del calendario
+        setSelectedBottomNav(R.id.nav_calendario)
+        
+        // Asegurar que el calendario está cargado y se actualice
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, calendarFragment, "CALENDAR")
+            .commit()
+    }
 
-    // 🔹 Nueva función para manejar reservas completas con más información
+    // 🔹 Función simplificada para procesar reservas completas
     fun procesarReservaCompleta(
         idLugar: Int,
         nombreLugar: String,
@@ -107,18 +106,8 @@ class MainActivity : AppCompatActivity() {
         horaInicio: String,
         horaFin: String
     ) {
-        // Comprobar si el fragmento está agregado antes de llamar a la función
-        if (calendarFragment.isAdded) {
-            calendarFragment.marcarReservaCompleta(idLugar, nombreLugar, fecha, horaInicio, horaFin)
-        } else {
-            // Si aún no está agregado, lo agregamos primero
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, calendarFragment, "CALENDAR")
-                .commitNow()
-            calendarFragment.marcarReservaCompleta(idLugar, nombreLugar, fecha, horaInicio, horaFin)
-        }
-
-        // Cambiar pestaña a calendario
+        // El calendario se actualiza automáticamente en onResume,
+        // solo necesitamos cambiar a la pestaña del calendario
         setSelectedBottomNav(R.id.nav_calendario)
         
         // Actualizar HomeFragment y MapsFragment para reflejar que el lugar ya no está disponible
