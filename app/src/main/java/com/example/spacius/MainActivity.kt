@@ -1,14 +1,11 @@
 package com.example.spacius
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
-import com.example.spacius.ui.HomeFragment
-import com.example.spacius.CalendarFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
@@ -88,8 +85,6 @@ class MainActivity : AppCompatActivity() {
         // El calendario se actualiza automáticamente en onResume, 
         // solo necesitamos cambiar a la pestaña del calendario
         setSelectedBottomNav(R.id.nav_calendario)
-        
-        android.util.Log.d("MainActivity", "Navegando a calendario - se actualizará automáticamente")
     }
     
     // ✅ Función para navegar al calendario después de una reserva exitosa
@@ -101,8 +96,6 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, calendarFragment, "CALENDAR")
             .commit()
-            
-        android.util.Log.d("MainActivity", "Navegando a calendario después de reserva exitosa")
     }
 
     // 🔹 Función simplificada para procesar reservas completas
@@ -120,8 +113,6 @@ class MainActivity : AppCompatActivity() {
         // Actualizar HomeFragment y MapsFragment para reflejar que el lugar ya no está disponible
         actualizarHomeFragment()
         actualizarMapsFragment()
-        
-        android.util.Log.d("MainActivity", "Reserva procesada - calendario se actualizará automáticamente")
     }
 
     // 🔹 Nueva función para actualizar calendario desde DetalleReservaFragment
