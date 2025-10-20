@@ -1,4 +1,4 @@
-package com.example.spacius.ui
+package com.example.spacius
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -53,36 +53,17 @@ class HomeFragment : Fragment() {
     private fun cargarLugaresDisponibles() {
         lifecycleScope.launch {
             try {
-                android.util.Log.d("HomeFragment", "=== INICIANDO CARGA DE LUGARES ===")
-                
                 // Inicializar lugares predefinidos si es necesario
                 val inicializado = firestoreRepository.inicializarLugaresPredefinidos()
-                android.util.Log.d("HomeFragment", "Lugares inicializados: $inicializado")
                 
                 // Limpiar duplicados si existen
-                android.util.Log.d("HomeFragment", "Verificando y limpiando duplicados...")
                 firestoreRepository.limpiarDuplicadosManualmente()
                 
                 // Obtener todos los lugares después de la limpieza
                 val todosLugares = firestoreRepository.obtenerLugares()
-                android.util.Log.d("HomeFragment", "Total lugares encontrados después de limpieza: ${todosLugares.size}")
-                
-                if (todosLugares.isNotEmpty()) {
-                    android.util.Log.d("HomeFragment", "Ejemplo de lugar: ${todosLugares.first()}")
-                }
                 
                 // Obtener lugares disponibles (no reservados por el usuario)
                 val lugaresDisponibles = firestoreRepository.obtenerLugaresDisponibles()
-                android.util.Log.d("HomeFragment", "Lugares disponibles: ${lugaresDisponibles.size}")
-                
-                // Si no hay lugares disponibles pero sí lugares totales, mostrar detalle
-                if (lugaresDisponibles.isEmpty() && todosLugares.isNotEmpty()) {
-                    val reservasUsuario = firestoreRepository.obtenerLugaresReservados()
-                    android.util.Log.d("HomeFragment", "Usuario tiene ${reservasUsuario.size} reservas activas")
-                    reservasUsuario.forEach { reserva ->
-                        android.util.Log.d("HomeFragment", "Reserva: LugarID=${reserva.lugarId}, Estado=${reserva.estado}")
-                    }
-                }
                 
                 // Actualizar la lista
                 lugares.clear()
@@ -100,10 +81,7 @@ class HomeFragment : Fragment() {
                 // Mostrar estado de lugares
                 mostrarEstadoLugares(lugaresDisponibles.isEmpty())
                 
-                android.util.Log.d("HomeFragment", "=== CARGA COMPLETADA ===")
-                
             } catch (e: Exception) {
-                android.util.Log.e("HomeFragment", "Error al cargar lugares: ${e.message}", e)
                 Toast.makeText(requireContext(), "Error al cargar lugares: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }

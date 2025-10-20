@@ -111,10 +111,8 @@ class LoginActivity : AppCompatActivity() {
                     Toast.makeText(this, "Bienvenido ${user?.email}", Toast.LENGTH_SHORT).show()
                     irAMainActivity()
                 } else {
-                    // Error en el login - Log detallado
+                    // Error en el login
                     val exception = task.exception
-                    android.util.Log.e("LoginActivity", "Error de Firebase Auth: ${exception?.message}")
-                    android.util.Log.e("LoginActivity", "Exception type: ${exception?.javaClass?.simpleName}")
                     
                     val errorMessage = when {
                         exception?.message?.contains("badly formatted") == true -> "Formato de correo inválido"

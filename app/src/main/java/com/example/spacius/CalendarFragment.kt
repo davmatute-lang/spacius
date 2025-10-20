@@ -1,7 +1,6 @@
 package com.example.spacius
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -50,7 +49,6 @@ class CalendarFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         // Recargar reservas cada vez que el fragment se vuelve visible
-        android.util.Log.d("CalendarFragment", "Fragment visible - recargando reservas...")
         cargarReservasPersistentes()
         cargarEventosDelMes()
     }
@@ -105,22 +103,17 @@ class CalendarFragment : Fragment() {
     // 🔹 Cargar reservas de Firestore y marcarlas
     private fun cargarReservasPersistentes() {
         lifecycleScope.launch {
-            android.util.Log.d("CalendarFragment", "Cargando reservas desde Firestore...")
-            
             // Obtener reservas del usuario actual para poder editarlas/cancelarlas
             val reservasUsuario: List<ReservaFirestore> = firestoreRepository.obtenerReservasUsuario()
             
             // Obtener todas las reservas para mostrar ocupación general
             val todasLasReservas: List<ReservaFirestore> = firestoreRepository.obtenerTodasLasReservasParaCalendario()
             
-            android.util.Log.d("CalendarFragment", "Reservas del usuario: ${reservasUsuario.size}, Total reservas: ${todasLasReservas.size}")
-            
             // 🔹 Limpiar fechas reservadas anteriores antes de recargar
             calendarAdapter.limpiarFechasReservadas()
             
             // Marcar todas las reservas en el calendario
             todasLasReservas.forEach { reserva ->
-                android.util.Log.d("CalendarFragment", "Procesando reserva: ${reserva.fecha}")
                 // Las fechas en Firestore están en formato YYYY-MM-DD
                 val parts = reserva.fecha.split("-")
                 if (parts.size == 3) {
@@ -130,13 +123,11 @@ class CalendarFragment : Fragment() {
                 }
             }
             calendarAdapter.notifyDataSetChanged()
-            android.util.Log.d("CalendarFragment", "Calendario actualizado con todas las reservas")
         }
     }
 
     // ✅ Función pública para recargar reservas (llamada después de crear una nueva reserva)
     fun recargarReservas() {
-        android.util.Log.d("CalendarFragment", "Recargando reservas...")
         cargarReservasPersistentes()
         cargarEventosDelMes()
     }
@@ -144,7 +135,6 @@ class CalendarFragment : Fragment() {
     // 🔹 Nueva función para cargar eventos del mes actual desde Firestore
     private fun cargarEventosDelMes() {
         lifecycleScope.launch {
-            android.util.Log.d("CalendarFragment", "Cargando eventos del mes desde Firestore...")
             val reservas = firestoreRepository.obtenerReservasUsuario()
             val eventosDelMes = filtrarEventosDelMes(reservas)
             mostrarEventosEnUI(eventosDelMes)
@@ -255,7 +245,6 @@ class CalendarFragment : Fragment() {
                     .commit()
                     
             } catch (e: Exception) {
-                Log.e("CalendarFragment", "Error al obtener datos del lugar: ${e.message}")
                 Toast.makeText(requireContext(), "Error al cargar detalles del lugar", Toast.LENGTH_SHORT).show()
             }
         }
