@@ -1,3 +1,5 @@
+// LoginActivity.kt - ACTUALIZADO
+
 package com.example.spacius
 
 import android.content.Intent
@@ -14,25 +16,32 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
-        // Vincular los elementos del XML con sus IDs correctos
         val etCorreo = findViewById<EditText>(R.id.etCorreo)
         val etContrasena = findViewById<EditText>(R.id.etContrasena)
         val btnLogin = findViewById<Button>(R.id.btnLogin)
         val tvRegistro = findViewById<TextView>(R.id.tvRegistro)
 
         val db = UserDatabaseHelper(this)
+        val sessionManager = SessionManager(this) // Inicializar el gestor de sesión
 
         // Botón Ingresar
         btnLogin.setOnClickListener {
-            val correo = etCorreo.text.toString().trim().lowercase()
+            val correo = etCorreo.text.toString().trim()
             val contrasena = etContrasena.text.toString().trim()
+            // NOTA: DEBES usar el mismo hashing aquí que en tu registro si es que hasheas antes de guardar.
 
             if (correo.isNotEmpty() && contrasena.isNotEmpty()) {
-                if (db.loginUsuario(correo, contrasena)) {
+                // Usa el nuevo método que devuelve el ID
+                val userId = db.getUserIdByCredentials(correo, contrasena)
+
+                if (userId != null) {
+                    // Éxito: Guardar el ID en la sesión
+                    sessionManager.saveUserId(userId)
+
                     Toast.makeText(this, "Bienvenido $correo", Toast.LENGTH_SHORT).show()
                     val intent = Intent(this, MainActivity::class.java)
                     startActivity(intent)
-                    finish() // Cierra la pantalla de login
+                    finish()
                 } else {
                     Toast.makeText(this, "Correo o contraseña incorrectos", Toast.LENGTH_SHORT).show()
                 }
@@ -41,7 +50,6 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
-        // Texto "Registrarse" → abre RegisterActivity
         tvRegistro.setOnClickListener {
             val intent = Intent(this, RegisterActivity::class.java)
             startActivity(intent)

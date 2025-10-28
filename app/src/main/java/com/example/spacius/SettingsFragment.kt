@@ -1,3 +1,5 @@
+// SettingsFragment.kt - ACTUALIZADO
+
 package com.example.spacius
 
 import android.content.Intent
@@ -5,18 +7,30 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.Toast
+import android.widget.*
 import androidx.fragment.app.Fragment
+
+// NOTA: La clase User fue movida a UserDatabaseHelper.kt
 
 class SettingsFragment : Fragment() {
 
-    // Se declaran las vistas necesarias para la lógica del desplegable
+    // Vistas del perfil
     private lateinit var headerEditarPerfil: LinearLayout
     private lateinit var contentEditarPerfil: LinearLayout
     private lateinit var iconExpandir: ImageView
+
+    private lateinit var etNombre: EditText
+    private lateinit var etIdentificacion: EditText
+    private lateinit var etFechaNacimiento: EditText
+    private lateinit var etCorreo: EditText
+    private lateinit var etContrasena: EditText
+
+    // Instancias de la base de datos y sesión
+    private lateinit var dbHelper: UserDatabaseHelper
+    private lateinit var sessionManager: SessionManager
+
+    // Almacena la instancia del usuario actual para facilitar la actualización.
+    private var currentUser: User? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -25,31 +39,40 @@ class SettingsFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_settings, container, false)
 
-        // 1. Vistas Existentes (Mantienen su lógica)
-        val rowHistorial: LinearLayout = view.findViewById(R.id.rowHistorial)
-        val rowCerrarSesion: LinearLayout = view.findViewById(R.id.rowCerrarSesion)
-        val btnGuardar: Button = view.findViewById(R.id.btnGuardar)
-        val btnCambiarFoto: Button = view.findViewById(R.id.btnCambiarFoto)
+        // Inicializar helpers
+        dbHelper = UserDatabaseHelper(requireContext())
+        sessionManager = SessionManager(requireContext())
 
-        // 2. Vistas Nuevas para el Despliegue
+        // 1. Inicialización de Vistas
         headerEditarPerfil = view.findViewById(R.id.headerEditarPerfil)
         contentEditarPerfil = view.findViewById(R.id.contentEditarPerfil)
         iconExpandir = view.findViewById(R.id.iconExpandir)
+        etNombre = view.findViewById(R.id.etNombre)
+        etIdentificacion = view.findViewById(R.id.etIdentificacion)
+        etFechaNacimiento = view.findViewById(R.id.etFechaNacimiento)
+        etCorreo = view.findViewById(R.id.etCorreo)
+        etContrasena = view.findViewById(R.id.etContrasena)
 
+        val btnGuardar: Button = view.findViewById(R.id.btnGuardar)
+        val rowCerrarSesion: LinearLayout = view.findViewById(R.id.rowCerrarSesion)
+        val rowHistorial: LinearLayout = view.findViewById(R.id.rowHistorial)
+        val btnCambiarFoto: Button = view.findViewById(R.id.btnCambiarFoto)
 
-        // LÓGICA DE DESPLIEGUE (NUEVA FUNCIÓN)
+        // 2. Cargar datos iniciales del usuario
+        loadUserData()
+
+        // 3. LÓGICA DE EVENTOS
         headerEditarPerfil.setOnClickListener {
             toggleProfileContent()
         }
 
-
-        // LÓGICA EXISTENTE (sin cambios)
-        btnCambiarFoto.setOnClickListener {
-            Toast.makeText(requireContext(), "Función de cambiar foto próximamente", Toast.LENGTH_SHORT).show()
+        btnGuardar.setOnClickListener {
+            updateUserData()
         }
 
-        btnGuardar.setOnClickListener {
-            Toast.makeText(requireContext(), "Cambios guardados correctamente", Toast.LENGTH_SHORT).show()
+        // Otras lógicas
+        btnCambiarFoto.setOnClickListener {
+            Toast.makeText(requireContext(), "Función de cambiar foto próximamente", Toast.LENGTH_SHORT).show()
         }
 
         rowHistorial.setOnClickListener {
@@ -57,7 +80,7 @@ class SettingsFragment : Fragment() {
         }
 
         rowCerrarSesion.setOnClickListener {
-            // Asumiendo que 'LoginActivity' existe y es el destino de cierre de sesión
+            sessionManager.clearSession()
             val intent = Intent(requireContext(), LoginActivity::class.java)
             startActivity(intent)
             requireActivity().finish()
@@ -67,18 +90,80 @@ class SettingsFragment : Fragment() {
     }
 
     /**
-     * Alterna la visibilidad del contenido de edición de perfil y rota el icono de flecha.
+     * Obtiene el ID del usuario de la sesión y carga los datos desde la DB.
      */
+    private fun loadUserData() {
+        val userId = sessionManager.getUserId()
+
+        if (userId != null) {
+            // Consulta la base de datos usando el ID de la sesión
+            currentUser = dbHelper.getUserById(userId)
+
+            if (currentUser != null) {
+                // Campos NO editables (Identificación y Fecha de Nacimiento)
+                etIdentificacion.setText(currentUser!!.identification)
+                etFechaNacimiento.setText(currentUser!!.birthDate)
+
+                // Campos editables (Nombre y Correo Electrónico)
+                etNombre.setText(currentUser!!.name)
+                etCorreo.setText(currentUser!!.email)
+            } else {
+                Toast.makeText(requireContext(), "Error: Datos de perfil no encontrados.", Toast.LENGTH_LONG).show()
+            }
+        } else {
+            Toast.makeText(requireContext(), "Error: No hay sesión activa. Redirigiendo...", Toast.LENGTH_LONG).show()
+            // Opcional: Redirigir a login si no hay sesión
+        }
+    }
+
+    /**
+     * Valida los campos y actualiza el perfil del usuario en la DB.
+     */
+    private fun updateUserData() {
+        val user = currentUser ?: return
+
+        val nombre = etNombre.text.toString().trim()
+        val correo = etCorreo.text.toString().trim()
+        val nuevaContrasena = etContrasena.text.toString()
+
+        if (nombre.isEmpty() || correo.isEmpty()) {
+            Toast.makeText(requireContext(), "El nombre y el correo no pueden estar vacíos.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        // 1. Determinar el hash de la contraseña
+        val hashParaGuardar = if (nuevaContrasena.isNotEmpty()) {
+            // NOTA: En la práctica, llama aquí a tu función de hashing segura
+            nuevaContrasena // Si el usuario escribe, usa el nuevo valor (asumiendo que tu DB helper lo hasheará o lo está guardando en texto plano)
+        } else {
+            user.passwordHash // Si el campo está vacío, mantiene el hash antiguo
+        }
+
+        // 2. Crear objeto User con los nuevos datos
+        val userToUpdate = user.copy(
+            name = nombre,
+            email = correo,
+            passwordHash = hashParaGuardar
+        )
+
+        // 3. Ejecutar la actualización en el DB Helper
+        val success = dbHelper.updateProfile(userToUpdate)
+
+        if (success) {
+            currentUser = userToUpdate
+            Toast.makeText(requireContext(), "Cambios guardados correctamente", Toast.LENGTH_SHORT).show()
+            etContrasena.setText("")
+        } else {
+            Toast.makeText(requireContext(), "Error al guardar los cambios.", Toast.LENGTH_LONG).show()
+        }
+    }
+
     private fun toggleProfileContent() {
         if (contentEditarPerfil.visibility == View.GONE) {
-            // Mostrar contenido
             contentEditarPerfil.visibility = View.VISIBLE
-            // Rotar el icono 180 grados (flecha hacia arriba)
             iconExpandir.animate().rotation(180f).setDuration(200).start()
         } else {
-            // Ocultar contenido
             contentEditarPerfil.visibility = View.GONE
-            // Rotar el icono a 0 grados (flecha hacia abajo)
             iconExpandir.animate().rotation(0f).setDuration(200).start()
         }
     }
