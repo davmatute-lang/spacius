@@ -96,11 +96,7 @@
             android:textSize="16sp"
             android:textColor="@android:color/white"
             android:padding="14dp"
-            android:background="@drawable/btn_gradient"
-            app:backgroundTint="@null"
+            app:backgroundTint="@color/green_primary"
             app:cornerRadius="16dp"/>
     </LinearLayout>
 </ScrollView>
-
-
-
