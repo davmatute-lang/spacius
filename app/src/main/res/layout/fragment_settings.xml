@@ -1,8 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
     android:padding="16dp">
 
     <LinearLayout
@@ -29,11 +29,15 @@
             android:gravity="center_vertical"
             android:clickable="true"
             android:focusable="true"
-            android:background="?attr/selectableItemBackground">
+            android:background="?attr/selectableItemBackground"
+            android:layout_marginBottom="8dp">
+
             <ImageView
                 android:layout_width="28dp"
                 android:layout_height="28dp"
-                android:src="@android:drawable/ic_menu_edit" />
+                android:src="@drawable/ic_user"
+                android:contentDescription="Editar Perfil" />
+
             <TextView
                 android:layout_marginStart="16dp"
                 android:layout_width="wrap_content"
@@ -42,22 +46,7 @@
                 android:textSize="16sp" />
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/panelEditarPerfil"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="12dp"
-            android:background="#EFEFEF"
-            android:visibility="gone">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Aquí puedes editar tu información personal."
-                android:textSize="14sp" />
-        </LinearLayout>
-
-        <!-- Espacios Favoritos -->
+        <!-- Espacios -->
         <LinearLayout
             android:id="@+id/rowEspacios"
             android:layout_width="match_parent"
@@ -67,32 +56,21 @@
             android:gravity="center_vertical"
             android:clickable="true"
             android:focusable="true"
-            android:background="?attr/selectableItemBackground">
+            android:background="?attr/selectableItemBackground"
+            android:layout_marginBottom="8dp">
+
             <ImageView
                 android:layout_width="28dp"
                 android:layout_height="28dp"
-                android:src="@android:drawable/ic_menu_myplaces" />
+                android:src="@drawable/ic_spaces"
+                android:contentDescription="Espacios" />
+
             <TextView
                 android:layout_marginStart="16dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Espacios Favoritos"
+                android:text="Espacios"
                 android:textSize="16sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/panelEspacios"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="12dp"
-            android:background="#EFEFEF"
-            android:visibility="gone">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Tus espacios favoritos aparecerán aquí."
-                android:textSize="14sp" />
         </LinearLayout>
 
         <!-- Historial -->
@@ -105,11 +83,15 @@
             android:gravity="center_vertical"
             android:clickable="true"
             android:focusable="true"
-            android:background="?attr/selectableItemBackground">
+            android:background="?attr/selectableItemBackground"
+            android:layout_marginBottom="8dp">
+
             <ImageView
                 android:layout_width="28dp"
                 android:layout_height="28dp"
-                android:src="@android:drawable/ic_menu_recent_history" />
+                android:src="@drawable/ic_history"
+                android:contentDescription="Historial" />
+
             <TextView
                 android:layout_marginStart="16dp"
                 android:layout_width="wrap_content"
@@ -118,67 +100,7 @@
                 android:textSize="16sp" />
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/panelHistorial"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="12dp"
-            android:background="#EFEFEF"
-            android:visibility="gone">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Aquí se mostrará tu historial de actividades."
-                android:textSize="14sp" />
-        </LinearLayout>
-
-        <!-- Notificaciones -->
-        <LinearLayout
-            android:id="@+id/rowNotificaciones"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="12dp"
-            android:gravity="center_vertical"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackground">
-            <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:src="@android:drawable/ic_dialog_email" />
-            <TextView
-                android:layout_marginStart="16dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Notificaciones"
-                android:textSize="16sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/panelNotificaciones"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="12dp"
-            android:background="#EFEFEF"
-            android:visibility="gone">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Configura tus notificaciones aquí."
-                android:textSize="14sp" />
-        </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#CCCCCC"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="20dp"/>
-
-        <!-- Cerrar sesión -->
+        <!-- Cerrar Sesión -->
         <LinearLayout
             android:id="@+id/rowCerrarSesion"
             android:layout_width="match_parent"
@@ -188,11 +110,15 @@
             android:gravity="center_vertical"
             android:clickable="true"
             android:focusable="true"
-            android:background="?attr/selectableItemBackground">
+            android:background="?attr/selectableItemBackground"
+            android:layout_marginBottom="8dp">
+
             <ImageView
                 android:layout_width="28dp"
                 android:layout_height="28dp"
-                android:src="@android:drawable/ic_lock_power_off" />
+                android:src="@drawable/ic_logout"
+                android:contentDescription="Cerrar Sesión" />
+
             <TextView
                 android:layout_marginStart="16dp"
                 android:layout_width="wrap_content"
@@ -204,3 +130,4 @@
 
     </LinearLayout>
 </ScrollView>
+
