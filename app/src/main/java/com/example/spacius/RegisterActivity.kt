@@ -12,120 +12,106 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import com.google.firebase.FirebaseApp
 
 class RegisterActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
+    private val db = Firebase.firestore
     private lateinit var progressBar: ProgressBar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
 
-        // Asegurar que Firebase esté inicializado
-        if (FirebaseApp.getApps(this).isEmpty()) {
-            FirebaseApp.initializeApp(this)
-        }
-
-        // Inicializar Firebase Auth
         auth = Firebase.auth
 
         val etNombre = findViewById<EditText>(R.id.etNombre)
+        val etCedula = findViewById<EditText>(R.id.etCedula)
         val etEmail = findViewById<EditText>(R.id.etEmail)
+        val etTelefono = findViewById<EditText>(R.id.etTelefono)
         val etPassword = findViewById<EditText>(R.id.etPassword)
+        val etConfirmPassword = findViewById<EditText>(R.id.etConfirmPassword)
         val btnRegistrar = findViewById<Button>(R.id.btnRegistrar)
 
-        // Crear ProgressBar programáticamente si no existe en el layout
         progressBar = ProgressBar(this).apply {
             visibility = View.GONE
         }
 
         btnRegistrar.setOnClickListener {
             val nombre = etNombre.text.toString().trim()
+            val cedula = etCedula.text.toString().trim()
             val email = etEmail.text.toString().trim()
+            val telefono = etTelefono.text.toString().trim()
             val password = etPassword.text.toString().trim()
+            val confirmPassword = etConfirmPassword.text.toString().trim()
 
-            if (validarCampos(nombre, email, password)) {
-                registrarConFirebase(nombre, email, password)
+            if (validarCampos(nombre, cedula, email, telefono, password, confirmPassword)) {
+                registrarConFirebase(nombre, cedula, email, telefono, password)
             }
         }
     }
 
-    private fun validarCampos(nombre: String, email: String, password: String): Boolean {
-        when {
-            nombre.isEmpty() -> {
-                Toast.makeText(this, "Por favor ingresa tu nombre", Toast.LENGTH_SHORT).show()
-                return false
-            }
-            nombre.length < 2 -> {
-                Toast.makeText(this, "El nombre debe tener al menos 2 caracteres", Toast.LENGTH_SHORT).show()
-                return false
-            }
-            email.isEmpty() -> {
-                Toast.makeText(this, "Por favor ingresa tu correo", Toast.LENGTH_SHORT).show()
-                return false
-            }
-            !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
-                Toast.makeText(this, "Por favor ingresa un correo válido", Toast.LENGTH_SHORT).show()
-                return false
-            }
-            password.isEmpty() -> {
-                Toast.makeText(this, "Por favor ingresa una contraseña", Toast.LENGTH_SHORT).show()
-                return false
-            }
-            password.length < 6 -> {
-                Toast.makeText(this, "La contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show()
-                return false
-            }
-            !password.any { it.isDigit() } -> {
-                Toast.makeText(this, "La contraseña debe contener al menos un número", Toast.LENGTH_SHORT).show()
-                return false
-            }
-            else -> return true
+    private fun validarCampos(nombre: String, cedula: String, email: String, telefono: String, pass: String, confirm: String): Boolean {
+        if (nombre.isEmpty() || cedula.isEmpty() || email.isEmpty() || telefono.isEmpty() || pass.isEmpty() || confirm.isEmpty()) {
+            Toast.makeText(this, "Todos los campos son obligatorios", Toast.LENGTH_SHORT).show()
+            return false
         }
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Toast.makeText(this, "Por favor ingresa un correo válido", Toast.LENGTH_SHORT).show()
+            return false
+        }
+        if (pass.length < 6) {
+            Toast.makeText(this, "La contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show()
+            return false
+        }
+        if (pass != confirm) {
+            Toast.makeText(this, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
+            return false
+        }
+        return true
     }
 
-    private fun registrarConFirebase(nombre: String, email: String, password: String) {
+    private fun registrarConFirebase(nombre: String, cedula: String, email: String, telefono: String, password: String) {
         mostrarCargando(true)
 
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    // Registro exitoso, actualizar el perfil del usuario con el nombre
-                    val user = auth.currentUser
-                    val profileUpdates = UserProfileChangeRequest.Builder()
-                        .setDisplayName(nombre)
-                        .build()
+                    val firebaseUser = auth.currentUser
+                    val profileUpdates = UserProfileChangeRequest.Builder().setDisplayName(nombre).build()
 
-                    user?.updateProfile(profileUpdates)
-                        ?.addOnCompleteListener { profileTask ->
-                            mostrarCargando(false)
-                            
-                            if (profileTask.isSuccessful) {
-                                Toast.makeText(this, "¡Cuenta creada exitosamente! Ahora puedes iniciar sesión con tu cuenta", Toast.LENGTH_LONG).show()
-                                // Cerrar sesión para que el usuario tenga que iniciar sesión manualmente
-                                auth.signOut()
-                                irALogin()
-                            } else {
-                                Toast.makeText(this, "Cuenta creada. Ahora puedes iniciar sesión", Toast.LENGTH_SHORT).show()
-                                // Cerrar sesión para que el usuario tenga que iniciar sesión manualmente
-                                auth.signOut()
-                                irALogin()
-                            }
+                    firebaseUser?.updateProfile(profileUpdates)?.addOnCompleteListener { profileTask ->
+                        if (profileTask.isSuccessful) {
+                            // Ahora, guarda los datos adicionales en Firestore
+                            val userMap = hashMapOf(
+                                "nombre" to nombre,
+                                "email" to email,
+                                "cedula" to cedula,
+                                "telefono" to telefono
+                            )
+
+                            db.collection("users").document(firebaseUser.uid).set(userMap)
+                                .addOnSuccessListener {
+                                    mostrarCargando(false)
+                                    Toast.makeText(this, "¡Cuenta creada exitosamente!", Toast.LENGTH_LONG).show()
+                                    auth.signOut()
+                                    irALogin()
+                                }
+                                .addOnFailureListener { e ->
+                                    mostrarCargando(false)
+                                    Toast.makeText(this, "Error al guardar datos: ${e.message}", Toast.LENGTH_SHORT).show()
+                                }
+                        } else {
+                             mostrarCargando(false)
+                             Toast.makeText(this, "Error al actualizar el perfil.", Toast.LENGTH_SHORT).show()
                         }
+                    }
                 } else {
                     mostrarCargando(false)
-                    // Error en el registro
-                    val errorMessage = when (task.exception?.message) {
-                        "The email address is already in use by another account." -> "Este correo ya está registrado"
-                        "The email address is badly formatted." -> "Formato de correo inválido"
-                        "The given password is invalid. [ Password should be at least 6 characters ]" -> "La contraseña debe tener al menos 6 caracteres"
-                        "A network error (such as timeout, interrupted connection or unreachable host) has occurred." -> "Error de conexión. Verifica tu internet"
-                        else -> "Error al crear la cuenta: ${task.exception?.message}"
-                    }
-                    Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
+                    val errorMessage = task.exception?.message ?: "Error desconocido"
+                    Toast.makeText(this, "Error al crear la cuenta: $errorMessage", Toast.LENGTH_LONG).show()
                 }
             }
     }
@@ -137,7 +123,7 @@ class RegisterActivity : AppCompatActivity() {
 
     private fun irALogin() {
         val intent = Intent(this, LoginActivity::class.java)
-        intent.putExtra("mensaje_registro", "¡Registro exitoso! Ahora inicia sesión con tu cuenta")
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()
     }
