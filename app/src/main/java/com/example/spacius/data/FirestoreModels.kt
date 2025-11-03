@@ -21,6 +21,7 @@ data class LugarFirestore(
     val categoria: String = "deportivo", // deportivo, recreativo, cultural
     val capacidadMaxima: Int = 50,
     val activo: Boolean = true,
+    var esFavorito: Boolean = false, // <- NUEVA PROPIEDAD
     @ServerTimestamp
     val fechaCreacion: Date? = null,
     @ServerTimestamp
@@ -39,6 +40,7 @@ data class LugarFirestore(
         categoria = "deportivo",
         capacidadMaxima = 50,
         activo = true,
+        esFavorito = false,
         fechaCreacion = null,
         fechaActualizacion = null
     )
@@ -82,6 +84,20 @@ data class ReservaFirestore(
         fechaCreacion = null,
         fechaActualizacion = null
     )
+}
+
+/**
+ * Modelo para los espacios favoritos de un usuario.
+ */
+data class FavoritoFirestore(
+    @DocumentId
+    val id: String = "",
+    val usuarioId: String = "",
+    val lugarId: String = "",
+    @ServerTimestamp
+    val fechaCreacion: Date? = null
+) {
+    constructor() : this("", "", "", null)
 }
 
 /**

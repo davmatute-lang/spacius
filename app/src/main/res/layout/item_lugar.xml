@@ -14,16 +14,36 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Imagen del lugar -->
-        <ImageView
-            android:id="@+id/imgLugar"
+        <!-- Contenedor para la Imagen y el botón de favorito -->
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="180dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_launcher_background"
-            android:contentDescription="Imagen del lugar" />
+            android:layout_height="180dp">
 
-        <!-- Contenido -->
+            <ImageView
+                android:id="@+id/imgLugar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_launcher_background"
+                android:contentDescription="Imagen del lugar" />
+
+            <!-- ========================================================== -->
+            <!-- ESTE ES EL BOTÓN DE LA ESTRELLA QUE HEMOS AÑADIDO -->
+            <!-- ========================================================== -->
+            <ImageButton
+                android:id="@+id/btnFavorito"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="top|end"
+                android:layout_margin="8dp"
+                android:background="@drawable/favorite_button_background"
+                android:contentDescription="Marcar como favorito"
+                android:src="@drawable/ic_star_border" />
+            <!-- Por defecto mostramos la estrella con borde (no favorita) -->
+
+        </FrameLayout>
+
+        <!-- Contenido (esto se mantiene igual que antes) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

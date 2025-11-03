@@ -2,6 +2,7 @@ package com.example.spacius.data
 
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
@@ -35,6 +36,7 @@ class FirestoreRepository {
         const val COLLECTION_LUGARES = "lugares"
         const val COLLECTION_RESERVAS = "reservas"
         const val COLLECTION_ESTADISTICAS = "estadisticas"
+        const val COLLECTION_FAVORITOS = "favoritos" // <- NUEVA COLECCIÓN
     }
     
     // ============================================
@@ -73,12 +75,18 @@ class FirestoreRepository {
             val lugaresReservados = obtenerLugaresReservados()
             Log.d(TAG, "Lugares reservados por usuario: ${lugaresReservados.size}")
             
+            // Obtener la lista de favoritos del usuario
+            val favoritos = obtenerFavoritosUsuario()
+
             // Filtramos en memoria para evitar consultas complejas
             val lugaresDisponibles = todosLugares.filter { lugar -> 
                 val estaReservado = lugaresReservados.any { reserva -> 
                     reserva.lugarId == lugar.id 
                 }
                 !estaReservado
+            }.map { lugar ->
+                // Marcar como favorito si está en la lista de favoritos
+                lugar.apply { esFavorito = favoritos.any { it.lugarId == lugar.id } }
             }
             
             Log.d(TAG, "Lugares disponibles: ${lugaresDisponibles.size}")
@@ -173,6 +181,90 @@ class FirestoreRepository {
         } catch (e: Exception) {
             Log.e(TAG, "Error en limpieza manual: ${e.message}")
             false
+        }
+    }
+
+    // ============================================
+    // GESTIÓN DE FAVORITOS
+    // ============================================
+    suspend fun obtenerLugaresFavoritos(): List<LugarFirestore> {
+        return try {
+            val favoritos = obtenerFavoritosUsuario()
+            if (favoritos.isEmpty()) return emptyList()
+
+            val idsFavoritos = favoritos.map { it.lugarId }
+
+            // Firestore permite un máximo de 10 elementos en una consulta "in"
+            // Si tienes más de 10 favoritos, hay que dividir la consulta en trozos.
+            val chunks = idsFavoritos.chunked(10)
+            val lugaresFavoritos = mutableListOf<LugarFirestore>()
+
+            for (chunk in chunks) {
+                if (chunk.isEmpty()) continue
+                val snapshot = db.collection(COLLECTION_LUGARES)
+                    .whereIn(FieldPath.documentId(), chunk)
+                    .get()
+                    .await()
+                lugaresFavoritos.addAll(snapshot.toObjects(LugarFirestore::class.java))
+            }
+
+            Log.d(TAG, "Se encontraron ${lugaresFavoritos.size} lugares favoritos.")
+            lugaresFavoritos
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al obtener lugares favoritos: ${e.message}")
+            emptyList()
+        }
+    }
+
+
+    /**
+     * Actualizar el estado de favorito de un lugar.
+     */
+    suspend fun actualizarFavorito(lugarId: String, esFavorito: Boolean): Boolean {
+        val usuarioId = auth.currentUser?.uid ?: return false
+
+        return try {
+            if (esFavorito) {
+                // Añadir a favoritos
+                val favorito = FavoritoFirestore(usuarioId = usuarioId, lugarId = lugarId)
+                db.collection(COLLECTION_FAVORITOS).add(favorito).await()
+            } else {
+                // Eliminar de favoritos
+                val query = db.collection(COLLECTION_FAVORITOS)
+                    .whereEqualTo("usuarioId", usuarioId)
+                    .whereEqualTo("lugarId", lugarId)
+                    .get()
+                    .await()
+
+                for (document in query.documents) {
+                    document.reference.delete().await()
+                }
+            }
+            Log.d(TAG, "Favorito actualizado: $lugarId, esFavorito: $esFavorito")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al actualizar favorito: ${e.message}")
+            false
+        }
+    }
+
+    /**
+     * Obtener la lista de lugares favoritos del usuario.
+     */
+    private suspend fun obtenerFavoritosUsuario(): List<FavoritoFirestore> {
+        val usuarioId = auth.currentUser?.uid ?: return emptyList()
+
+        return try {
+            val snapshot = db.collection(COLLECTION_FAVORITOS)
+                .whereEqualTo("usuarioId", usuarioId)
+                .get()
+                .await()
+
+            snapshot.toObjects(FavoritoFirestore::class.java)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al obtener favoritos: ${e.message}")
+            emptyList()
         }
     }
     

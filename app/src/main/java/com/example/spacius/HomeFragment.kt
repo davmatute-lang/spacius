@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -59,9 +60,6 @@ class HomeFragment : Fragment() {
                 // Limpiar duplicados si existen
                 firestoreRepository.limpiarDuplicadosManualmente()
                 
-                // Obtener todos los lugares después de la limpieza
-                val todosLugares = firestoreRepository.obtenerLugares()
-                
                 // Obtener lugares disponibles (no reservados por el usuario)
                 val lugaresDisponibles = firestoreRepository.obtenerLugaresDisponibles()
                 
@@ -71,9 +69,11 @@ class HomeFragment : Fragment() {
                 
                 // Configurar adapter
                 if (recyclerView.adapter == null) {
-                    recyclerView.adapter = LugarAdapter(lugares) { lugar ->
-                        lanzarDetalleReserva(lugar)
-                    }
+                    recyclerView.adapter = LugarAdapter(
+                        lugares,
+                        onReservarClick = { lugar -> lanzarDetalleReserva(lugar) },
+                        onFavoritoClick = { lugar -> toggleFavorito(lugar) }
+                    )
                 } else {
                     recyclerView.adapter?.notifyDataSetChanged()
                 }
@@ -83,6 +83,30 @@ class HomeFragment : Fragment() {
                 
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Error al cargar lugares: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    /**
+     * Cambiar el estado de favorito de un lugar.
+     */
+    private fun toggleFavorito(lugar: LugarFirestore) {
+        // Invertir estado actual
+        val nuevoEstado = !lugar.esFavorito
+        lugar.esFavorito = nuevoEstado
+
+        // Actualizar en Firestore
+        lifecycleScope.launch {
+            val exito = firestoreRepository.actualizarFavorito(lugar.id, nuevoEstado)
+            if (exito) {
+                // Actualizar el ítem en el RecyclerView
+                val index = lugares.indexOfFirst { it.id == lugar.id }
+                if (index != -1) {
+                    recyclerView.adapter?.notifyItemChanged(index)
+                }
+            } else {
+                // Revertir si falla
+                lugar.esFavorito = !nuevoEstado
             }
         }
     }
@@ -143,7 +167,8 @@ class HomeFragment : Fragment() {
      */
     inner class LugarAdapter(
         private val lugares: List<LugarFirestore>,
-        private val onReservarClick: (LugarFirestore) -> Unit
+        private val onReservarClick: (LugarFirestore) -> Unit,
+        private val onFavoritoClick: (LugarFirestore) -> Unit // <- NUEVO CALLBACK
     ) : RecyclerView.Adapter<LugarAdapter.LugarViewHolder>() {
 
         inner class LugarViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -152,6 +177,7 @@ class HomeFragment : Fragment() {
             val txtDescripcion: TextView = itemView.findViewById(R.id.txtDescripcionLugar)
             val txtCapacidad: TextView = itemView.findViewById(R.id.txtCapacidad)
             val btnReservar: Button = itemView.findViewById(R.id.btnReservar)
+            val btnFavorito: ImageButton = itemView.findViewById(R.id.btnFavorito) // <- NUEVO BOTÓN
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
@@ -164,7 +190,7 @@ class HomeFragment : Fragment() {
             
             // Mostrar información útil: capacidad y disponibilidad general
             val capacidadInfo = if (lugar.capacidadMaxima > 0) {
-                "� Capacidad: ${lugar.capacidadMaxima} personas"
+                " Capacidad: ${lugar.capacidadMaxima} personas"
             } else {
                 "🏢 Espacio disponible"
             }
@@ -178,6 +204,16 @@ class HomeFragment : Fragment() {
                 .into(holder.imgLugar)
 
             holder.btnReservar.setOnClickListener { onReservarClick(lugar) }
+            
+            // Configurar el botón de favorito
+            holder.btnFavorito.setOnClickListener { onFavoritoClick(lugar) }
+            
+            // Cambiar el ícono de la estrella según el estado
+            if (lugar.esFavorito) {
+                holder.btnFavorito.setImageResource(R.drawable.ic_star_filled)
+            } else {
+                holder.btnFavorito.setImageResource(R.drawable.ic_star_border)
+            }
         }
 
         override fun getItemCount() = lugares.size
