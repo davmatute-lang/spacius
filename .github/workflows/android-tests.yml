@@ -81,6 +81,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
+      # 🔍 Validate Firebase secrets
+      - name: Validate Firebase Configuration
+        run: |
+          if [ -z "${{ secrets.FIREBASE_APP_ID }}" ] || [ -z "${{ secrets.CREDENTIAL_FILE_CONTENT }}" ]; then
+            echo "❌ Firebase secrets not configured. Skipping deployment."
+            echo "Please configure FIREBASE_APP_ID and CREDENTIAL_FILE_CONTENT secrets in GitHub."
+            exit 1
+          fi
+          echo "✅ Firebase secrets are configured"
+        
       # 2️⃣ Download APK artifact
       - name: Download APK artifact
         uses: actions/download-artifact@v4
