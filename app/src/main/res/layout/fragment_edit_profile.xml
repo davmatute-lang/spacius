@@ -41,7 +41,7 @@
                 android:layout_height="32dp"
                 android:layout_gravity="center"
                 android:src="@android:drawable/ic_menu_camera"
-                android:tint="#FFFFFF"
+                app:tint="#FFFFFF"
                 android:clickable="false"
                 android:alpha="0.9"/>
         </FrameLayout>
