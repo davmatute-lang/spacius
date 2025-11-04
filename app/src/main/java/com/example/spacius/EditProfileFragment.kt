@@ -9,7 +9,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -36,6 +35,16 @@ class EditProfileFragment : Fragment() {
     private lateinit var storage: FirebaseStorage
 
     private var isLoading = false
+
+    companion object {
+        private const val COLLECTION_USERS = "users"
+        private const val STORAGE_PROFILE_IMAGES = "profile_images"
+        private const val MAX_IMAGE_SIZE_KB = 500
+        private const val INITIAL_COMPRESSION_QUALITY = 90
+        private const val MIN_COMPRESSION_QUALITY = 20
+        private const val PHONE_CEDULA_LENGTH = 10
+        private const val MIN_NAME_LENGTH = 3
+    }
 
     private val galleryLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -82,40 +91,46 @@ class EditProfileFragment : Fragment() {
         setLoading(true)
         val user = auth.currentUser
         
-        if (user != null) {
-            // Cargar foto de perfil
-            val photoUrl = user.photoUrl
-            if (photoUrl != null) {
-                Glide.with(this)
-                    .load(photoUrl)
-                    .placeholder(R.drawable.ic_user)
-                    .error(R.drawable.ic_user)
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .into(binding.ivProfileImage)
-            } else {
-                binding.ivProfileImage.setImageResource(R.drawable.ic_user)
-            }
-            
-            // Cargar datos básicos
-            binding.etProfileName.setText(user.displayName ?: "")
-            binding.etProfileEmail.setText(user.email ?: "")
-            
-            // Cargar datos adicionales de Firestore
-            firestore.collection("users").document(user.uid).get()
-                .addOnSuccessListener { document ->
-                    if (document.exists()) {
-                        binding.etProfilePhone.setText(document.getString("telefono") ?: "")
-                        binding.etProfileCedula.setText(document.getString("cedula") ?: "")
-                    }
-                    setLoading(false)
-                }
-                .addOnFailureListener { e ->
-                    Toast.makeText(context, "Error al cargar datos: ${e.message}", Toast.LENGTH_SHORT).show()
-                    setLoading(false)
-                }
-        } else {
+        if (user == null) {
             setLoading(false)
-            Toast.makeText(context, "Usuario no autenticado", Toast.LENGTH_SHORT).show()
+            showToast("Usuario no autenticado")
+            return
+        }
+        
+        // Cargar foto de perfil
+        loadProfileImage(user.photoUrl)
+        
+        // Cargar datos básicos
+        binding.etProfileName.setText(user.displayName.orEmpty())
+        binding.etProfileEmail.setText(user.email.orEmpty())
+        
+        // Cargar datos adicionales de Firestore
+        firestore.collection(COLLECTION_USERS)
+            .document(user.uid)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    binding.etProfilePhone.setText(document.getString("telefono").orEmpty())
+                    binding.etProfileCedula.setText(document.getString("cedula").orEmpty())
+                }
+                setLoading(false)
+            }
+            .addOnFailureListener { e ->
+                showToast("Error al cargar datos: ${e.message}")
+                setLoading(false)
+            }
+    }
+    
+    private fun loadProfileImage(photoUrl: Uri?) {
+        if (photoUrl != null) {
+            Glide.with(this)
+                .load(photoUrl)
+                .placeholder(R.drawable.ic_user)
+                .error(R.drawable.ic_user)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(binding.ivProfileImage)
+        } else {
+            binding.ivProfileImage.setImageResource(R.drawable.ic_user)
         }
     }
 
@@ -125,53 +140,54 @@ class EditProfileFragment : Fragment() {
     }
 
     private fun uploadImageToFirebase(imageUri: Uri) {
-        val user = auth.currentUser ?: return
+        val user = auth.currentUser ?: run {
+            showToast("Usuario no autenticado")
+            return
+        }
         
         setLoading(true)
         
         try {
-            // Comprimir la imagen antes de subirla
-            val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                ImageDecoder.decodeBitmap(ImageDecoder.createSource(requireContext().contentResolver, imageUri))
-            } else {
-                @Suppress("DEPRECATION")
-                MediaStore.Images.Media.getBitmap(requireContext().contentResolver, imageUri)
-            }
-            
+            val bitmap = loadBitmapFromUri(imageUri)
             val compressedImage = compressImage(bitmap)
-            
-            val storageRef = storage.reference.child("profile_images/${user.uid}.jpg")
+            val storageRef = storage.reference.child("$STORAGE_PROFILE_IMAGES/${user.uid}.jpg")
             
             storageRef.putBytes(compressedImage)
-                .addOnProgressListener { taskSnapshot ->
-                    val progress = (100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount).toInt()
-                    // Opcional: mostrar progreso en UI
-                }
                 .addOnSuccessListener {
                     storageRef.downloadUrl.addOnSuccessListener { downloadUri ->
                         updateProfilePhoto(downloadUri)
+                    }.addOnFailureListener { e ->
+                        handleError("Error al obtener URL: ${e.message}")
                     }
                 }
                 .addOnFailureListener { e ->
-                    setLoading(false)
-                    Toast.makeText(context, "Error al subir la imagen: ${e.message}", Toast.LENGTH_LONG).show()
+                    handleError("Error al subir la imagen: ${e.message}")
                 }
         } catch (e: Exception) {
-            setLoading(false)
-            Toast.makeText(context, "Error al procesar la imagen: ${e.message}", Toast.LENGTH_SHORT).show()
+            handleError("Error al procesar la imagen: ${e.message}")
+        }
+    }
+    
+    private fun loadBitmapFromUri(imageUri: Uri): Bitmap {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            ImageDecoder.decodeBitmap(ImageDecoder.createSource(requireContext().contentResolver, imageUri))
+        } else {
+            @Suppress("DEPRECATION")
+            MediaStore.Images.Media.getBitmap(requireContext().contentResolver, imageUri)
         }
     }
     
     private fun compressImage(bitmap: Bitmap): ByteArray {
         val outputStream = ByteArrayOutputStream()
-        var quality = 90
+        var quality = INITIAL_COMPRESSION_QUALITY
+        val maxSize = MAX_IMAGE_SIZE_KB * 1024
         
-        // Comprimir hasta que sea menor a 500KB
+        // Comprimir hasta que sea menor al tamaño máximo
         do {
             outputStream.reset()
             bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
             quality -= 10
-        } while (outputStream.size() > 500 * 1024 && quality > 20)
+        } while (outputStream.size() > maxSize && quality > MIN_COMPRESSION_QUALITY)
         
         return outputStream.toByteArray()
     }
@@ -187,47 +203,31 @@ class EditProfileFragment : Fragment() {
             .addOnCompleteListener { task ->
                 setLoading(false)
                 if (task.isSuccessful) {
-                    Toast.makeText(context, "¡Foto de perfil actualizada!", Toast.LENGTH_SHORT).show()
+                    showToast("¡Foto de perfil actualizada!")
+                    // Recargar imagen sin caché
                     Glide.with(this)
                         .load(photoUri)
                         .diskCacheStrategy(DiskCacheStrategy.NONE)
                         .skipMemoryCache(true)
                         .into(binding.ivProfileImage)
                 } else {
-                    Toast.makeText(context, "Error al actualizar el perfil", Toast.LENGTH_SHORT).show()
+                    showToast("Error al actualizar el perfil")
                 }
             }
     }
 
     private fun saveUserChanges() {
-        val user = auth.currentUser ?: return
+        val user = auth.currentUser ?: run {
+            showToast("Usuario no autenticado")
+            return
+        }
 
         val newName = binding.etProfileName.text.toString().trim()
         val newPhone = binding.etProfilePhone.text.toString().trim()
         val newCedula = binding.etProfileCedula.text.toString().trim()
 
         // Validaciones
-        if (newName.isEmpty()) {
-            binding.etProfileName.error = "El nombre no puede estar vacío"
-            binding.etProfileName.requestFocus()
-            return
-        }
-        
-        if (newName.length < 3) {
-            binding.etProfileName.error = "El nombre debe tener al menos 3 caracteres"
-            binding.etProfileName.requestFocus()
-            return
-        }
-
-        if (newPhone.isNotEmpty() && !isValidPhone(newPhone)) {
-            binding.etProfilePhone.error = "Número de teléfono inválido"
-            binding.etProfilePhone.requestFocus()
-            return
-        }
-
-        if (newCedula.isNotEmpty() && !isValidCedula(newCedula)) {
-            binding.etProfileCedula.error = "Cédula inválida (debe tener 10 dígitos)"
-            binding.etProfileCedula.requestFocus()
+        if (!validateInputs(newName, newPhone, newCedula)) {
             return
         }
 
@@ -240,59 +240,72 @@ class EditProfileFragment : Fragment() {
             
         user.updateProfile(profileUpdates)
             .addOnSuccessListener {
-                // Actualizar datos en Firestore
-                updateFirestoreData(newName, newPhone, newCedula)
+                updateFirestoreData(user.uid, newName, newPhone, newCedula)
             }
             .addOnFailureListener { e ->
-                setLoading(false)
-                Toast.makeText(context, "Error al actualizar nombre: ${e.message}", Toast.LENGTH_SHORT).show()
+                handleError("Error al actualizar nombre: ${e.message}")
             }
     }
     
-    private fun updateFirestoreData(name: String, phone: String, cedula: String) {
-        val user = auth.currentUser ?: return
-        
+    private fun validateInputs(name: String, phone: String, cedula: String): Boolean {
+        return when {
+            name.isEmpty() -> {
+                binding.etProfileName.error = "El nombre no puede estar vacío"
+                binding.etProfileName.requestFocus()
+                false
+            }
+            name.length < MIN_NAME_LENGTH -> {
+                binding.etProfileName.error = "El nombre debe tener al menos $MIN_NAME_LENGTH caracteres"
+                binding.etProfileName.requestFocus()
+                false
+            }
+            phone.isNotEmpty() && !isValidPhone(phone) -> {
+                binding.etProfilePhone.error = "Número de teléfono inválido (10 dígitos)"
+                binding.etProfilePhone.requestFocus()
+                false
+            }
+            cedula.isNotEmpty() && !isValidCedula(cedula) -> {
+                binding.etProfileCedula.error = "Cédula inválida (10 dígitos)"
+                binding.etProfileCedula.requestFocus()
+                false
+            }
+            else -> true
+        }
+    }
+    
+    private fun updateFirestoreData(uid: String, name: String, phone: String, cedula: String) {
         val userUpdates = hashMapOf<String, Any>(
             "nombre" to name,
             "telefono" to phone,
             "cedula" to cedula
         )
 
-        firestore.collection("users").document(user.uid)
-            .update(userUpdates)
+        firestore.collection(COLLECTION_USERS)
+            .document(uid)
+            .set(userUpdates, com.google.firebase.firestore.SetOptions.merge())
             .addOnSuccessListener {
                 setLoading(false)
-                Toast.makeText(context, "¡Perfil actualizado exitosamente!", Toast.LENGTH_SHORT).show()
+                showToast("¡Perfil actualizado exitosamente!")
             }
-            .addOnFailureListener { e ->
-                // Si el documento no existe, crearlo
-                firestore.collection("users").document(user.uid)
-                    .set(userUpdates)
-                    .addOnSuccessListener {
-                        setLoading(false)
-                        Toast.makeText(context, "¡Perfil actualizado exitosamente!", Toast.LENGTH_SHORT).show()
-                    }
-                    .addOnFailureListener { error ->
-                        setLoading(false)
-                        Toast.makeText(context, "Error al actualizar datos: ${error.message}", Toast.LENGTH_SHORT).show()
-                    }
+            .addOnFailureListener { error ->
+                handleError("Error al actualizar datos: ${error.message}")
             }
     }
     
     private fun isValidPhone(phone: String): Boolean {
-        // Validar que sea un número de 10 dígitos (Ecuador)
-        return phone.matches(Regex("^[0-9]{10}$"))
+        return phone.matches(Regex("^[0-9]{$PHONE_CEDULA_LENGTH}$"))
     }
     
     private fun isValidCedula(cedula: String): Boolean {
-        // Validar que tenga 10 dígitos
-        return cedula.matches(Regex("^[0-9]{10}$"))
+        return cedula.matches(Regex("^[0-9]{$PHONE_CEDULA_LENGTH}$"))
     }
     
     private fun showPasswordResetDialog() {
+        val email = auth.currentUser?.email
+        
         AlertDialog.Builder(requireContext())
             .setTitle("Cambiar Contraseña")
-            .setMessage("Se enviará un correo a ${auth.currentUser?.email} con instrucciones para cambiar tu contraseña. ¿Deseas continuar?")
+            .setMessage("Se enviará un correo a $email con instrucciones para cambiar tu contraseña. ¿Deseas continuar?")
             .setPositiveButton("Enviar") { _, _ ->
                 sendPasswordResetEmail()
             }
@@ -301,11 +314,10 @@ class EditProfileFragment : Fragment() {
     }
 
     private fun sendPasswordResetEmail() {
-        val user = auth.currentUser
-        val email = user?.email
+        val email = auth.currentUser?.email
         
         if (email.isNullOrEmpty()) {
-            Toast.makeText(context, "No se pudo encontrar el correo del usuario", Toast.LENGTH_SHORT).show()
+            showToast("No se pudo encontrar el correo del usuario")
             return
         }
         
@@ -314,16 +326,25 @@ class EditProfileFragment : Fragment() {
         auth.sendPasswordResetEmail(email)
             .addOnSuccessListener {
                 setLoading(false)
-                Toast.makeText(
-                    context, 
-                    "Se ha enviado un correo a $email para cambiar tu contraseña", 
-                    Toast.LENGTH_LONG
-                ).show()
+                showToast("Se ha enviado un correo a $email para cambiar tu contraseña", isLong = true)
             }
             .addOnFailureListener { e ->
-                setLoading(false)
-                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                handleError("Error: ${e.message}")
             }
+    }
+    
+    // Métodos auxiliares para manejo de UI
+    private fun showToast(message: String, isLong: Boolean = false) {
+        Toast.makeText(
+            context, 
+            message, 
+            if (isLong) Toast.LENGTH_LONG else Toast.LENGTH_SHORT
+        ).show()
+    }
+    
+    private fun handleError(message: String) {
+        setLoading(false)
+        showToast(message)
     }
     
     private fun setLoading(loading: Boolean) {
