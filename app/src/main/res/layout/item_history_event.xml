@@ -20,7 +20,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:src="@android:drawable/ic_menu_today"
-            android:tint="#1DB954"
+            app:tint="#1DB954"
             android:layout_gravity="center_vertical"
             android:contentDescription="Icono de evento" />
 
