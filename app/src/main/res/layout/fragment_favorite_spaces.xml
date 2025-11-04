@@ -1,25 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
-    android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp"
-    android:background="?android:attr/colorBackground" tools:context=".FavoriteSpacesFragment">
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/swipeRefreshFavorites"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".FavoriteSpacesFragment">
 
-    <!-- Título del panel -->
-    <TextView android:id="@+id/textViewTitleFavorites" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:text="Mis Espacios Favoritos"
-        android:textSize="18sp" android:textStyle="bold" android:layout_marginBottom="16dp" />
-
-    <!-- Mensaje para cuando no hay espacios favoritos guardados -->
-    <TextView android:id="@+id/textViewEmptyFavorites" android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Aún no tienes espacios guardados en favoritos."
-        android:gravity="center_horizontal" android:visibility="gone" tools:visibility="visible" />
-
-    <!-- RecyclerView para listar los elementos -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewFavorites"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="gone" />
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="?android:attr/colorBackground">
 
-</LinearLayout>
+        <!-- Título del panel -->
+        <TextView
+            android:id="@+id/textViewTitleFavorites"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mis Espacios Favoritos"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Progress Bar -->
+        <ProgressBar
+            android:id="@+id/progressBarFavorites"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <!-- Mensaje para cuando no hay espacios favoritos guardados -->
+        <TextView
+            android:id="@+id/textViewEmptyFavorites"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Aún no tienes espacios guardados en favoritos.\n\n💚 Toca el ícono de estrella en cualquier lugar para agregarlo aquí."
+            android:gravity="center"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:padding="32dp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <!-- RecyclerView para listar los elementos -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewFavorites"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            tools:visibility="visible"
+            tools:listitem="@layout/item_favorite_place" />
+
+    </LinearLayout>
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

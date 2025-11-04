@@ -123,16 +123,32 @@ class NotificationsFragment : Fragment(R.layout.fragment_notifications) {
     }
 
     private fun sendTestNotification() {
-        val builder = NotificationCompat.Builder(requireContext(), SpaciusApplication.NEW_SPACES_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notifications) // Reemplaza con tu icono
-            .setContentTitle("¡Nuevo Espacio Disponible!")
-            .setContentText("Una nueva cancha de tenis ha sido añadida cerca de ti.")
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-
-        with(NotificationManagerCompat.from(requireContext())) {
-            // El ID de la notificación debe ser único
-            notify(1, builder.build())
+        // Verificar permisos nuevamente antes de enviar
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                Toast.makeText(requireContext(), "No tienes permisos para notificaciones", Toast.LENGTH_SHORT).show()
+                return
+            }
         }
-        Toast.makeText(requireContext(), "Enviando notificación de prueba...", Toast.LENGTH_SHORT).show()
+        
+        val builder = NotificationCompat.Builder(requireContext(), SpaciusApplication.NEW_SPACES_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_dialog_info) // Icono por defecto del sistema
+            .setContentTitle("✅ Notificación de Prueba")
+            .setContentText("¡Las notificaciones están funcionando correctamente!")
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+
+        try {
+            with(NotificationManagerCompat.from(requireContext())) {
+                notify(System.currentTimeMillis().toInt(), builder.build())
+            }
+            Toast.makeText(requireContext(), "Notificación enviada correctamente", Toast.LENGTH_SHORT).show()
+        } catch (e: SecurityException) {
+            Toast.makeText(requireContext(), "Error de permisos: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 }
