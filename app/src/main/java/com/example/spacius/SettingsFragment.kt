@@ -1,6 +1,9 @@
 package com.example.spacius
 
 import android.content.Intent
+import com.example.spacius.FavoriteSpacesFragment
+import com.example.spacius.HistoryFragment
+import com.example.spacius.NotificationsFragment
 import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
@@ -42,16 +45,13 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             togglePanel(containerEditarPerfil, EditProfileFragment())
         }
         view.findViewById<LinearLayout>(R.id.rowEspacios).setOnClickListener {
-            // Próximamente: togglePanel(containerEspacios, FavoriteSpacesFragment())
-             Toast.makeText(context, "Próximamente...", Toast.LENGTH_SHORT).show()
+            togglePanel(containerEspacios, FavoriteSpacesFragment())
         }
         view.findViewById<LinearLayout>(R.id.rowHistorial).setOnClickListener {
-             // Próximamente: togglePanel(containerHistorial, HistoryFragment())
-             Toast.makeText(context, "Próximamente...", Toast.LENGTH_SHORT).show()
+             togglePanel(containerHistorial, HistoryFragment())
         }
         view.findViewById<LinearLayout>(R.id.rowNotificaciones).setOnClickListener {
-             // Próximamente: togglePanel(containerNotificaciones, NotificationsFragment())
-             Toast.makeText(context, "Próximamente...", Toast.LENGTH_SHORT).show()
+             togglePanel(containerNotificaciones, NotificationsFragment())
         }
         view.findViewById<LinearLayout>(R.id.rowCerrarSesion).setOnClickListener {
             cerrarSesion()

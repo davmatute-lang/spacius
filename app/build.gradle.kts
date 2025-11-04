@@ -31,12 +31,12 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
     
     buildFeatures {
@@ -54,9 +54,13 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("de.hdodenhof:circleimageview:3.1.0") // <-- Añadido para imagen de perfil circular
+    
+    // SwipeRefreshLayout
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 
     // --- 🔹 Glide (Carga de imágenes) ---
     implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation("jp.wasabeef:glide-transformations:4.3.0") // <-- LIBRERÍA PARA DESENFOQUE
 
     // --- 🔥 Firebase ---
     implementation(platform("com.google.firebase:firebase-bom:33.4.0"))

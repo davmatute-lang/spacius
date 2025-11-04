@@ -1,10 +1,10 @@
-name: Android CI - Login Test & Firebase Deploy
+name: Android CI - Build, Test & Deploy
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main, Dani-Freire, Ashlee_Coello, Diego_Rubio ]
   pull_request:
-    branches: [ master ]
+    branches: [ main, Dani-Freire, Ashlee_Coello, Diego_Rubio ]
 
 jobs:
   build:
@@ -27,30 +27,87 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # 4️⃣ Construye el proyecto
+      # 4️⃣ Cache Gradle dependencies
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # 5️⃣ Construye el proyecto
       - name: Build with Gradle
         run: ./gradlew assembleDebug
 
-      # 5️⃣ Ejecuta pruebas unitarias
+      # 6️⃣ Ejecuta pruebas unitarias
       - name: Run Unit Tests
         run: ./gradlew testDebugUnitTest
 
-      # 6️⃣ Subir APK como artefacto (opcional)
+      # 7️⃣ Ejecuta pruebas de lint
+      - name: Run Lint
+        run: ./gradlew lintDebug
+
+      # 8️⃣ Subir APK como artefacto
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: spacius-debug-apk
+          name: spacius-debug-apk-${{ github.sha }}
           path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
 
-      # 7️⃣ Instala Firebase CLI
-      - name: Install Firebase CLI
-        run: curl -sL https://firebase.tools | bash
+      # 9️⃣ Subir reportes de tests
+      - name: Upload Test Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports-${{ github.sha }}
+          path: |
+            app/build/reports/tests/
+            app/build/reports/lint-results-debug.html
+          retention-days: 30
 
-      # 8️⃣ Despliegue a Firebase App Distribution
-      - name: Deploy to Firebase App Distribution
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+  # 🚀 Deploy to Firebase (solo en push a main)
+  deploy:
+    name: Deploy to Firebase App Distribution
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      # 1️⃣ Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      # 🔍 Validate Firebase secrets
+      - name: Validate Firebase Configuration
         run: |
-          firebase appdistribution:distribute app/build/outputs/apk/debug/app-debug.apk \
-            --app <YOUR_FIREBASE_APP_ID> \
-            --groups "testers"
+          if [ -z "${{ secrets.FIREBASE_APP_ID }}" ] || [ -z "${{ secrets.CREDENTIAL_FILE_CONTENT }}" ]; then
+            echo "❌ Firebase secrets not configured. Skipping deployment."
+            echo "Please configure FIREBASE_APP_ID and CREDENTIAL_FILE_CONTENT secrets in GitHub."
+            exit 1
+          fi
+          echo "✅ Firebase secrets are configured"
+        
+      # 2️⃣ Download APK artifact
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: spacius-debug-apk-${{ github.sha }}
+          path: app/build/outputs/apk/debug/
+
+      # 3️⃣ Deploy to Firebase App Distribution
+      - name: Deploy to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.CREDENTIAL_FILE_CONTENT }}
+          groups: testers
+          file: app/build/outputs/apk/debug/app-debug.apk
+          releaseNotes: |
+            🚀 Nueva versión de Spacius
+            📱 Commit: ${{ github.sha }}
+            👨‍💻 Branch: ${{ github.ref_name }}
+            📅 Build: ${{ github.run_number }}

@@ -3,6 +3,7 @@ package com.example.spacius
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
@@ -18,6 +19,10 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
+        // Configurar la Toolbar
+        val topAppBar: Toolbar = findViewById(R.id.topAppBar)
+        setSupportActionBar(topAppBar)
+
         // Manejo de EdgeToEdge
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -28,11 +33,12 @@ class MainActivity : AppCompatActivity() {
         // Configurar BottomNavigationView
         setupBottomNavigation()
 
-        // Cargar fragment inicial
+        // Cargar fragment inicial y establecer título
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
                 .replace(R.id.fragment_container, HomeFragment(), "HOME")
                 .commit()
+            supportActionBar?.title = "Inicio"
         }
     }
 
@@ -44,24 +50,26 @@ class MainActivity : AppCompatActivity() {
                     supportFragmentManager.beginTransaction()
                         .replace(R.id.fragment_container, HomeFragment(), "HOME")
                         .commit()
+                    supportActionBar?.title = "Inicio"
                     true
                 }
                 R.id.nav_calendario -> {
-                    // 🔹 Agregamos CalendarFragment con tag "CALENDAR"
                     supportFragmentManager.beginTransaction()
                         .replace(R.id.fragment_container, calendarFragment, "CALENDAR")
                         .commit()
+                    supportActionBar?.title = "Calendario"
                     true
                 }
                 R.id.nav_mapa -> {
                     supportFragmentManager.beginTransaction()
                         .replace(R.id.fragment_container, MapsFragment(), "MAPS")
                         .commit()
+                    supportActionBar?.title = "Mapa"
                     true
                 }
-
                 R.id.nav_perfil -> {
                     loadFragment(SettingsFragment())
+                    supportActionBar?.title = "Ajustes"
                     true
                 }
                 else -> false
@@ -82,17 +90,14 @@ class MainActivity : AppCompatActivity() {
 
     // ✅ Función simplificada para cambiar a calendario (se actualiza automáticamente)
     fun marcarFechaEnCalendario(fecha: String) {
-        // El calendario se actualiza automáticamente en onResume, 
-        // solo necesitamos cambiar a la pestaña del calendario
         setSelectedBottomNav(R.id.nav_calendario)
+        supportActionBar?.title = "Calendario"
     }
-    
+
     // ✅ Función para navegar al calendario después de una reserva exitosa
     fun navegarACalendario() {
-        // Cambiar a la pestaña del calendario
         setSelectedBottomNav(R.id.nav_calendario)
-        
-        // Asegurar que el calendario está cargado y se actualice
+        supportActionBar?.title = "Calendario"
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, calendarFragment, "CALENDAR")
             .commit()
@@ -106,11 +111,8 @@ class MainActivity : AppCompatActivity() {
         horaInicio: String,
         horaFin: String
     ) {
-        // El calendario se actualiza automáticamente en onResume,
-        // solo necesitamos cambiar a la pestaña del calendario
         setSelectedBottomNav(R.id.nav_calendario)
-        
-        // Actualizar HomeFragment y MapsFragment para reflejar que el lugar ya no está disponible
+        supportActionBar?.title = "Calendario"
         actualizarHomeFragment()
         actualizarMapsFragment()
     }
@@ -120,11 +122,10 @@ class MainActivity : AppCompatActivity() {
         if (calendarFragment.isAdded) {
             calendarFragment.actualizarDespuesDeCancelacion()
         }
-        // También actualizar el mapa y el home
         actualizarMapsFragment()
         actualizarHomeFragment()
     }
-    
+
     // 🔹 Nueva función para actualizar HomeFragment después de una reserva o cancelación
     fun actualizarHomeFragment() {
         val homeFragment = supportFragmentManager.findFragmentByTag("HOME") as? HomeFragment
@@ -132,7 +133,7 @@ class MainActivity : AppCompatActivity() {
             // El onResume del fragment se encargará de recargar los datos
         }
     }
-    
+
     // 🔹 Nueva función para actualizar MapsFragment después de una reserva o cancelación
     fun actualizarMapsFragment() {
         val mapsFragment = supportFragmentManager.findFragmentByTag("MAPS") as? MapsFragment
@@ -141,4 +142,3 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
-

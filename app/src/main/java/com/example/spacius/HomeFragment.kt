@@ -1,22 +1,24 @@
 package com.example.spacius
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.ImageView
-import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
-import com.example.spacius.R
-import com.example.spacius.ReservaFragment
-import com.example.spacius.data.*
+import com.example.spacius.data.LugarFirestore
+import com.example.spacius.data.FirestoreRepository
 import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment() {
@@ -25,6 +27,16 @@ class HomeFragment : Fragment() {
     private lateinit var firestoreRepository: FirestoreRepository
     private val lugares = mutableListOf<LugarFirestore>()
     private var mensajeView: TextView? = null
+
+    private lateinit var imageCarousel: ViewPager2
+    private val imageList = listOf(
+        R.drawable.carr1,
+        R.drawable.carr2,
+        R.drawable.carr3,
+        R.drawable.carr4
+    )
+    private val handler = Handler(Looper.getMainLooper())
+    private lateinit var autoScrollRunnable: Runnable
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -35,65 +47,82 @@ class HomeFragment : Fragment() {
         recyclerView = view.findViewById(R.id.recyclerLugares)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        firestoreRepository = FirestoreRepository()
+        imageCarousel = view.findViewById(R.id.imageCarousel)
+        setupCarousel()
 
+        firestoreRepository = FirestoreRepository()
         cargarLugaresDisponibles()
-        
+
         return view
     }
-    
+
+    private fun setupCarousel() {
+        imageCarousel.adapter = ImageCarouselAdapter(imageList)
+        autoScrollRunnable = Runnable {
+            var currentItem = imageCarousel.currentItem
+            currentItem = (currentItem + 1) % imageList.size
+            imageCarousel.setCurrentItem(currentItem, true)
+            handler.postDelayed(autoScrollRunnable, 6000) // 6 segundos
+        }
+    }
+
     override fun onResume() {
         super.onResume()
-        cargarLugaresDisponibles() // Recargar lugares disponibles
+        handler.postDelayed(autoScrollRunnable, 6000)
+        cargarLugaresDisponibles()
     }
-    
-    /**
-     * Cargar lugares disponibles desde Firestore
-     */
+
+    override fun onPause() {
+        super.onPause()
+        handler.removeCallbacks(autoScrollRunnable)
+    }
+
     private fun cargarLugaresDisponibles() {
         lifecycleScope.launch {
             try {
-                // Inicializar lugares predefinidos si es necesario
-                val inicializado = firestoreRepository.inicializarLugaresPredefinidos()
-                
-                // Limpiar duplicados si existen
-                firestoreRepository.limpiarDuplicadosManualmente()
-                
-                // Obtener todos los lugares después de la limpieza
-                val todosLugares = firestoreRepository.obtenerLugares()
-                
-                // Obtener lugares disponibles (no reservados por el usuario)
                 val lugaresDisponibles = firestoreRepository.obtenerLugaresDisponibles()
-                
-                // Actualizar la lista
                 lugares.clear()
                 lugares.addAll(lugaresDisponibles)
-                
-                // Configurar adapter
+
                 if (recyclerView.adapter == null) {
-                    recyclerView.adapter = LugarAdapter(lugares) { lugar ->
-                        lanzarDetalleReserva(lugar)
-                    }
+                    recyclerView.adapter = LugarAdapter(
+                        lugares,
+                        onReservarClick = { lugar -> lanzarDetalleReserva(lugar) },
+                        onFavoritoClick = { lugar -> toggleFavorito(lugar) }
+                    )
                 } else {
                     recyclerView.adapter?.notifyDataSetChanged()
                 }
-                
-                // Mostrar estado de lugares
+
                 mostrarEstadoLugares(lugaresDisponibles.isEmpty())
-                
+
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Error al cargar lugares: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }
 
-    /**
-     * Mostrar mensaje cuando no hay lugares disponibles
-     */
+    private fun toggleFavorito(lugar: LugarFirestore) {
+        val nuevoEstado = !lugar.esFavorito
+        lugar.esFavorito = nuevoEstado
+
+        lifecycleScope.launch {
+            val exito = firestoreRepository.actualizarFavorito(lugar.id, nuevoEstado)
+            if (exito) {
+                val index = lugares.indexOfFirst { it.id == lugar.id }
+                if (index != -1) {
+                    recyclerView.adapter?.notifyItemChanged(index)
+                }
+            } else {
+                lugar.esFavorito = !nuevoEstado
+            }
+        }
+    }
+
     private fun mostrarEstadoLugares(sinLugares: Boolean) {
         if (sinLugares) {
             recyclerView.visibility = View.GONE
-            
+
             if (mensajeView == null) {
                 mensajeView = TextView(requireContext()).apply {
                     text = "🎉 ¡Todos los lugares están reservados!\n\n" +
@@ -104,7 +133,7 @@ class HomeFragment : Fragment() {
                     gravity = android.view.Gravity.CENTER
                     setPadding(32, 64, 32, 64)
                 }
-                
+
                 (recyclerView.parent as? ViewGroup)?.addView(mensajeView)
             } else {
                 mensajeView?.visibility = View.VISIBLE
@@ -115,9 +144,6 @@ class HomeFragment : Fragment() {
         }
     }
 
-    /**
-     * Lanzar fragmento de detalle/reserva
-     */
     private fun lanzarDetalleReserva(lugar: LugarFirestore) {
         val fragment = ReservaFragment()
         fragment.arguments = Bundle().apply {
@@ -138,12 +164,10 @@ class HomeFragment : Fragment() {
             .commit()
     }
 
-    /**
-     * Adapter para RecyclerView con datos de Firestore
-     */
     inner class LugarAdapter(
         private val lugares: List<LugarFirestore>,
-        private val onReservarClick: (LugarFirestore) -> Unit
+        private val onReservarClick: (LugarFirestore) -> Unit,
+        private val onFavoritoClick: (LugarFirestore) -> Unit
     ) : RecyclerView.Adapter<LugarAdapter.LugarViewHolder>() {
 
         inner class LugarViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -152,6 +176,7 @@ class HomeFragment : Fragment() {
             val txtDescripcion: TextView = itemView.findViewById(R.id.txtDescripcionLugar)
             val txtCapacidad: TextView = itemView.findViewById(R.id.txtCapacidad)
             val btnReservar: Button = itemView.findViewById(R.id.btnReservar)
+            val btnFavorito: ImageButton = itemView.findViewById(R.id.btnFavorito)
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
@@ -161,14 +186,13 @@ class HomeFragment : Fragment() {
             val lugar = lugares[position]
             holder.txtNombre.text = lugar.nombre
             holder.txtDescripcion.text = lugar.descripcion
-            
-            // Mostrar información útil: capacidad y disponibilidad general
+
             val capacidadInfo = if (lugar.capacidadMaxima > 0) {
-                "� Capacidad: ${lugar.capacidadMaxima} personas"
+                " Capacidad: ${lugar.capacidadMaxima} personas"
             } else {
                 "🏢 Espacio disponible"
             }
-            
+
             val disponibilidadInfo = lugar.fechaDisponible.takeIf { it.isNotEmpty() } ?: "Disponible"
             holder.txtCapacidad.text = "$capacidadInfo • 📅 $disponibilidadInfo"
 
@@ -178,6 +202,14 @@ class HomeFragment : Fragment() {
                 .into(holder.imgLugar)
 
             holder.btnReservar.setOnClickListener { onReservarClick(lugar) }
+
+            holder.btnFavorito.setOnClickListener { onFavoritoClick(lugar) }
+
+            if (lugar.esFavorito) {
+                holder.btnFavorito.setImageResource(R.drawable.ic_star_filled)
+            } else {
+                holder.btnFavorito.setImageResource(R.drawable.ic_star_border)
+            }
         }
 
         override fun getItemCount() = lugares.size
