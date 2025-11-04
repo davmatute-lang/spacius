@@ -2,6 +2,7 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.Spacius" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <item name="colorPrimary">@color/green_primary</item>
+        <item name="colorSecondary">@color/green_secondary</item>
     </style>
 </resources>

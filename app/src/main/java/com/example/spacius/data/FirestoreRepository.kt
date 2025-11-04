@@ -1,13 +1,16 @@
 package com.example.spacius.data
 
 import android.util.Log
+import com.example.spacius.HistoryEvent
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.ServerTimestamp
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.tasks.await
+import java.util.Date
 import kotlin.Exception
 
 /**
@@ -18,6 +21,17 @@ data class BloqueHorario(
     val horaInicio: String,
     val horaFin: String,
     val descripcion: String
+)
+
+/**
+ * Data class para el evento de historial que se guarda en Firestore.
+ */
+data class HistoryEventFirestore(
+    val usuarioId: String = "",
+    val eventType: String = "",
+    val spaceName: String = "",
+    val details: String = "",
+    @ServerTimestamp val timestamp: Date? = null
 )
 
 /**
@@ -36,7 +50,60 @@ class FirestoreRepository {
         const val COLLECTION_LUGARES = "lugares"
         const val COLLECTION_RESERVAS = "reservas"
         const val COLLECTION_ESTADISTICAS = "estadisticas"
-        const val COLLECTION_FAVORITOS = "favoritos" // <- NUEVA COLECCIÓN
+        const val COLLECTION_FAVORITOS = "favoritos"
+        const val COLLECTION_HISTORY = "history" // <- NUEVA COLECCIÓN
+    }
+
+    // ============================================
+    // GESTIÓN DEL HISTORIAL
+    // ============================================
+
+    /**
+     * Añadir un evento al historial del usuario.
+     */
+    suspend fun addHistoryEvent(eventType: String, spaceName: String, details: String) {
+        val usuarioId = auth.currentUser?.uid ?: return
+        try {
+            val event = HistoryEventFirestore(
+                usuarioId = usuarioId,
+                eventType = eventType,
+                spaceName = spaceName,
+                details = details
+            )
+            db.collection(COLLECTION_HISTORY).add(event).await()
+            Log.d(TAG, "Evento de historial añadido: $eventType")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al añadir evento al historial: ${e.message}")
+        }
+    }
+
+    /**
+     * Obtener el historial de eventos para el usuario actual.
+     */
+    suspend fun getHistoryForCurrentUser(): List<HistoryEvent> {
+        val usuarioId = auth.currentUser?.uid ?: return emptyList()
+        return try {
+            val snapshot = db.collection(COLLECTION_HISTORY)
+                .whereEqualTo("usuarioId", usuarioId)
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(50) // Limitar a los 50 más recientes
+                .get()
+                .await()
+
+            snapshot.documents.mapNotNull { doc ->
+                val firestoreEvent = doc.toObject(HistoryEventFirestore::class.java)
+                firestoreEvent?.let {
+                    val date = it.timestamp?.let { ts ->
+                        // Formatear el timestamp a un string legible
+                        android.text.format.DateFormat.getDateFormat(null).format(ts)
+                    } ?: ""
+                    HistoryEvent(it.eventType, "${it.spaceName} - ${it.details}", date)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al obtener el historial: ${e.message}")
+            emptyList()
+        }
     }
     
     // ============================================

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/switch_all_notifications"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Todas las notificaciones"
+        android:textSize="16sp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tipos de Notificaciones"
+        android:textStyle="bold"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"/>
+
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/switch_booking_confirmations"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Confirmaciones de Reserva"
+        android:layout_marginStart="16dp"/>
+
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/switch_booking_reminders"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Recordatorios de Reserva"
+        android:layout_marginStart="16dp"/>
+
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/switch_new_spaces"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Nuevos Espacios"
+        android:layout_marginStart="16dp"/>
+
+    <Button
+        android:id="@+id/btn_test_notification"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="Probar Notificación" />
+
+</LinearLayout>
