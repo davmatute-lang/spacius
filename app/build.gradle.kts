@@ -57,6 +57,7 @@ dependencies {
 
     // --- 🔹 Glide (Carga de imágenes) ---
     implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation("jp.wasabeef:glide-transformations:4.3.0") // <-- LIBRERÍA PARA DESENFOQUE
 
     // --- 🔥 Firebase ---
     implementation(platform("com.google.firebase:firebase-bom:33.4.0"))

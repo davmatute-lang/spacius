@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp"
+    android:background="?android:attr/colorBackground" tools:context=".FavoriteSpacesFragment">
+
+    <!-- Título del panel -->
+    <TextView android:id="@+id/textViewTitleFavorites" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:text="Mis Espacios Favoritos"
+        android:textSize="18sp" android:textStyle="bold" android:layout_marginBottom="16dp" />
+
+    <!-- Mensaje para cuando no hay espacios favoritos guardados -->
+    <TextView android:id="@+id/textViewEmptyFavorites" android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Aún no tienes espacios guardados en favoritos."
+        android:gravity="center_horizontal" android:visibility="gone" tools:visibility="visible" />
+
+    <!-- RecyclerView para listar los elementos -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewFavorites"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+
+</LinearLayout>

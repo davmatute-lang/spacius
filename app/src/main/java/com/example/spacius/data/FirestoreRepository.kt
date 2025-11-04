@@ -1,12 +1,16 @@
 package com.example.spacius.data
 
 import android.util.Log
+import com.example.spacius.HistoryEvent
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.ServerTimestamp
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.tasks.await
+import java.util.Date
 import kotlin.Exception
 
 /**
@@ -17,6 +21,17 @@ data class BloqueHorario(
     val horaInicio: String,
     val horaFin: String,
     val descripcion: String
+)
+
+/**
+ * Data class para el evento de historial que se guarda en Firestore.
+ */
+data class HistoryEventFirestore(
+    val usuarioId: String = "",
+    val eventType: String = "",
+    val spaceName: String = "",
+    val details: String = "",
+    @ServerTimestamp val timestamp: Date? = null
 )
 
 /**
@@ -35,6 +50,60 @@ class FirestoreRepository {
         const val COLLECTION_LUGARES = "lugares"
         const val COLLECTION_RESERVAS = "reservas"
         const val COLLECTION_ESTADISTICAS = "estadisticas"
+        const val COLLECTION_FAVORITOS = "favoritos"
+        const val COLLECTION_HISTORY = "history" // <- NUEVA COLECCIÓN
+    }
+
+    // ============================================
+    // GESTIÓN DEL HISTORIAL
+    // ============================================
+
+    /**
+     * Añadir un evento al historial del usuario.
+     */
+    suspend fun addHistoryEvent(eventType: String, spaceName: String, details: String) {
+        val usuarioId = auth.currentUser?.uid ?: return
+        try {
+            val event = HistoryEventFirestore(
+                usuarioId = usuarioId,
+                eventType = eventType,
+                spaceName = spaceName,
+                details = details
+            )
+            db.collection(COLLECTION_HISTORY).add(event).await()
+            Log.d(TAG, "Evento de historial añadido: $eventType")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al añadir evento al historial: ${e.message}")
+        }
+    }
+
+    /**
+     * Obtener el historial de eventos para el usuario actual.
+     */
+    suspend fun getHistoryForCurrentUser(): List<HistoryEvent> {
+        val usuarioId = auth.currentUser?.uid ?: return emptyList()
+        return try {
+            val snapshot = db.collection(COLLECTION_HISTORY)
+                .whereEqualTo("usuarioId", usuarioId)
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(50) // Limitar a los 50 más recientes
+                .get()
+                .await()
+
+            snapshot.documents.mapNotNull { doc ->
+                val firestoreEvent = doc.toObject(HistoryEventFirestore::class.java)
+                firestoreEvent?.let {
+                    val date = it.timestamp?.let { ts ->
+                        // Formatear el timestamp a un string legible
+                        android.text.format.DateFormat.getDateFormat(null).format(ts)
+                    } ?: ""
+                    HistoryEvent(it.eventType, "${it.spaceName} - ${it.details}", date)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al obtener el historial: ${e.message}")
+            emptyList()
+        }
     }
     
     // ============================================
@@ -73,12 +142,18 @@ class FirestoreRepository {
             val lugaresReservados = obtenerLugaresReservados()
             Log.d(TAG, "Lugares reservados por usuario: ${lugaresReservados.size}")
             
+            // Obtener la lista de favoritos del usuario
+            val favoritos = obtenerFavoritosUsuario()
+
             // Filtramos en memoria para evitar consultas complejas
             val lugaresDisponibles = todosLugares.filter { lugar -> 
                 val estaReservado = lugaresReservados.any { reserva -> 
                     reserva.lugarId == lugar.id 
                 }
                 !estaReservado
+            }.map { lugar ->
+                // Marcar como favorito si está en la lista de favoritos
+                lugar.apply { esFavorito = favoritos.any { it.lugarId == lugar.id } }
             }
             
             Log.d(TAG, "Lugares disponibles: ${lugaresDisponibles.size}")
@@ -173,6 +248,90 @@ class FirestoreRepository {
         } catch (e: Exception) {
             Log.e(TAG, "Error en limpieza manual: ${e.message}")
             false
+        }
+    }
+
+    // ============================================
+    // GESTIÓN DE FAVORITOS
+    // ============================================
+    suspend fun obtenerLugaresFavoritos(): List<LugarFirestore> {
+        return try {
+            val favoritos = obtenerFavoritosUsuario()
+            if (favoritos.isEmpty()) return emptyList()
+
+            val idsFavoritos = favoritos.map { it.lugarId }
+
+            // Firestore permite un máximo de 10 elementos en una consulta "in"
+            // Si tienes más de 10 favoritos, hay que dividir la consulta en trozos.
+            val chunks = idsFavoritos.chunked(10)
+            val lugaresFavoritos = mutableListOf<LugarFirestore>()
+
+            for (chunk in chunks) {
+                if (chunk.isEmpty()) continue
+                val snapshot = db.collection(COLLECTION_LUGARES)
+                    .whereIn(FieldPath.documentId(), chunk)
+                    .get()
+                    .await()
+                lugaresFavoritos.addAll(snapshot.toObjects(LugarFirestore::class.java))
+            }
+
+            Log.d(TAG, "Se encontraron ${lugaresFavoritos.size} lugares favoritos.")
+            lugaresFavoritos
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al obtener lugares favoritos: ${e.message}")
+            emptyList()
+        }
+    }
+
+
+    /**
+     * Actualizar el estado de favorito de un lugar.
+     */
+    suspend fun actualizarFavorito(lugarId: String, esFavorito: Boolean): Boolean {
+        val usuarioId = auth.currentUser?.uid ?: return false
+
+        return try {
+            if (esFavorito) {
+                // Añadir a favoritos
+                val favorito = FavoritoFirestore(usuarioId = usuarioId, lugarId = lugarId)
+                db.collection(COLLECTION_FAVORITOS).add(favorito).await()
+            } else {
+                // Eliminar de favoritos
+                val query = db.collection(COLLECTION_FAVORITOS)
+                    .whereEqualTo("usuarioId", usuarioId)
+                    .whereEqualTo("lugarId", lugarId)
+                    .get()
+                    .await()
+
+                for (document in query.documents) {
+                    document.reference.delete().await()
+                }
+            }
+            Log.d(TAG, "Favorito actualizado: $lugarId, esFavorito: $esFavorito")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al actualizar favorito: ${e.message}")
+            false
+        }
+    }
+
+    /**
+     * Obtener la lista de lugares favoritos del usuario.
+     */
+    private suspend fun obtenerFavoritosUsuario(): List<FavoritoFirestore> {
+        val usuarioId = auth.currentUser?.uid ?: return emptyList()
+
+        return try {
+            val snapshot = db.collection(COLLECTION_FAVORITOS)
+                .whereEqualTo("usuarioId", usuarioId)
+                .get()
+                .await()
+
+            snapshot.toObjects(FavoritoFirestore::class.java)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al obtener favoritos: ${e.message}")
+            emptyList()
         }
     }
     
