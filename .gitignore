@@ -13,3 +13,14 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# 🔒 Archivos sensibles de Firebase y Google Services
+app/google-services.json
+**/google-services.json
+
+# 🔒 Carpetas de build (contienen artefactos compilados)
+**/build/
+**/.gradle/
+
+# 🔒 Archivos de configuración local con secrets
+secrets.properties
