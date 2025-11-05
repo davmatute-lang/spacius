@@ -127,6 +127,16 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
                 return@setOnClickListener
             }
 
+            // 🆕 Validar que la fecha/hora no haya pasado
+            if (!esFechaHoraFutura(fechaSeleccionada, horaInicioSeleccionada)) {
+                Toast.makeText(
+                    requireContext(), 
+                    "⏰ No puedes reservar en el pasado.\nSelecciona una fecha y hora futura.", 
+                    Toast.LENGTH_LONG
+                ).show()
+                return@setOnClickListener
+            }
+
             // Validar disponibilidad antes de crear la reserva
             lifecycleScope.launch {
                 try {
@@ -135,7 +145,11 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
                     )
                     
                     if (!disponible) {
-                        Toast.makeText(requireContext(), "❌ Horario no disponible. Selecciona otro.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            requireContext(), 
+                            "❌ Horario no disponible o ya pasó.\nPor favor selecciona otro horario.", 
+                            Toast.LENGTH_LONG
+                        ).show()
                         return@launch
                     }
 
@@ -232,6 +246,22 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
         }
         
         return bloques
+    }
+
+    /**
+     * 🆕 Verificar si una fecha y hora están en el futuro
+     */
+    private fun esFechaHoraFutura(fecha: String, hora: String): Boolean {
+        return try {
+            val formatoFechaHora = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+            val fechaHoraReserva = formatoFechaHora.parse("$fecha $hora")
+            val ahora = Date()
+            
+            fechaHoraReserva?.after(ahora) ?: false
+        } catch (e: Exception) {
+            Log.e("ReservaFragment", "Error al validar fecha futura: ${e.message}")
+            false
+        }
     }
 
     private fun navegarAlCalendario() {

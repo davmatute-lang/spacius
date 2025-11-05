@@ -10,7 +10,9 @@ import com.google.firebase.firestore.ServerTimestamp
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 import kotlin.Exception
 
 /**
@@ -568,6 +570,12 @@ class FirestoreRepository {
         return try {
             Log.d(TAG, "Verificando disponibilidad para lugar: $lugarId, fecha: $fecha, hora: $horaInicio-$horaFin")
             
+            // 🆕 VALIDACIÓN 1: Verificar que la fecha/hora no haya pasado
+            if (!esFechaHoraFutura(fecha, horaInicio)) {
+                Log.d(TAG, "❌ Reserva rechazada: La fecha u hora ya pasó")
+                return false
+            }
+            
             val snapshot = db.collection(COLLECTION_RESERVAS)
                 .whereEqualTo("lugarId", lugarId)
                 .whereEqualTo("fecha", fecha)
@@ -591,6 +599,29 @@ class FirestoreRepository {
         } catch (e: Exception) {
             Log.e(TAG, "Error al verificar disponibilidad: ${e.message}")
             false
+        }
+    }
+    
+    /**
+     * 🆕 Verificar si la fecha y hora están en el futuro
+     */
+    private fun esFechaHoraFutura(fecha: String, hora: String): Boolean {
+        return try {
+            val formatoFechaHora = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+            val fechaHoraReserva = formatoFechaHora.parse("$fecha $hora")
+            val ahora = Date()
+            
+            // La reserva debe ser al menos en el futuro
+            val esFutura = fechaHoraReserva?.after(ahora) ?: false
+            
+            if (!esFutura) {
+                Log.d(TAG, "⏰ Reserva en el pasado: $fecha $hora vs ${formatoFechaHora.format(ahora)}")
+            }
+            
+            esFutura
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al validar fecha futura: ${e.message}")
+            false // En caso de error, rechazar por seguridad
         }
     }
     
@@ -659,11 +690,17 @@ class FirestoreRepository {
             val reservasDelDia = obtenerReservasPorFecha(fecha)
             val reservasDelLugar = reservasDelDia.filter { it.lugarId == lugarId }
             
-            // Filtrar bloques que no están reservados
+            // Filtrar bloques que no están reservados Y que no han pasado
             val bloquesDisponibles = todosLosBloques.filter { bloque ->
-                reservasDelLugar.none { reserva ->
+                // 🆕 Verificar que el bloque no haya pasado
+                val noHaPasado = esFechaHoraFutura(fecha, bloque.horaInicio)
+                
+                // Verificar que no esté reservado
+                val noEstaReservado = reservasDelLugar.none { reserva ->
                     hayConflictoHorario(bloque.horaInicio, bloque.horaFin, reserva.horaInicio, reserva.horaFin)
                 }
+                
+                noHaPasado && noEstaReservado
             }
             
             Log.d(TAG, "Bloques disponibles para lugar $lugarId en $fecha: ${bloquesDisponibles.size}/${todosLosBloques.size}")
@@ -671,7 +708,7 @@ class FirestoreRepository {
             
         } catch (e: Exception) {
             Log.e(TAG, "Error al obtener bloques disponibles: ${e.message}")
-            generarBloquesHorarios() // En caso de error, devolver todos los bloques
+            emptyList() // 🆕 Devolver lista vacía en caso de error (más seguro)
         }
     }
     
