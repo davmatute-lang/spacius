@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
+import com.example.spacius.data.BloqueHorario
 import com.example.spacius.data.FirestoreRepository
 import com.example.spacius.data.ReservaFirestore
 import com.example.spacius.utils.DateTimeUtils
@@ -194,13 +195,15 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
 
     private fun mostrarSelectorBloqueHorario(onBloqueSeleccionado: (BloqueHorario) -> Unit) {
         lifecycleScope.launch {
-                try {
+            try {
                 // Obtener bloques disponibles usando el sistema de disponibilidad
                 val bloquesDisponibles = if (fechaSeleccionada.isNotEmpty()) {
                     firestoreRepository.obtenerBloquesDisponibles(lugarId, fechaSeleccionada)
                 } else {
                     HorarioUtils.generarBloquesHorarios() // Mostrar todos si no hay fecha seleccionada
-                }                if (bloquesDisponibles.isEmpty()) {
+                }
+                
+                if (bloquesDisponibles.isEmpty()) {
                     Toast.makeText(requireContext(), "❌ No hay horarios disponibles para esta fecha", Toast.LENGTH_LONG).show()
                     return@launch
                 }
