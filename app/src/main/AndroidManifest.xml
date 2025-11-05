@@ -8,6 +8,9 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <!-- 🔔 Permiso para mostrar notificaciones (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:name=".SpaciusApplication"
         android:allowBackup="true"
@@ -20,10 +23,10 @@
         android:theme="@style/Theme.Spacius"
         tools:targetApi="31">
 
-        <!-- 🔑 Clave de API de Google Maps -->
+        <!-- 🔑 Clave de API de Google Maps (cargada desde local.properties) -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyCpC1GdhoYWZ9jpbHrow_mEkFCUDDYfSgA" />
+            android:value="${MAPS_API_KEY}" />
 
         <!-- 🚀 LoginActivity será la primera pantalla -->
         <activity
@@ -48,4 +51,3 @@
     </application>
 
 </manifest>
-

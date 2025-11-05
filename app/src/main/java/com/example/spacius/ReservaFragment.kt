@@ -14,9 +14,11 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
-import com.example.spacius.data.FirestoreRepository
 import com.example.spacius.data.BloqueHorario
+import com.example.spacius.data.FirestoreRepository
 import com.example.spacius.data.ReservaFirestore
+import com.example.spacius.utils.DateTimeUtils
+import com.example.spacius.utils.HorarioUtils
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -24,7 +26,6 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
 import java.util.*
 
 class ReservaFragment : Fragment(), OnMapReadyCallback {
@@ -127,6 +128,16 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
                 return@setOnClickListener
             }
 
+            // 🆕 Validar que la fecha/hora no haya pasado
+            if (!DateTimeUtils.esFechaHoraFutura(fechaSeleccionada, horaInicioSeleccionada)) {
+                Toast.makeText(
+                    requireContext(), 
+                    "⏰ No puedes reservar en el pasado.\nSelecciona una fecha y hora futura.", 
+                    Toast.LENGTH_LONG
+                ).show()
+                return@setOnClickListener
+            }
+
             // Validar disponibilidad antes de crear la reserva
             lifecycleScope.launch {
                 try {
@@ -135,7 +146,11 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
                     )
                     
                     if (!disponible) {
-                        Toast.makeText(requireContext(), "❌ Horario no disponible. Selecciona otro.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            requireContext(), 
+                            "❌ Horario no disponible o ya pasó.\nPor favor selecciona otro horario.", 
+                            Toast.LENGTH_LONG
+                        ).show()
                         return@launch
                     }
 
@@ -185,9 +200,9 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
                 val bloquesDisponibles = if (fechaSeleccionada.isNotEmpty()) {
                     firestoreRepository.obtenerBloquesDisponibles(lugarId, fechaSeleccionada)
                 } else {
-                    obtenerBloquesHorarios() // Mostrar todos si no hay fecha seleccionada
+                    HorarioUtils.generarBloquesHorarios() // Mostrar todos si no hay fecha seleccionada
                 }
-
+                
                 if (bloquesDisponibles.isEmpty()) {
                     Toast.makeText(requireContext(), "❌ No hay horarios disponibles para esta fecha", Toast.LENGTH_LONG).show()
                     return@launch
@@ -206,32 +221,6 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
                 Toast.makeText(requireContext(), "Error al cargar horarios: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
-    }
-
-    private fun obtenerBloquesHorarios(): List<BloqueHorario> {
-        val bloques = mutableListOf<BloqueHorario>()
-        var id = 1
-        
-        // Generar bloques de 1h45min desde 8:00 AM hasta 9:45 PM
-        val horaInicio = 8 * 60 // 8:00 AM en minutos
-        val horaFin = 21 * 60 + 45 // 9:45 PM en minutos
-        val duracionBloque = 105 // 1h45min en minutos
-        
-        var horaActual = horaInicio
-        while (horaActual + duracionBloque <= horaFin + 60) {
-            val horas1 = horaActual / 60
-            val minutos1 = horaActual % 60
-            val horas2 = (horaActual + duracionBloque) / 60
-            val minutos2 = (horaActual + duracionBloque) % 60
-            
-            val inicio = String.format("%02d:%02d", horas1, minutos1)
-            val fin = String.format("%02d:%02d", horas2, minutos2)
-            
-            bloques.add(BloqueHorario(id++, inicio, fin, "Bloque $id"))
-            horaActual += duracionBloque + 15 // +15 min de descanso
-        }
-        
-        return bloques
     }
 
     private fun navegarAlCalendario() {

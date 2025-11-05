@@ -9,23 +9,11 @@
     android:background="#FFFFFF"
     tools:context=".ui.InicioFragment">
 
-    <!-- Título -->
-    <TextView
-        android:id="@+id/txtBienvenida"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:text="Bienvenido/a"
-        android:textSize="26sp"
-        android:textStyle="bold" />
-
-    <!-- Imagen principal -->
-    <ImageView
-        android:id="@+id/imgPrincipal"
+    <!-- Carrusel de imágenes -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/imageCarousel"
         android:layout_width="match_parent"
         android:layout_height="200dp"
-        android:scaleType="centerCrop"
-        android:src="@drawable/bann1"
         android:layout_marginBottom="16dp" />
 
     <!-- Subtítulo -->
@@ -48,6 +36,3 @@
         tools:listitem="@layout/item_lugar" />
 
 </LinearLayout>
-
-
-
