@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -18,6 +21,21 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        // 🔒 Leer Google Maps API Key desde local.properties de forma segura
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            FileInputStream(localPropertiesFile).use { localProperties.load(it) }
+        }
+        
+        val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: System.getenv("MAPS_API_KEY") ?: ""
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+        
+        // Verificar que la API Key está configurada
+        if (mapsApiKey.isEmpty()) {
+            logger.warn("⚠️ MAPS_API_KEY no encontrada. Configúrala en local.properties")
+        }
     }
 
     buildTypes {

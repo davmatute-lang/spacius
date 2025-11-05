@@ -230,8 +230,37 @@ cd spacius
 - File → Open → Seleccionar carpeta del proyecto
 - Esperar sincronización automática de Gradle
 
-### 3. Configurar Firebase (Opcional - ya configurado)
-El proyecto ya incluye `google-services.json`. Si necesitas tu propio proyecto:
+### 3. 🔒 Configurar API Keys (REQUERIDO)
+
+**⚠️ Por seguridad, las API Keys NO están incluidas en el repositorio.**
+
+1. **Copia el archivo de ejemplo:**
+   ```bash
+   cp local.properties.example local.properties
+   ```
+
+2. **Obtén tu Google Maps API Key:**
+   - Ve a [Google Cloud Console](https://console.cloud.google.com/google/maps-apis)
+   - Crea/selecciona un proyecto
+   - Habilita "Maps SDK for Android"
+   - Crea una API Key en "Credenciales"
+   - **Restringe la key** a tu app (package: `com.example.spacius`)
+
+3. **Edita `local.properties` y agrega tu key:**
+   ```properties
+   MAPS_API_KEY=TU_GOOGLE_MAPS_API_KEY_AQUI
+   ```
+
+4. **Obtén tu `google-services.json`:**
+   - Contacta al equipo para el archivo de Firebase
+   - O crea tu propio proyecto Firebase (ver sección Firebase)
+   - Coloca el archivo en `app/google-services.json`
+
+📖 **Más detalles:** Consulta [SECURITY.md](SECURITY.md) para la guía completa
+
+### 4. Configurar Firebase (Opcional)
+
+Si quieres usar tu propio proyecto Firebase en lugar del compartido:
 
 1. Crear proyecto en [Firebase Console](https://console.firebase.google.com/)
 2. Agregar app Android con package `com.example.spacius`
@@ -239,14 +268,7 @@ El proyecto ya incluye `google-services.json`. Si necesitas tu propio proyecto:
 4. Habilitar Authentication (Email/Password)
 5. Crear base de datos Firestore
 
-### 4. Configurar Google Maps (Opcional)
-Si necesitas tu propia API Key:
-```xml
-<!-- AndroidManifest.xml -->
-<meta-data
-    android:name="com.google.android.geo.API_KEY"
-    android:value="TU_API_KEY_AQUI" />
-```
+**Nota:** El proyecto ya tiene configuración de Firebase. Solo necesitas el archivo `google-services.json` del equipo.
 
 ### 5. Ejecutar la Aplicación
 - Conectar dispositivo Android o iniciar emulador
@@ -478,36 +500,100 @@ CREDENTIAL_FILE_CONTENT=[Contenido del JSON de service account]
 
 ## 🔒 Consideraciones de Seguridad
 
-### Implementadas
-- ✅ Validación de inputs en formularios
-- ✅ Autenticación con Firebase (encriptación en la nube)
-- ✅ Reglas de seguridad de Firestore
-- ✅ Consultas parametrizadas (Firestore SDK)
+### ✅ Implementadas (Noviembre 2025)
+- ✅ **API Keys protegidas**: Movidas a `local.properties` (NO en Git)
+- ✅ **google-services.json**: Excluido del repositorio (.gitignore)
+- ✅ **Validación de inputs**: Formularios con validación client-side
+- ✅ **Autenticación Firebase**: Encriptación en tránsito y reposo
+- ✅ **Consultas seguras**: Firestore SDK con queries parametrizadas
+- ✅ **Documentación de seguridad**: Ver [SECURITY.md](SECURITY.md)
 
-### Pendientes (Recomendadas)
-- ⚠️ **API Key de Google Maps**: Expuesta en AndroidManifest
-- ⚠️ **Ofuscación de código**: ProGuard/R8 en release
-- ⚠️ **Reglas de Firestore más estrictas**: Validación de datos en backend
+### 🚧 Pendientes (Recomendadas para Producción)
+- ⚠️ **Rotar API Key expuesta**: La key en commits anteriores debe rotarse
+- ⚠️ **Ofuscación de código**: Habilitar ProGuard/R8 en release builds
+- ⚠️ **Reglas de Firestore mejoradas**: Validación server-side más estricta
+- ⚠️ **Certificate Pinning**: Para comunicaciones críticas
+- ⚠️ **Rate Limiting**: Prevenir abuso de APIs
 
-### Mejoras de Seguridad Sugeridas
-```kotlin
-// Mover API Keys a local.properties
-// y usar BuildConfig
+### 🔐 Configuración Segura
 
-// Implementar reglas de Firestore más estrictas:
+**Para desarrolladores:**
+```bash
+# 1. Copia el archivo de ejemplo
+cp local.properties.example local.properties
+
+# 2. Edita y agrega tu API Key
+# MAPS_API_KEY=tu_key_aqui
+
+# 3. Nunca commitees local.properties (ya está en .gitignore)
+```
+
+**Para CI/CD (GitHub Actions):**
+```yaml
+# Configura en: Settings → Secrets → Actions
+MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+```
+
+### 📋 Reglas de Firestore Recomendadas
+
+```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // 🔒 Lugares: Lectura pública, escritura solo admin
+    match /lugares/{lugarId} {
+      allow read: if true;
+      allow write: if false; // Solo desde consola Firebase
+    }
+    
+    // 🔒 Reservas: Solo el dueño puede leer/escribir sus reservas
     match /reservas/{reservaId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && 
+                     request.auth.uid == resource.data.usuarioId;
       allow create: if request.auth != null && 
-                      request.resource.data.usuarioId == request.auth.uid;
+                      request.auth.uid == request.resource.data.usuarioId &&
+                      request.resource.data.keys().hasAll(['lugarId', 'fecha', 'horaInicio', 'horaFin']);
       allow update, delete: if request.auth != null && 
-                              resource.data.usuarioId == request.auth.uid;
+                              request.auth.uid == resource.data.usuarioId;
+    }
+    
+    // 🔒 Favoritos: Solo el usuario puede gestionar sus favoritos
+    match /favoritos/{favoritoId} {
+      allow read, write: if request.auth != null && 
+                           request.auth.uid == resource.data.usuarioId;
+    }
+    
+    // 🔒 Historial: Solo lectura del propio usuario
+    match /history/{historyId} {
+      allow read: if request.auth != null && 
+                     request.auth.uid == resource.data.usuarioId;
+      allow create: if request.auth != null && 
+                      request.auth.uid == request.resource.data.usuarioId;
+      allow update, delete: if false; // No modificable una vez creado
     }
   }
 }
 ```
+
+**Aplicar reglas:**
+1. Ve a Firebase Console → Firestore Database → Rules
+2. Pega las reglas anteriores
+3. Haz clic en "Publicar"
+
+### 🛡️ Checklist de Seguridad Pre-Producción
+
+- [x] API Keys en variables de entorno
+- [x] Archivos sensibles en .gitignore
+- [ ] **Rotar API Keys expuestas en Git**
+- [ ] Habilitar ProGuard (minifyEnabled = true)
+- [ ] Implementar reglas de Firestore estrictas
+- [ ] Configurar restricciones de API Key en Google Cloud
+- [ ] Auditoría de dependencias (gradle dependencyCheckAnalyze)
+- [ ] Configurar Firebase App Check
+- [ ] Implementar logging seguro (sin datos sensibles)
+
+📖 **Guía completa:** [SECURITY.md](SECURITY.md)
 
 ## 📊 Métricas del Proyecto
 

@@ -1,0 +1,19 @@
+## Este es un archivo de ejemplo para configurar local.properties
+## Copia este archivo como "local.properties" y completa con tus propias credenciales
+
+# 📍 Ubicación del Android SDK (autocompletado por Android Studio)
+sdk.dir=C\:\\Users\\TU_USUARIO\\AppData\\Local\\Android\\Sdk
+
+# 🔒 Google Maps API Key
+# Obtén tu propia key en: https://console.cloud.google.com/google/maps-apis
+# 1. Ve a Google Cloud Console
+# 2. Crea o selecciona un proyecto
+# 3. Habilita "Maps SDK for Android"
+# 4. Ve a "Credenciales" y crea una API Key
+# 5. Restringe la key a tu app (package: com.example.spacius)
+MAPS_API_KEY=TU_GOOGLE_MAPS_API_KEY_AQUI
+
+# ⚠️ IMPORTANTE: 
+# - Este archivo NO debe subirse a Git (ya está en .gitignore)
+# - Cada desarrollador debe tener su propia copia con sus credenciales
+# - Para CI/CD, usa variables de entorno en GitHub Secrets
