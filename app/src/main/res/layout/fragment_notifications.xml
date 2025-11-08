@@ -1,53 +1,164 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:layout_height="match_parent"
     android:padding="16dp">
 
-    <com.google.android.material.switchmaterial.SwitchMaterial
-        android:id="@+id/switch_all_notifications"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Todas las notificaciones"
-        android:textSize="16sp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"/>
+        android:orientation="vertical">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Tipos de Notificaciones"
-        android:textStyle="bold"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp"/>
+        <!-- Título -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Configuración de Notificaciones"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
 
-    <com.google.android.material.switchmaterial.SwitchMaterial
-        android:id="@+id/switch_booking_confirmations"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Confirmaciones de Reserva"
-        android:layout_marginStart="16dp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Administra qué notificaciones quieres recibir"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:layout_marginBottom="24dp" />
 
-    <com.google.android.material.switchmaterial.SwitchMaterial
-        android:id="@+id/switch_booking_reminders"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Recordatorios de Reserva"
-        android:layout_marginStart="16dp"/>
+        <!-- Card principal: Todas las notificaciones -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp">
 
-    <com.google.android.material.switchmaterial.SwitchMaterial
-        android:id="@+id/switch_new_spaces"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Nuevos Espacios"
-        android:layout_marginStart="16dp"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
 
-    <Button
-        android:id="@+id/btn_test_notification"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="Probar Notificación" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switch_all_notifications"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="🔔 Todas las Notificaciones"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
-</LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Activa o desactiva todas las notificaciones"
+                    android:textSize="12sp"
+                    android:textColor="#999999"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="4dp" />
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Card: Tipos de notificaciones -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tipos de Notificaciones"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- Confirmaciones de Reserva -->
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switch_booking_confirmations"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="✅ Confirmaciones de Reserva"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Recibe confirmación cuando se cree o cancele una reserva"
+                    android:textSize="12sp"
+                    android:textColor="#999999"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Recordatorios de Reserva -->
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switch_booking_reminders"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="⏰ Recordatorios de Reserva"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Recibe recordatorios antes de tus reservas programadas"
+                    android:textSize="12sp"
+                    android:textColor="#999999"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Nuevos Espacios -->
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switch_new_spaces"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="🆕 Nuevos Espacios"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Notificaciones sobre nuevos espacios disponibles"
+                    android:textSize="12sp"
+                    android:textColor="#999999"
+                    android:layout_marginStart="16dp" />
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Botón de prueba -->
+        <Button
+            android:id="@+id/btn_test_notification"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="🔔 Enviar Notificación de Prueba"
+            android:backgroundTint="#1DB954"
+            android:textSize="16sp"
+            android:layout_marginTop="8dp" />
+
+        <!-- Información adicional -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="💡 Tip: Asegúrate de permitir notificaciones en la configuración de tu dispositivo"
+            android:textSize="12sp"
+            android:textColor="#999999"
+            android:layout_marginTop="16dp"
+            android:padding="8dp"
+            android:background="@drawable/edittext_rounded" />
+
+    </LinearLayout>
+
+</ScrollView>

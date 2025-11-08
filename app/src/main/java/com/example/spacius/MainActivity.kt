@@ -1,9 +1,16 @@
 package com.example.spacius
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
@@ -13,6 +20,17 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var bottomNavigation: BottomNavigationView
     private val calendarFragment by lazy { CalendarFragment() } // Instancia única del calendario
+
+    // --- 🔔 Lanuncher para el permiso de notificaciones ---
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // Permiso concedido. No se necesita hacer nada extra aquí.
+        } else {
+            // Permiso denegado. Las notificaciones no se mostrarán.
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +57,37 @@ class MainActivity : AppCompatActivity() {
                 .replace(R.id.fragment_container, HomeFragment(), "HOME")
                 .commit()
             supportActionBar?.title = "Inicio"
+        }
+
+        // Pedir permiso al iniciar
+        askNotificationPermission()
+    }
+
+    private fun askNotificationPermission() {
+        // Solo es necesario para Android 13 (API 33) en adelante
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                // Si el permiso no está concedido, se solicita
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_notifications -> {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, NotificationHistoryFragment()) // Usar el nuevo fragmento
+                    .addToBackStack(null)
+                    .commit()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 
@@ -83,18 +132,15 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
-    // Función para cambiar la pestaña del BottomNavigation
     fun setSelectedBottomNav(itemId: Int) {
         bottomNavigation.selectedItemId = itemId
     }
 
-    // ✅ Función simplificada para cambiar a calendario (se actualiza automáticamente)
     fun marcarFechaEnCalendario(fecha: String) {
         setSelectedBottomNav(R.id.nav_calendario)
         supportActionBar?.title = "Calendario"
     }
 
-    // ✅ Función para navegar al calendario después de una reserva exitosa
     fun navegarACalendario() {
         setSelectedBottomNav(R.id.nav_calendario)
         supportActionBar?.title = "Calendario"
@@ -103,7 +149,6 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
-    // 🔹 Función simplificada para procesar reservas completas
     fun procesarReservaCompleta(
         idLugar: Int,
         nombreLugar: String,
@@ -117,7 +162,6 @@ class MainActivity : AppCompatActivity() {
         actualizarMapsFragment()
     }
 
-    // 🔹 Nueva función para actualizar calendario desde DetalleReservaFragment
     fun actualizarCalendarioDesdeDetalle() {
         if (calendarFragment.isAdded) {
             calendarFragment.actualizarDespuesDeCancelacion()
@@ -126,19 +170,13 @@ class MainActivity : AppCompatActivity() {
         actualizarHomeFragment()
     }
 
-    // 🔹 Nueva función para actualizar HomeFragment después de una reserva o cancelación
     fun actualizarHomeFragment() {
         val homeFragment = supportFragmentManager.findFragmentByTag("HOME") as? HomeFragment
-        homeFragment?.let {
-            // El onResume del fragment se encargará de recargar los datos
-        }
+        homeFragment?.let { }
     }
 
-    // 🔹 Nueva función para actualizar MapsFragment después de una reserva o cancelación
     fun actualizarMapsFragment() {
         val mapsFragment = supportFragmentManager.findFragmentByTag("MAPS") as? MapsFragment
-        mapsFragment?.let {
-            // El onResume del fragment se encargará de recargar los datos
-        }
+        mapsFragment?.let { }
     }
 }
