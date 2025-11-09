@@ -47,7 +47,7 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_detalle_reserva, container, false)
+        val view = inflater.inflate(R.layout.fragment_reserva, container, false)
 
         // Inicializar Firestore
         firestoreRepository = FirestoreRepository()
