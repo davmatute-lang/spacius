@@ -48,22 +48,22 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_reserva_exitosa, container, false)
+        val view = inflater.inflate(R.layout.fragment_reserva, container, false)
 
         // Inicializar Firestore
         firestoreRepository = FirestoreRepository()
 
-        val txtNombre: TextView = view.findViewById(R.id.btnNombreLugar)
-        val txtDescripcion: TextView = view.findViewById(R.id.btnDescripcionLugar)
-        val txtCapacidad: TextView = view.findViewById(R.id.btnCapacidad)
-        val imgLugar: ImageView = view.findViewById(R.id.imgLugar)
+        val txtNombre: TextView = view.findViewById(R.id.txtNombreLugarDetalle)
+        val txtDescripcion: TextView = view.findViewById(R.id.txtDescripcionLugarDetalle)
+        val txtCapacidad: TextView = view.findViewById(R.id.txtCapacidad)
+        val imgLugar: ImageView = view.findViewById(R.id.imgLugarDetalle)
 
         val btnSeleccionarFecha: Button = view.findViewById(R.id.btnFecha)
         val btnHoraInicio: Button = view.findViewById(R.id.btnHoraInicio)
         val btnHoraFin: Button = view.findViewById(R.id.btnHoraFin)
 
         val btnReservar: Button = view.findViewById(R.id.btnReservar)
-        val btnCancelar: Button = view.findViewById(R.id.btnCancelar)
+        val btnCancelar: Button = view.findViewById(R.id.btnCancelarReserva)
 
         // Cargar datos del lugar seleccionado desde arguments
         arguments?.let { bundle ->
