@@ -23,8 +23,17 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: 🔒 Create local.properties with secrets
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "MAPS_API_KEY=${{ secrets.MAPS_API_KEY }}" >> local.properties
+        env:
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+
       - name: Build Debug APK and Test APK
         run: ./gradlew :app:assembleDebug :app:assembleAndroidTest
+        env:
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
 
       - name: Run Instrumented Tests on Emulator
         uses: reactivecircus/android-emulator-runner@v2

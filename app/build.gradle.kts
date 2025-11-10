@@ -72,37 +72,4 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
-    implementation(libs.play.services.maps)
-    implementation(libs.circleimageview)
-    
-    // SwipeRefreshLayout
-    implementation(libs.swiperefreshlayout)
 
-    // --- 🔹 Navigation Component (Navegación entre fragmentos) ---
-    implementation(libs.navigation.fragment.ktx)
-    implementation(libs.navigation.ui.ktx)
-
-    // --- 🔹 WorkManager (Tareas en segundo plano) ---
-    implementation(libs.work.runtime.ktx)
-
-    // --- 🔹 Room (Base de datos local) ---
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    ksp(libs.androidx.room.compiler)
-
-    // --- 🔹 Glide (Carga de imágenes) ---
-    implementation(libs.glide)
-    implementation(libs.glide.transformations)
-
-    // --- 🔥 Firebase ---
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.auth.ktx)
-    implementation(libs.firebase.analytics.ktx)
-    implementation(libs.firebase.firestore.ktx)
-    implementation(libs.firebase.storage.ktx)
-
-    // --- Tests ---
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-}

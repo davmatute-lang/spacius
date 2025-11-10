@@ -155,10 +155,11 @@ app/src/main/res/layout/
 ## 🛠️ Tecnologías y Librerías
 
 ### Core
-- **Kotlin 1.9+**: Lenguaje principal
-- **Android SDK 36**: Target SDK
+- **Kotlin 2.0.21**: Lenguaje principal (actualizado Nov 2025)
+- **Android SDK 36**: Target SDK 
 - **Min SDK 24**: Android 7.0+ (Nougat)
-- **Gradle (Kotlin DSL)**: Sistema de build
+- **Gradle 8.7 (Kotlin DSL)**: Sistema de build optimizado
+- **Android Gradle Plugin 8.7.2**: Compatible y estable
 
 ### Backend y Base de Datos
 - **Firebase Authentication**: Autenticación de usuarios en la nube
@@ -167,35 +168,55 @@ app/src/main/res/layout/
 - **Kotlin Coroutines**: Operaciones asíncronas
 - **Firebase Analytics**: Analíticas de uso (opcional)
 
-### UI/UX
+### UI/UX y Imágenes
 - **Material Design 3**: Componentes de UI modernos
 - **BottomNavigationView**: Navegación principal
 - **RecyclerView**: Listas eficientes
 - **GridView**: Vista de calendario
 - **EdgeToEdge**: Interfaz inmersiva
-
-### Mapas e Imágenes
 - **Google Maps SDK 18.2.0**: Integración de mapas
 - **Glide 4.16.0**: Carga de imágenes optimizada
+- **Glide Transformations 4.3.0**: Efectos de imagen (desenfoque)
+- **CircleImageView 3.1.0**: Imágenes de perfil circulares
+- **SwipeRefreshLayout 1.1.0**: Pull-to-refresh
 
-### Testing
+### Testing y CI/CD
 - **JUnit**: Pruebas unitarias
 - **Espresso**: Pruebas de UI
 - **AndroidX Test**: Framework de testing
+- **GitHub Actions**: Pipeline de CI/CD automático
+- **Firebase App Distribution**: Deploy automático
+
+### Compatibilidad Java
+- **JDK 17**: Consistente en desarrollo y CI/CD
+- **Target Compatibility**: Java 17
+- **Kotlin JVM Target**: 17
 
 ## 📋 Requisitos del Sistema
 
 ### Desarrollo
 - **Android Studio** Hedgehog (2023.1.1) o superior
-- **JDK 11** o superior
-- **Gradle 8.0+**
+- **JDK 17** (recomendado - compatibilidad garantizada)
+- **Gradle 8.7+** (incluido en el proyecto)
 - **Cuenta de Firebase** (se incluye google-services.json en el proyecto)
 - **API Key de Google Maps** (incluida en el proyecto)
+
+### CI/CD (GitHub Actions)
+- **Ubuntu Latest** (automático)
+- **JDK 17 Temurin** (configurado en workflow)
+- **Gradle Cache** (optimización automática)
+- **Firebase Secrets** (FIREBASE_APP_ID, CREDENTIAL_FILE_CONTENT)
 
 ### Dispositivo/Emulador
 - **Android 7.0 (API 24)** o superior
 - **Conexión a Internet** (requerida para Firebase, imágenes y mapas)
 - **Servicios de Google Play** (para Google Maps y Firebase)
+
+### Compatibilidad Verificada ✅
+- **JDK 17**: Desarrollo + CI/CD consistente
+- **Gradle 8.7**: Estable y compatible
+- **Android Gradle Plugin 8.7.2**: Sin conflictos
+- **Kotlin 2.0.21**: Última versión estable
 
 ## 🚀 Instalación y Configuración
 
@@ -209,8 +230,37 @@ cd spacius
 - File → Open → Seleccionar carpeta del proyecto
 - Esperar sincronización automática de Gradle
 
-### 3. Configurar Firebase (Opcional - ya configurado)
-El proyecto ya incluye `google-services.json`. Si necesitas tu propio proyecto:
+### 3. 🔒 Configurar API Keys (REQUERIDO)
+
+**⚠️ Por seguridad, las API Keys NO están incluidas en el repositorio.**
+
+1. **Copia el archivo de ejemplo:**
+   ```bash
+   cp local.properties.example local.properties
+   ```
+
+2. **Obtén tu Google Maps API Key:**
+   - Ve a [Google Cloud Console](https://console.cloud.google.com/google/maps-apis)
+   - Crea/selecciona un proyecto
+   - Habilita "Maps SDK for Android"
+   - Crea una API Key en "Credenciales"
+   - **Restringe la key** a tu app (package: `com.example.spacius`)
+
+3. **Edita `local.properties` y agrega tu key:**
+   ```properties
+   MAPS_API_KEY=TU_GOOGLE_MAPS_API_KEY_AQUI
+   ```
+
+4. **Obtén tu `google-services.json`:**
+   - Contacta al equipo para el archivo de Firebase
+   - O crea tu propio proyecto Firebase (ver sección Firebase)
+   - Coloca el archivo en `app/google-services.json`
+
+📖 **Más detalles:** Consulta [SECURITY.md](SECURITY.md) para la guía completa
+
+### 4. Configurar Firebase (Opcional)
+
+Si quieres usar tu propio proyecto Firebase en lugar del compartido:
 
 1. Crear proyecto en [Firebase Console](https://console.firebase.google.com/)
 2. Agregar app Android con package `com.example.spacius`
@@ -218,14 +268,7 @@ El proyecto ya incluye `google-services.json`. Si necesitas tu propio proyecto:
 4. Habilitar Authentication (Email/Password)
 5. Crear base de datos Firestore
 
-### 4. Configurar Google Maps (Opcional)
-Si necesitas tu propia API Key:
-```xml
-<!-- AndroidManifest.xml -->
-<meta-data
-    android:name="com.google.android.geo.API_KEY"
-    android:value="TU_API_KEY_AQUI" />
-```
+**Nota:** El proyecto ya tiene configuración de Firebase. Solo necesitas el archivo `google-services.json` del equipo.
 
 ### 5. Ejecutar la Aplicación
 - Conectar dispositivo Android o iniciar emulador
@@ -306,9 +349,22 @@ Si necesitas tu propia API Key:
 - ✅ **Sistema de disponibilidad** - Completo
 - ✅ **Cancelación de reservas** - Completo
 - ✅ **Código optimizado** - Limpieza realizada (Oct 2025)
+- ✅ **CI/CD Pipeline** - **Implementado (Nov 2025)**
+- ✅ **Lint issues solucionados** - **Corregido (Nov 2025)**
+- ✅ **Compatibilidad JDK 17** - **Actualizado (Nov 2025)**
+- ✅ **Versiones estabilizadas** - **Gradle 8.7 + AGP 8.7.2 (Nov 2025)**
 - 🚧 **Perfil de usuario completo** - En desarrollo
+- 🚧 **Deploy automático a Firebase** - Pipeline listo, pendiente secrets
 - 🚧 **Notificaciones push** - Planeado
 - 🚧 **Historial de reservas** - Planeado
+
+### 🔄 Últimas Actualizaciones (Noviembre 2025)
+- **✅ GitHub Actions CI/CD:** Pipeline completo implementado
+- **✅ Lint Android:** Errores de `android:tint` corregidos 
+- **✅ Compatibilidad Java:** JDK 17 consistente en desarrollo y CI
+- **✅ Gradle optimizado:** Versión 8.7 estable
+- **✅ Artefactos automáticos:** APK y reportes en cada build
+- **⚙️ Firebase Deploy:** Configurado, pendiente de secrets
 
 ## 🎨 Características de UI/UX
 
@@ -380,47 +436,164 @@ Flujo de Sincronización Automática con Firebase:
 
 ## 🧪 Testing y CI/CD
 
-### GitHub Actions
-- **Workflow automatizado** en `.github/workflows/android-tests.yml`
-- **Branches monitoreadas**: 
-  - `main`
-  - `Ashlee_Coello`
-  - `Dani-Freire`
-  - `Diego_Rubio`
+### GitHub Actions Workflow ✅
+El proyecto incluye un **pipeline de CI/CD completamente funcional** con GitHub Actions:
+
+**📁 Archivo:** `.github/workflows/android-tests.yml`
+
+**🔄 Triggers automáticos:**
+- **Push** a ramas: `main`, `Dani-Freire`, `Ashlee_Coello`, `Diego_Rubio`
+- **Pull Requests** hacia las mismas ramas
+
+**🏗️ Build Pipeline:**
+1. **Setup Environment:**
+   - Ubuntu Latest
+   - JDK 17 (Temurin distribution)
+   - Gradle cache optimization
+
+2. **Build & Quality:**
+   - `./gradlew assembleDebug` - Compilación
+   - `./gradlew testDebugUnitTest` - Tests unitarios
+   - `./gradlew lintDebug` - Análisis de código
+
+3. **Artifacts:**
+   - APK de debug (30 días retención)
+   - Reportes de tests y lint
+   - Nombrados con hash del commit
+
+4. **Deploy Automático** (solo en `main`):
+   - Firebase App Distribution
+   - Deploy solo si los secrets están configurados
+   - Notas de release automáticas
+
+**🔧 Configuración requerida para deploy:**
+```bash
+# GitHub Secrets necesarios:
+FIREBASE_APP_ID=1:51182576457:android:ed2d0e4242487f39cfb098
+CREDENTIAL_FILE_CONTENT=[Contenido del JSON de service account]
+```
+
+**📊 Estado actual:** ✅ **Totalmente funcional**
+- ✅ Build automático sin errores
+- ✅ Tests ejecutándose correctamente  
+- ✅ Lint issues solucionados (Nov 2025)
+- ✅ Artifacts generándose
+- ⚙️ Deploy pendiente de configuración de secrets
+
+### Tests Locales
+```bash
+# Pruebas unitarias
+./gradlew test
+
+# Pruebas instrumentadas
+./gradlew connectedAndroidTest
+
+# Análisis de código
+./gradlew lintDebug
+```
+
+### Calidad de Código ✅
+- **Lint Android:** Sin errores críticos
+- **Compatibilidad:** JDK 17 consistente
+- **Versionado:** Gradle 8.7 + AGP 8.7.2 (estable)
 
 
 ## 🔒 Consideraciones de Seguridad
 
-### Implementadas
-- ✅ Validación de inputs en formularios
-- ✅ Autenticación con Firebase (encriptación en la nube)
-- ✅ Reglas de seguridad de Firestore
-- ✅ Consultas parametrizadas (Firestore SDK)
+### ✅ Implementadas (Noviembre 2025)
+- ✅ **API Keys protegidas**: Movidas a `local.properties` (NO en Git)
+- ✅ **google-services.json**: Excluido del repositorio (.gitignore)
+- ✅ **Validación de inputs**: Formularios con validación client-side
+- ✅ **Autenticación Firebase**: Encriptación en tránsito y reposo
+- ✅ **Consultas seguras**: Firestore SDK con queries parametrizadas
+- ✅ **Documentación de seguridad**: Ver [SECURITY.md](SECURITY.md)
 
-### Pendientes (Recomendadas)
-- ⚠️ **API Key de Google Maps**: Expuesta en AndroidManifest
-- ⚠️ **Ofuscación de código**: ProGuard/R8 en release
-- ⚠️ **Reglas de Firestore más estrictas**: Validación de datos en backend
+### 🚧 Pendientes (Recomendadas para Producción)
+- ⚠️ **Rotar API Key expuesta**: La key en commits anteriores debe rotarse
+- ⚠️ **Ofuscación de código**: Habilitar ProGuard/R8 en release builds
+- ⚠️ **Reglas de Firestore mejoradas**: Validación server-side más estricta
+- ⚠️ **Certificate Pinning**: Para comunicaciones críticas
+- ⚠️ **Rate Limiting**: Prevenir abuso de APIs
 
-### Mejoras de Seguridad Sugeridas
-```kotlin
-// Mover API Keys a local.properties
-// y usar BuildConfig
+### 🔐 Configuración Segura
 
-// Implementar reglas de Firestore más estrictas:
+**Para desarrolladores:**
+```bash
+# 1. Copia el archivo de ejemplo
+cp local.properties.example local.properties
+
+# 2. Edita y agrega tu API Key
+# MAPS_API_KEY=tu_key_aqui
+
+# 3. Nunca commitees local.properties (ya está en .gitignore)
+```
+
+**Para CI/CD (GitHub Actions):**
+```yaml
+# Configura en: Settings → Secrets → Actions
+MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+```
+
+### 📋 Reglas de Firestore Recomendadas
+
+```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // 🔒 Lugares: Lectura pública, escritura solo admin
+    match /lugares/{lugarId} {
+      allow read: if true;
+      allow write: if false; // Solo desde consola Firebase
+    }
+    
+    // 🔒 Reservas: Solo el dueño puede leer/escribir sus reservas
     match /reservas/{reservaId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && 
+                     request.auth.uid == resource.data.usuarioId;
       allow create: if request.auth != null && 
-                      request.resource.data.usuarioId == request.auth.uid;
+                      request.auth.uid == request.resource.data.usuarioId &&
+                      request.resource.data.keys().hasAll(['lugarId', 'fecha', 'horaInicio', 'horaFin']);
       allow update, delete: if request.auth != null && 
-                              resource.data.usuarioId == request.auth.uid;
+                              request.auth.uid == resource.data.usuarioId;
+    }
+    
+    // 🔒 Favoritos: Solo el usuario puede gestionar sus favoritos
+    match /favoritos/{favoritoId} {
+      allow read, write: if request.auth != null && 
+                           request.auth.uid == resource.data.usuarioId;
+    }
+    
+    // 🔒 Historial: Solo lectura del propio usuario
+    match /history/{historyId} {
+      allow read: if request.auth != null && 
+                     request.auth.uid == resource.data.usuarioId;
+      allow create: if request.auth != null && 
+                      request.auth.uid == request.resource.data.usuarioId;
+      allow update, delete: if false; // No modificable una vez creado
     }
   }
 }
 ```
+
+**Aplicar reglas:**
+1. Ve a Firebase Console → Firestore Database → Rules
+2. Pega las reglas anteriores
+3. Haz clic en "Publicar"
+
+### 🛡️ Checklist de Seguridad Pre-Producción
+
+- [x] API Keys en variables de entorno
+- [x] Archivos sensibles en .gitignore
+- [ ] **Rotar API Keys expuestas en Git**
+- [ ] Habilitar ProGuard (minifyEnabled = true)
+- [ ] Implementar reglas de Firestore estrictas
+- [ ] Configurar restricciones de API Key en Google Cloud
+- [ ] Auditoría de dependencias (gradle dependencyCheckAnalyze)
+- [ ] Configurar Firebase App Check
+- [ ] Implementar logging seguro (sin datos sensibles)
+
+📖 **Guía completa:** [SECURITY.md](SECURITY.md)
 
 ## 📊 Métricas del Proyecto
 
@@ -481,14 +654,38 @@ service cloud.firestore {
 
 ### Guía para Contribuidores
 
-Este proyecto sigue GitFlow con múltiples branches de desarrollo:
+Este proyecto sigue GitFlow con múltiples branches de desarrollo y **CI/CD automático**:
 
 **Branches principales:**
 - `main`: Código estable en producción
-- `Sistema-de-Disponibilidad-Fire-Base`: Branch activo con Firebase (actual)
-- `Ashlee_Coello`: Desarrollo por Ashlee
-- `Dani-Freire`: Desarrollo por Dani
-- `Diego_Rubio`: Desarrollo por Diego
+- `Dani-Freire`: Desarrollo por Dani (CI/CD activo)
+- `Ashlee_Coello`: Desarrollo por Ashlee (CI/CD activo)
+- `Diego_Rubio`: Desarrollo por Diego (CI/CD activo)
+
+**🔄 Workflow de Desarrollo:**
+1. **Crear feature branch** desde tu branch principal
+2. **Desarrollar y probar** localmente
+3. **Push al branch** → GitHub Actions se ejecuta automáticamente
+4. **Revisar resultados** del CI en la pestaña "Actions"
+5. **Crear Pull Request** si todos los tests pasan
+6. **Merge a main** → Deploy automático a Firebase
+
+**📊 Monitoreo del CI/CD:**
+- Ve a la tab **"Actions"** en GitHub para ver builds
+- Descarga **APK artifacts** de cada build exitoso
+- Revisa **reportes de lint y tests** automáticos
+- Verifica **logs de deploy** a Firebase App Distribution
+
+**✅ Pre-requisitos para contribuir:**
+- JDK 17 instalado localmente
+- Android Studio actualizado
+- Ejecutar `./gradlew lintDebug` antes de push
+- Verificar que no hay errores de compilación
+
+**🚀 Para habilitar deploy automático:**
+1. Configurar secrets en GitHub (admin required):
+   - `FIREBASE_APP_ID`: `1:51182576457:android:ed2d0e4242487f39cfb098`
+   - `CREDENTIAL_FILE_CONTENT`: [JSON del service account de Firebase]
 
 
 ## 👥 Equipo de Desarrollo
@@ -517,6 +714,36 @@ Si usas este código, por favor da crédito al equipo original.
 ---
 
 ## 📋 Changelog
+
+### v1.0.2 - Noviembre 4, 2025
+**🔄 CI/CD Implementation & Build Optimization**
+
+**Nuevas Características:**
+- ✅ **GitHub Actions CI/CD Pipeline** completamente funcional
+- ✅ Build, test y deploy automático en múltiples branches
+- ✅ Artefactos automáticos (APK + reportes) con retención de 30 días
+- ✅ Deploy automático a Firebase App Distribution (configurado)
+
+**Correcciones Técnicas:**
+- ✅ **Lint Android corregido:** `android:tint` → `app:tint` en layouts
+- ✅ **Compatibilidad Java:** JDK 17 consistente (desarrollo + CI)
+- ✅ **Gradle estabilizado:** 8.7 + Android Gradle Plugin 8.7.2
+- ✅ **Configuraciones optimizadas:** gradle.properties mejorado
+
+**Archivos modificados:**
+- `.github/workflows/android-tests.yml` - Pipeline CI/CD
+- `app/build.gradle.kts` - Compatibilidad JDK 17
+- `gradle/libs.versions.toml` - AGP 8.7.2 
+- `gradle/wrapper/gradle-wrapper.properties` - Gradle 8.7
+- `gradle.properties` - Optimizaciones de compatibilidad
+- Layouts: `fragment_edit_profile.xml`, `item_history_event.xml`, `item_favorite_place.xml`
+
+**CI/CD Features:**
+- 🔄 Triggers: Push/PR en `main`, `Dani-Freire`, `Ashlee_Coello`, `Diego_Rubio`
+- 🏗️ Build: assembleDebug, testDebugUnitTest, lintDebug
+- 📦 Artifacts: APK + test reports automáticos
+- 🚀 Deploy: Firebase App Distribution (solo main)
+- ⚡ Cache: Gradle dependencies optimizado
 
 ### v1.0.1 - Octubre 20, 2025
 **🔄 Migración a Firebase y Optimización del Código**

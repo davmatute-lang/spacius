@@ -7,99 +7,166 @@
     android:padding="16dp"
     tools:context=".EditProfileFragment">
 
-    <!-- El resto de tu código -->
-
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center_horizontal">
 
-        <!-- Imagen de perfil -->
-        <de.hdodenhof.circleimageview.CircleImageView
-            android:id="@+id/ivProfileImage"
+        <!-- Contenedor de imagen de perfil con overlay -->
+        <FrameLayout
             android:layout_width="120dp"
             android:layout_height="120dp"
-            android:layout_marginBottom="24dp"
-            android:src="@drawable/ic_user"
-            app:civ_border_width="2dp"
-            app:civ_border_color="#CCCCCC"/>
+            android:layout_marginBottom="24dp">
+
+            <!-- Imagen de perfil circular -->
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/ivProfileImage"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:src="@drawable/ic_user"
+                app:civ_border_width="2dp"
+                app:civ_border_color="#1DB954"/>
+
+            <!-- Overlay semitransparente con icono de cámara -->
+            <View
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:background="@drawable/profile_image_overlay"
+                android:clickable="false"/>
+
+            <!-- Icono de cámara (necesitaremos crear este drawable) -->
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center"
+                android:src="@android:drawable/ic_menu_camera"
+                app:tint="#FFFFFF"
+                android:clickable="false"
+                android:alpha="0.9"/>
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Toca la imagen para cambiarla"
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Progress Bar -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:indeterminate="true"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp"
+            tools:visibility="visible"/>
 
         <!-- Campo Nombre -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="16dp"
+            app:startIconDrawable="@drawable/ic_user"
+            app:errorEnabled="true">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etProfileName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Nombre de Usuario"
-                android:inputType="textPersonName" />
+                android:inputType="textPersonName"
+                android:maxLines="1"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Campo Correo -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="16dp"
+            app:startIconDrawable="@android:drawable/ic_dialog_email"
+            app:helperText="El correo no se puede modificar"
+            app:helperTextTextColor="#666666">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etProfileEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Correo Electrónico"
+                android:inputType="textEmailAddress"
                 android:enabled="false"
-                android:focusable="false" />
+                android:focusable="false"
+                android:maxLines="1"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Campo Teléfono -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="16dp"
+            app:startIconDrawable="@android:drawable/stat_sys_phone_call"
+            app:errorEnabled="true"
+            app:helperText="10 dígitos">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etProfilePhone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Teléfono"
-                android:inputType="phone" />
+                android:inputType="phone"
+                android:maxLength="10"
+                android:maxLines="1"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Campo Cédula -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="24dp"
+            app:startIconDrawable="@android:drawable/ic_menu_myplaces"
+            app:errorEnabled="true"
+            app:helperText="10 dígitos">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etProfileCedula"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Cédula"
-                android:inputType="number" />
+                android:inputType="number"
+                android:maxLength="10"
+                android:maxLines="1"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Botón Guardar Cambios -->
         <Button
             android:id="@+id/btnSaveChanges"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
+            android:layout_height="56dp"
+            android:layout_marginBottom="12dp"
             android:text="Guardar Cambios"
-            android:backgroundTint="#1DB954" /> <!-- ¡AQUÍ ESTÁ LA MAGIA! Pinta el botón de verde -->
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:backgroundTint="#1DB954"
+            app:icon="@android:drawable/ic_menu_save"
+            app:iconGravity="textStart"/>
 
         <!-- Botón Cambiar Contraseña -->
         <Button
             android:id="@+id/btnChangePassword"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:text="Cambiar Contraseña"
-            android:textColor="#1DB954" /> <!-- ¡AQUÍ ESTÁ LA MAGIA! Pinta el texto y borde de verde -->
+            android:textSize="16sp"
+            android:textColor="#1DB954"
+            app:strokeColor="#1DB954"
+            app:strokeWidth="2dp"
+            app:icon="@android:drawable/ic_lock_lock"
+            app:iconTint="#1DB954"
+            app:iconGravity="textStart"/>
 
     </LinearLayout>
 </ScrollView>

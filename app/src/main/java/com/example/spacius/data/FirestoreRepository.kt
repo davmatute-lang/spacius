@@ -2,6 +2,8 @@ package com.example.spacius.data
 
 import android.util.Log
 import com.example.spacius.HistoryEvent
+import com.example.spacius.utils.DateTimeUtils
+import com.example.spacius.utils.HorarioUtils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
@@ -568,6 +570,12 @@ class FirestoreRepository {
         return try {
             Log.d(TAG, "Verificando disponibilidad para lugar: $lugarId, fecha: $fecha, hora: $horaInicio-$horaFin")
             
+            // 🆕 VALIDACIÓN 1: Verificar que la fecha/hora no haya pasado
+            if (!DateTimeUtils.esFechaHoraFutura(fecha, horaInicio)) {
+                Log.d(TAG, "❌ Reserva rechazada: La fecha u hora ya pasó")
+                return false
+            }
+            
             val snapshot = db.collection(COLLECTION_RESERVAS)
                 .whereEqualTo("lugarId", lugarId)
                 .whereEqualTo("fecha", fecha)
@@ -579,7 +587,7 @@ class FirestoreRepository {
             
             // Verificar si hay conflicto de horarios
             for (reserva in reservasExistentes) {
-                if (hayConflictoHorario(horaInicio, horaFin, reserva.horaInicio, reserva.horaFin)) {
+                if (DateTimeUtils.hayConflictoHorario(horaInicio, horaFin, reserva.horaInicio, reserva.horaFin)) {
                     Log.d(TAG, "Conflicto encontrado con reserva: ${reserva.id} (${reserva.horaInicio}-${reserva.horaFin})")
                     return false
                 }
@@ -592,38 +600,6 @@ class FirestoreRepository {
             Log.e(TAG, "Error al verificar disponibilidad: ${e.message}")
             false
         }
-    }
-    
-    /**
-     * Verificar si dos rangos de horarios se solapan
-     */
-    private fun hayConflictoHorario(nuevaInicio: String, nuevaFin: String, existenteInicio: String, existenteFin: String): Boolean {
-        try {
-            val nuevaInicioMin = convertirHoraAMinutos(nuevaInicio)
-            val nuevaFinMin = convertirHoraAMinutos(nuevaFin)
-            val existenteInicioMin = convertirHoraAMinutos(existenteInicio)
-            val existenteFinMin = convertirHoraAMinutos(existenteFin)
-            
-            // Verificar si hay solapamiento
-            // No hay conflicto si: nueva termina antes de que existent comience O nueva comienza después de que existente termine
-            val noHayConflicto = (nuevaFinMin <= existenteInicioMin) || (nuevaInicioMin >= existenteFinMin)
-            
-            return !noHayConflicto
-            
-        } catch (e: Exception) {
-            Log.e(TAG, "Error al verificar conflicto de horario: ${e.message}")
-            return true // En caso de error, asumir que hay conflicto para seguridad
-        }
-    }
-    
-    /**
-     * Convertir hora en formato HH:MM a minutos desde medianoche
-     */
-    private fun convertirHoraAMinutos(hora: String): Int {
-        val partes = hora.split(":")
-        val horas = partes[0].toInt()
-        val minutos = partes[1].toInt()
-        return horas * 60 + minutos
     }
     
     /**
@@ -655,15 +631,21 @@ class FirestoreRepository {
      */
     suspend fun obtenerBloquesDisponibles(lugarId: String, fecha: String): List<BloqueHorario> {
         return try {
-            val todosLosBloques = generarBloquesHorarios()
+            val todosLosBloques = HorarioUtils.generarBloquesHorarios()
             val reservasDelDia = obtenerReservasPorFecha(fecha)
             val reservasDelLugar = reservasDelDia.filter { it.lugarId == lugarId }
             
-            // Filtrar bloques que no están reservados
+            // Filtrar bloques que no están reservados Y que no han pasado
             val bloquesDisponibles = todosLosBloques.filter { bloque ->
-                reservasDelLugar.none { reserva ->
-                    hayConflictoHorario(bloque.horaInicio, bloque.horaFin, reserva.horaInicio, reserva.horaFin)
+                // Verificar que el bloque no haya pasado
+                val noHaPasado = DateTimeUtils.esFechaHoraFutura(fecha, bloque.horaInicio)
+                
+                // Verificar que no esté reservado
+                val noEstaReservado = reservasDelLugar.none { reserva ->
+                    DateTimeUtils.hayConflictoHorario(bloque.horaInicio, bloque.horaFin, reserva.horaInicio, reserva.horaFin)
                 }
+                
+                noHaPasado && noEstaReservado
             }
             
             Log.d(TAG, "Bloques disponibles para lugar $lugarId en $fecha: ${bloquesDisponibles.size}/${todosLosBloques.size}")
@@ -671,23 +653,8 @@ class FirestoreRepository {
             
         } catch (e: Exception) {
             Log.e(TAG, "Error al obtener bloques disponibles: ${e.message}")
-            generarBloquesHorarios() // En caso de error, devolver todos los bloques
+            emptyList() // Devolver lista vacía en caso de error (más seguro)
         }
-    }
-    
-    /**
-     * Generar lista de bloques horarios disponibles (8:00 AM - 9:45 PM en bloques de 1h45min)
-     */
-    private fun generarBloquesHorarios(): List<BloqueHorario> {
-        return listOf(
-            BloqueHorario(1, "08:00", "09:45", "8:00 AM - 9:45 AM"),
-            BloqueHorario(2, "10:00", "11:45", "10:00 AM - 11:45 AM"),
-            BloqueHorario(3, "12:00", "13:45", "12:00 PM - 1:45 PM"),
-            BloqueHorario(4, "14:00", "15:45", "2:00 PM - 3:45 PM"),
-            BloqueHorario(5, "16:00", "17:45", "4:00 PM - 5:45 PM"),
-            BloqueHorario(6, "18:00", "19:45", "6:00 PM - 7:45 PM"),
-            BloqueHorario(7, "20:00", "21:45", "8:00 PM - 9:45 PM")
-        )
     }
     
     /**

@@ -1,24 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp">
 
-    <TextView
-        android:id="@+id/text_view_event_type"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textStyle="bold" />
+        android:orientation="horizontal"
+        android:padding="16dp">
 
-    <TextView
-        android:id="@+id/text_view_space_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        <!-- Icono del evento -->
+        <ImageView
+            android:id="@+id/ivEventIcon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_menu_today"
+            app:tint="#1DB954"
+            android:layout_gravity="center_vertical"
+            android:contentDescription="Icono de evento" />
 
-    <TextView
-        android:id="@+id/text_view_date"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        <!-- Información del evento -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
 
-</LinearLayout>
+            <TextView
+                android:id="@+id/text_view_event_type"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                tools:text="Reserva Creada" />
+
+            <TextView
+                android:id="@+id/text_view_space_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="#666666"
+                android:layout_marginTop="4dp"
+                tools:text="Parque de la Madre" />
+
+            <TextView
+                android:id="@+id/text_view_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="#999999"
+                android:layout_marginTop="4dp"
+                tools:text="20/05/2024" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>
