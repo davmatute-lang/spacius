@@ -72,4 +72,43 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.navigation.fragment.ktx)
+    implementation(libs.navigation.ui.ktx)
+    implementation(libs.swiperefreshlayout)
+
+    // --- Firebase ---
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth.ktx)
+    implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.storage.ktx)
+    implementation(libs.firebase.analytics.ktx)
+
+    // --- Google Maps ---
+    implementation(libs.play.services.maps)
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+
+    // --- Room Database ---
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    // --- WorkManager ---
+    implementation(libs.work.runtime.ktx)
+
+    // --- Glide para imágenes ---
+    implementation(libs.glide)
+    ksp("com.github.bumptech.glide:ksp:5.0.5")
+
+    // --- CircleImageView ---
+    implementation(libs.circleimageview)
+
+    // --- Coroutines ---
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+
+    // --- Testing ---
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+}
 
