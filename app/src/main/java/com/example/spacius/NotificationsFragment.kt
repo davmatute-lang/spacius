@@ -12,6 +12,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.example.spacius.preferences.NotificationPreferences
 import com.google.android.material.switchmaterial.SwitchMaterial
 
 class NotificationsFragment : Fragment(R.layout.fragment_notifications) {

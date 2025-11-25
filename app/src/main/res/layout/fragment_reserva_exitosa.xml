@@ -245,7 +245,7 @@
                     android:id="@+id/mapFragmentContainer"
                     android:layout_width="match_parent"
                     android:layout_height="220dp"
-                    android.background="@drawable/button_rounded"
+                    android:background="@drawable/button_rounded"
                     android:backgroundTint="#F0F0F0"
                     android:elevation="2dp" />
 
