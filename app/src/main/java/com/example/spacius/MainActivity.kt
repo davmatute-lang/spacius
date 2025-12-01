@@ -6,20 +6,31 @@ import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import com.example.spacius.utils.NotificationUtils
+import com.example.spacius.viewmodels.NotificationViewModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var bottomNavigation: BottomNavigationView
     private val calendarFragment by lazy { CalendarFragment() } // Instancia única del calendario
+
+    // --- ViewModel ---
+    private val notificationViewModel: NotificationViewModel by viewModels()
+
+    // --- 🎨 UI para el contador de notificaciones ---
+    private var notificationBadge: TextView? = null
 
     // --- 🔔 Lanuncher para el permiso de notificaciones ---
     private val requestPermissionLauncher = registerForActivityResult(
@@ -36,6 +47,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+
+        // Crear canal de notificaciones
+        NotificationUtils.createNotificationChannel(this)
 
         // Configurar la Toolbar
         val topAppBar: Toolbar = findViewById(R.id.topAppBar)
@@ -61,6 +75,11 @@ class MainActivity : AppCompatActivity() {
 
         // Pedir permiso al iniciar
         askNotificationPermission()
+        
+        // Observar el contador de notificaciones
+        notificationViewModel.unreadNotificationsCount.observe(this) {
+            count -> updateNotificationBadge(count)
+        }
     }
 
     private fun askNotificationPermission() {
@@ -75,14 +94,39 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
+
+        // --- 🎨 Configurar el contador de notificaciones ---
+        val notificationItem = menu?.findItem(R.id.action_notifications)
+        val actionView = notificationItem?.actionView
+        notificationBadge = actionView?.findViewById(R.id.notification_badge)
+
+        actionView?.setOnClickListener {
+            onOptionsItemSelected(notificationItem)
+        }
+
         return true
+    }
+
+    // --- 🎨 Funciones para el contador de notificaciones ---
+    fun updateNotificationBadge(count: Int) {
+        if (notificationBadge == null) return
+
+        runOnUiThread {
+            if (count > 0) {
+                notificationBadge?.text = count.toString()
+                notificationBadge?.visibility = View.VISIBLE
+            } else {
+                notificationBadge?.visibility = View.GONE
+            }
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_notifications -> {
+                updateNotificationBadge(0) // Limpiar contador al abrir
                 supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, NotificationHistoryFragment()) // Usar el nuevo fragmento
+                    .replace(R.id.fragment_container, NotificationHistoryFragment()) // Volver a usar el fragmento de historial
                     .addToBackStack(null)
                     .commit()
                 true

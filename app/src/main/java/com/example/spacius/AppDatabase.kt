@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 /** Main database for the application. */
-@Database(entities = [NotificationHistoryItem::class], version = 1, exportSchema = false)
+@Database(entities = [NotificationHistoryItem::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun notificationHistoryDao(): NotificationHistoryDao
@@ -21,7 +21,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "spacius_database"
-                ).build()
+                )
+                .fallbackToDestructiveMigration() // This will clear the old data
+                .build()
                 INSTANCE = instance
                 instance
             }

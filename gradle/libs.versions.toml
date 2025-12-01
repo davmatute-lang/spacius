@@ -1,3 +1,4 @@
+
 [versions]
 
 androidx-activity = "1.9.0"
@@ -6,6 +7,7 @@ androidx-constraintlayout = "2.1.4"
 androidx-core-ktx = "1.13.1"
 androidx-espresso-core = "3.6.1"
 androidx-junit = "1.2.1"
+androidx-lifecycle = "2.8.3"
 androidx-room = "2.6.1"
 android-application = "8.6.0"
 kotlin-android = "2.0.0"
@@ -14,6 +16,7 @@ kotlin-ksp = "2.0.0-1.0.21"
 material = "1.12.0"
 
 play-services-maps = "19.2.0"
+play-services-location = "21.3.0"
 circleimageview = "3.1.0"
 swiperefreshlayout = "1.1.0"
 navigation = "2.9.6"
@@ -23,6 +26,7 @@ glide = "5.0.5"
 glide-transformations = "4.3.0"
 
 firebase-bom = "33.1.0"
+kotlin-coroutines = "1.9.0"
 
 [libraries]
 
@@ -33,6 +37,9 @@ androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx
 androidx-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "androidx-espresso-core" }
 androidx-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-junit" }
 
+androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "androidx-lifecycle" }
+androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "androidx-lifecycle" }
+
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "androidx-room" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "androidx-room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "androidx-room" }
@@ -41,6 +48,7 @@ junit = { module = "junit:junit", version.ref = "junit" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 
 play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "play-services-maps" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "play-services-location" }
 circleimageview = { module = "de.hdodenhof:circleimageview", version.ref = "circleimageview" }
 swiperefreshlayout = { module = "androidx.swiperefreshlayout:swiperefreshlayout", version.ref = "swiperefreshlayout" }
 
@@ -50,6 +58,7 @@ navigation-ui-ktx = { module = "androidx.navigation:navigation-ui-ktx", version.
 work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work-runtime-ktx" }
 
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
+glide-ksp = { module = "com.github.bumptech.glide:ksp", version.ref = "glide" }
 glide-transformations = { module = "jp.wasabeef:glide-transformations", version.ref = "glide-transformations" }
 
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
@@ -57,6 +66,11 @@ firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx" }
 firebase-analytics-ktx = { module = "com.google.firebase:firebase-analytics-ktx" }
 firebase-firestore-ktx = { module = "com.google.firebase:firebase-firestore-ktx" }
 firebase-storage-ktx = { module = "com.google.firebase:firebase-storage-ktx" }
+firebase-messaging-ktx = { module = "com.google.firebase:firebase-messaging-ktx" }
+
+kotlin-coroutines-bom = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-bom", version.ref = "kotlin-coroutines" }
+kotlin-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android" }
+kotlin-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services" }
 
 [plugins]
 

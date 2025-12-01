@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/history_item_background"
+    android:layout_marginBottom="8dp">
+
+    <TextView
+        android:id="@+id/notification_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Título de la Notificación"
+        android:textStyle="bold"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/notification_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Mensaje de la notificación" />
+
+    <TextView
+        android:id="@+id/notification_countdown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Faltan: 2 d, 3 h, 45 m"
+        android:textColor="@color/green_primary"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/notification_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="dd/MM/yyyy"
+        android:textSize="12sp"
+        android:layout_marginTop="8dp" />
+
+</LinearLayout>

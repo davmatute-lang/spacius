@@ -9,5 +9,7 @@ data class NotificationHistoryItem(
     val id: Int = 0,
     val title: String,
     val message: String,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val eventTimestamp: Long? = null, // Timestamp of the actual event (e.g., reservation time)
+    val notificationType: String = "generic" // e.g., "reserva_creada", "reserva_cancelada"
 )

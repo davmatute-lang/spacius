@@ -42,7 +42,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -75,11 +75,15 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.navigation.fragment.ktx)
     implementation(libs.navigation.ui.ktx)
     implementation(libs.swiperefreshlayout)
+
+    // --- ViewModel & LiveData ---
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity)
 
     // --- Firebase ---
     implementation(platform(libs.firebase.bom))
@@ -87,10 +91,11 @@ dependencies {
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage.ktx)
     implementation(libs.firebase.analytics.ktx)
+    implementation(libs.firebase.messaging.ktx)
 
     // --- Google Maps ---
     implementation(libs.play.services.maps)
-    implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation(libs.play.services.location)
 
     // --- Room Database ---
     implementation(libs.androidx.room.runtime)
@@ -102,18 +107,18 @@ dependencies {
 
     // --- Glide para imágenes ---
     implementation(libs.glide)
-    ksp("com.github.bumptech.glide:ksp:5.0.5")
+    ksp(libs.glide.ksp)
 
     // --- CircleImageView ---
     implementation(libs.circleimageview)
 
     // --- Coroutines ---
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+    implementation(platform(libs.kotlin.coroutines.bom))
+    implementation(libs.kotlin.coroutines.android)
+    implementation(libs.kotlin.coroutines.play.services)
 
     // --- Testing ---
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
-

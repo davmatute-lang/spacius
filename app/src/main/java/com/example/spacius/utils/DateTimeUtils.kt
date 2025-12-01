@@ -10,7 +10,8 @@ object DateTimeUtils {
      */
     fun esFechaHoraFutura(fecha: String, hora: String): Boolean {
         return try {
-            val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+            // Formato de fecha corregido para yyyy-MM-dd
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
             val fechaHora = dateFormat.parse("$fecha $hora") ?: return false
             fechaHora.after(Date())
         } catch (e: Exception) {

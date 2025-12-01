@@ -3,7 +3,6 @@ package com.example.spacius
 import android.app.DatePickerDialog
 import android.app.AlertDialog
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,12 +12,16 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.bumptech.glide.Glide
 import com.example.spacius.data.BloqueHorario
 import com.example.spacius.data.FirestoreRepository
 import com.example.spacius.data.ReservaFirestore
 import com.example.spacius.utils.DateTimeUtils
 import com.example.spacius.utils.HorarioUtils
+import com.example.spacius.utils.NotificationUtils
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -26,7 +29,11 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.coroutines.launch
-import java.util.*
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 class ReservaFragment : Fragment(), OnMapReadyCallback {
 
@@ -34,6 +41,8 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
     private var latLugar: Double = -2.170998
     private var lngLugar: Double = -79.922359
     private lateinit var firestoreRepository: FirestoreRepository
+    private val notificationHistoryDao by lazy { AppDatabase.getDatabase(requireContext()).notificationHistoryDao() }
+
 
     // Variables para almacenar datos del lugar
     private var lugarId: String = ""
@@ -93,17 +102,17 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
         // Selección de fecha (solo fechas presentes y futuras)
         btnSeleccionarFecha.setOnClickListener {
             val calendario = Calendar.getInstance()
-            val año = calendario.get(Calendar.YEAR)
+            val anio = calendario.get(Calendar.YEAR)
             val mes = calendario.get(Calendar.MONTH)
             val dia = calendario.get(Calendar.DAY_OF_MONTH)
 
             val datePickerDialog = DatePickerDialog(
                 requireContext(),
-                { _, añoSeleccionado, mesSeleccionado, diaSeleccionado ->
-                    fechaSeleccionada = String.format("%04d-%02d-%02d", añoSeleccionado, mesSeleccionado + 1, diaSeleccionado)
+                { _, anioSeleccionado, mesSeleccionado, diaSeleccionado ->
+                    fechaSeleccionada = String.format(Locale.getDefault(), "%04d-%02d-%02d", anioSeleccionado, mesSeleccionado + 1, diaSeleccionado)
                     btnSeleccionarFecha.text = "📅 $fechaSeleccionada"
                 },
-                año, mes, dia
+                anio, mes, dia
             )
             
             // Establecer fecha mínima como hoy
@@ -132,7 +141,7 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
             if (!DateTimeUtils.esFechaHoraFutura(fechaSeleccionada, horaInicioSeleccionada)) {
                 Toast.makeText(
                     requireContext(), 
-                    "⏰ No puedes reservar en el pasado.\nSelecciona una fecha y hora futura.", 
+                    "⏰ No puedes reservar en el pasado.\nSelecciona una fecha y hora futura.",
                     Toast.LENGTH_LONG
                 ).show()
                 return@setOnClickListener
@@ -148,7 +157,7 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
                     if (!disponible) {
                         Toast.makeText(
                             requireContext(), 
-                            "❌ Horario no disponible o ya pasó.\nPor favor selecciona otro horario.", 
+                            "❌ Horario no disponible o ya pasó.\nPor favor selecciona otro horario.",
                             Toast.LENGTH_LONG
                         ).show()
                         return@launch
@@ -164,11 +173,36 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
                         notas = "Reserva creada desde la app"
                     )
 
-                    firestoreRepository.crearReserva(reserva)
-                    Toast.makeText(requireContext(), "✅ Reserva creada exitosamente", Toast.LENGTH_SHORT).show()
-                    
-                    // Navegar al calendario
-                    navegarAlCalendario()
+                    val exito = firestoreRepository.crearReserva(reserva)
+                    if (exito) {
+                        Toast.makeText(requireContext(), "✅ Reserva creada exitosamente", Toast.LENGTH_SHORT).show()
+
+                        // Show notification in status bar
+                        NotificationUtils.showReservaCreadaNotification(
+                            requireContext(),
+                            nombreLugar,
+                            fechaSeleccionada,
+                            horaInicioSeleccionada
+                        )
+
+                        // Save notification to history
+                        val title = "✅ Reserva Confirmada"
+                        val message = "Tu reserva en $nombreLugar para el $fechaSeleccionada a las $horaInicioSeleccionada ha sido confirmada."
+                        val eventDate = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).parse("$fechaSeleccionada $horaInicioSeleccionada")
+                        val notificationData = NotificationHistoryItem(
+                            title = title, 
+                            message = message,
+                            eventTimestamp = eventDate?.time,
+                            notificationType = "reserva_creada"
+                        )
+                        notificationHistoryDao.insert(notificationData)
+
+                        scheduleReminder(fechaSeleccionada, horaInicioSeleccionada, nombreLugar)
+                        
+                        navegarAlCalendario() 
+                    } else {
+                         Toast.makeText(requireContext(), "Error al crear la reserva", Toast.LENGTH_LONG).show()
+                    }
                     
                 } catch (e: Exception) {
                     Toast.makeText(requireContext(), "Error al crear reserva: ${e.message}", Toast.LENGTH_LONG).show()
@@ -232,6 +266,33 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
                 .commit()
         } catch (e: Exception) {
             Toast.makeText(requireContext(), "Error al navegar: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun scheduleReminder(fecha: String, horaInicio: String, lugarNombre: String) {
+        try {
+            val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+            val reservaTime = sdf.parse("$fecha $horaInicio")?.time ?: return
+
+            val currentTime = System.currentTimeMillis()
+            val delay = reservaTime - currentTime - TimeUnit.HOURS.toMillis(1)
+
+            if (delay > 0) {
+                val data = Data.Builder()
+                    .putString("lugarNombre", lugarNombre)
+                    .putString("fecha", fecha)
+                    .putString("horaInicio", horaInicio)
+                    .build()
+
+                val reminderWorkRequest = OneTimeWorkRequestBuilder<ReminderWorker>()
+                    .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                    .setInputData(data)
+                    .build()
+
+                WorkManager.getInstance(requireContext()).enqueue(reminderWorkRequest)
+            }
+        } catch (e: Exception) {
+            // Manejar error de parseo de fecha
         }
     }
 
