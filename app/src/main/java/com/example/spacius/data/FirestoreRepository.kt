@@ -53,31 +53,13 @@ class FirestoreRepository {
         const val COLLECTION_RESERVAS = "reservas"
         const val COLLECTION_ESTADISTICAS = "estadisticas"
         const val COLLECTION_FAVORITOS = "favoritos"
-        const val COLLECTION_HISTORY = "history" // <- NUEVA COLECCIÓN
+        const val COLLECTION_HISTORY = "history"
+        const val COLLECTION_NOTIFICATIONS = "notifications"
     }
 
-    // ============================================
+    // ============================================>
     // GESTIÓN DEL HISTORIAL
-    // ============================================
-
-    /**
-     * Añadir un evento al historial del usuario.
-     */
-    suspend fun addHistoryEvent(eventType: String, spaceName: String, details: String) {
-        val usuarioId = auth.currentUser?.uid ?: return
-        try {
-            val event = HistoryEventFirestore(
-                usuarioId = usuarioId,
-                eventType = eventType,
-                spaceName = spaceName,
-                details = details
-            )
-            db.collection(COLLECTION_HISTORY).add(event).await()
-            Log.d(TAG, "Evento de historial añadido: $eventType")
-        } catch (e: Exception) {
-            Log.e(TAG, "Error al añadir evento al historial: ${e.message}")
-        }
-    }
+    // ============================================>
 
     /**
      * Obtener el historial de eventos para el usuario actual.
@@ -108,9 +90,9 @@ class FirestoreRepository {
         }
     }
     
-    // ============================================
+    // ============================================>
     // GESTIÓN DE LUGARES
-    // ============================================
+    // ============================================>
     
     /**
      * Obtener todos los lugares disponibles en Firestore
@@ -253,9 +235,9 @@ class FirestoreRepository {
         }
     }
 
-    // ============================================
+    // ============================================>
     // GESTIÓN DE FAVORITOS
-    // ============================================
+    // ============================================>
     suspend fun obtenerLugaresFavoritos(): List<LugarFirestore> {
         return try {
             val favoritos = obtenerFavoritosUsuario()
@@ -337,29 +319,51 @@ class FirestoreRepository {
         }
     }
     
-    // ============================================
+    // ============================================>
     // GESTIÓN DE RESERVAS
-    // ============================================
+    // ============================================>
     
     /**
      * Crear una nueva reserva
      */
     suspend fun crearReserva(reserva: ReservaFirestore): Boolean {
+        val usuarioActual = auth.currentUser
+        if (usuarioActual == null) {
+            Log.e(TAG, "Usuario no autenticado")
+            return false
+        }
+
         return try {
-            val usuarioActual = auth.currentUser
-            if (usuarioActual == null) {
-                Log.e(TAG, "Usuario no autenticado")
-                return false
-            }
-            
             val reservaCompleta = reserva.copy(
                 usuarioId = usuarioActual.uid,
                 usuarioEmail = usuarioActual.email ?: "",
                 usuarioNombre = usuarioActual.displayName ?: usuarioActual.email ?: "Usuario"
             )
+
+            val historyEvent = HistoryEventFirestore(
+                usuarioId = usuarioActual.uid,
+                eventType = "Reserva Creada",
+                spaceName = reserva.lugarNombre,
+                details = "a las ${reserva.horaInicio} - ${reserva.horaFin}"
+            )
             
-            db.collection(COLLECTION_RESERVAS).add(reservaCompleta).await()
-            Log.d(TAG, "Reserva creada exitosamente")
+            val notification = Notification(
+                title = "Reserva Confirmada",
+                message = "Tu reserva en ${reserva.lugarNombre} para el ${reserva.fecha} a las ${reserva.horaInicio} ha sido confirmada."
+            )
+
+            // Usar un batch para asegurar que ambas operaciones se completen
+            db.runBatch { batch ->
+                val reservaRef = db.collection(COLLECTION_RESERVAS).document()
+                val historyRef = db.collection(COLLECTION_HISTORY).document()
+                val notificationRef = db.collection("users").document(usuarioActual.uid).collection(COLLECTION_NOTIFICATIONS).document()
+
+                batch.set(reservaRef, reservaCompleta)
+                batch.set(historyRef, historyEvent)
+                batch.set(notificationRef, notification)
+            }.await()
+
+            Log.d(TAG, "Reserva, historial y notificación creados exitosamente")
             true
         } catch (e: Exception) {
             Log.e(TAG, "Error al crear reserva: ${e.message}")
@@ -433,12 +437,31 @@ class FirestoreRepository {
      */
     suspend fun cancelarReserva(reservaId: String): Boolean {
         return try {
-            db.collection(COLLECTION_RESERVAS)
-                .document(reservaId)
-                .update("estado", "cancelada")
-                .await()
+            val reservaRef = db.collection(COLLECTION_RESERVAS).document(reservaId)
+            val reservaDoc = reservaRef.get().await()
+            val reserva = reservaDoc.toObject(ReservaFirestore::class.java) ?: return false
+
+            val historyEvent = HistoryEventFirestore(
+                usuarioId = reserva.usuarioId,
+                eventType = "Reserva Cancelada",
+                spaceName = reserva.lugarNombre,
+                details = "Reserva para el ${reserva.fecha} a las ${reserva.horaInicio}"
+            )
             
-            Log.d(TAG, "Reserva cancelada exitosamente")
+            val notification = Notification(
+                title = "Reserva Cancelada",
+                message = "Tu reserva en ${reserva.lugarNombre} para el ${reserva.fecha} a las ${reserva.horaInicio} ha sido cancelada."
+            )
+
+            db.runBatch { batch ->
+                val historyRef = db.collection(COLLECTION_HISTORY).document()
+                val notificationRef = db.collection("users").document(reserva.usuarioId).collection(COLLECTION_NOTIFICATIONS).document()
+                batch.update(reservaRef, "estado", "cancelada")
+                batch.set(historyRef, historyEvent)
+                batch.set(notificationRef, notification)
+            }.await()
+            
+            Log.d(TAG, "Reserva cancelada, historial y notificación creados exitosamente")
             true
         } catch (e: Exception) {
             Log.e(TAG, "Error al cancelar reserva: ${e.message}")
@@ -464,9 +487,9 @@ class FirestoreRepository {
         }
     }
     
-    // ============================================
+    // ============================================>
     // DATOS PREDEFINIDOS
-    // ============================================
+    // ============================================>
     
     private fun obtenerLugaresPredefinidos(): List<LugarFirestore> = listOf(
         LugarFirestore(
@@ -559,9 +582,9 @@ class FirestoreRepository {
         )
     )
 
-    // ============================================
+    // ============================================>
     // SISTEMA DE DISPONIBILIDAD
-    // ============================================
+    // ============================================>
     
     /**
      * Verificar si un lugar está disponible en una fecha y horario específicos
@@ -631,29 +654,49 @@ class FirestoreRepository {
      */
     suspend fun obtenerBloquesDisponibles(lugarId: String, fecha: String): List<BloqueHorario> {
         return try {
-            val todosLosBloques = HorarioUtils.generarBloquesHorarios()
+            // 1. Obtener el lugar para conocer su horario de disponibilidad
+            val lugar = obtenerLugarPorId(lugarId)
+            if (lugar == null) {
+                Log.e(TAG, "No se pudo encontrar el lugar con ID: $lugarId")
+                return emptyList()
+            }
+    
+            // 2. Parsear el horario de disponibilidad del lugar
+            val (horaApertura, horaCierre) = try {
+                val partes = lugar.horaDisponible.replace("h", ":").split(" a ")
+                if (partes.size == 2) {
+                    partes[0] to partes[1]
+                } else {
+                    // Horario por defecto si el formato no es válido
+                    "08:00" to "20:00"
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error al parsear horaDisponible: '${lugar.horaDisponible}'", e)
+                "08:00" to "20:00" // Fallback
+            }
+    
+            // 3. Generar todos los bloques para ese horario
+            val todosLosBloques = HorarioUtils.generarBloquesHorarios(horaApertura, horaCierre)
+            
+            // 4. Obtener las reservas existentes para ese día y lugar
             val reservasDelDia = obtenerReservasPorFecha(fecha)
             val reservasDelLugar = reservasDelDia.filter { it.lugarId == lugarId }
             
-            // Filtrar bloques que no están reservados Y que no han pasado
+            // 5. Filtrar bloques que no están reservados Y que no han pasado
             val bloquesDisponibles = todosLosBloques.filter { bloque ->
-                // Verificar que el bloque no haya pasado
                 val noHaPasado = DateTimeUtils.esFechaHoraFutura(fecha, bloque.horaInicio)
-                
-                // Verificar que no esté reservado
                 val noEstaReservado = reservasDelLugar.none { reserva ->
                     DateTimeUtils.hayConflictoHorario(bloque.horaInicio, bloque.horaFin, reserva.horaInicio, reserva.horaFin)
                 }
-                
                 noHaPasado && noEstaReservado
             }
             
-            Log.d(TAG, "Bloques disponibles para lugar $lugarId en $fecha: ${bloquesDisponibles.size}/${todosLosBloques.size}")
+            Log.d(TAG, "Bloques disponibles para lugar $lugarId en $fecha: ${bloquesDisponibles.size}/${todosLosBloques.size} (Horario: $horaApertura - $horaCierre)")
             bloquesDisponibles
             
         } catch (e: Exception) {
             Log.e(TAG, "Error al obtener bloques disponibles: ${e.message}")
-            emptyList() // Devolver lista vacía en caso de error (más seguro)
+            emptyList()
         }
     }
     

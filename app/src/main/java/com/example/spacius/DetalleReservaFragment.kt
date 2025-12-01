@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.spacius.data.FirestoreRepository
 import com.example.spacius.utils.DateTimeUtils
+import com.example.spacius.utils.NotificationUtils
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -26,14 +27,20 @@ class DetalleReservaFragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var map: GoogleMap
     private lateinit var firestoreRepository: FirestoreRepository
-    
+    private val notificationHistoryDao by lazy { AppDatabase.getDatabase(requireContext()).notificationHistoryDao() }
+
     private var reservaId: String = ""
     private var latLugar: Double = -2.170998
     private var lngLugar: Double = -79.922359
-    
+
     // Variables para validar si la reserva ya pasó
     private var fechaReserva: String = ""
     private var horaFinReserva: String = ""
+
+    // Variables para la notificación
+    private var nombreLugar: String = ""
+    private var fechaMostrada: String = ""
+    private var horaInicio: String = ""
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -50,17 +57,17 @@ class DetalleReservaFragment : Fragment(), OnMapReadyCallback {
         val txtHorario: TextView = view.findViewById(R.id.txtHorarioDetalle)
         val txtUsuario: TextView = view.findViewById(R.id.txtUsuarioDetalle)
         val imgLugar: ImageView = view.findViewById(R.id.imgLugarDetalle)
-        
+
         val btnCancelarReserva: Button = view.findViewById(R.id.btnCancelarReserva)
         val btnVolver: Button = view.findViewById(R.id.btnVolverCalendario)
 
         // Obtener datos pasados desde el calendario
         arguments?.let { args ->
             reservaId = args.getString("reservaId", "")
-            val nombreLugar = args.getString("nombreLugar", "")
+            nombreLugar = args.getString("nombreLugar", "")
             val descripcion = args.getString("descripcionLugar", "")
-            val fecha = args.getString("fecha", "")
-            val horaInicio = args.getString("horaInicio", "")
+            fechaMostrada = args.getString("fecha", "")
+            horaInicio = args.getString("horaInicio", "")
             val horaFin = args.getString("horaFin", "")
             val usuario = args.getString("usuario", "")
             val imagenUrl = args.getString("imagenUrl", "")
@@ -68,22 +75,22 @@ class DetalleReservaFragment : Fragment(), OnMapReadyCallback {
             lngLugar = args.getDouble("longitud", -79.922359)
 
             // Guardar fecha y hora para validación (convertir DD/MM/YYYY a YYYY-MM-DD)
-            fechaReserva = convertirFechaAFormatoISO(fecha)
+            fechaReserva = convertirFechaAFormatoISO(fechaMostrada)
             horaFinReserva = horaFin
-            
+
             // Establecer valores en las vistas
             txtNombreLugar.text = nombreLugar
             txtDescripcion.text = descripcion
-            
+
             // 🆕 Verificar si la reserva ya pasó y mostrar indicador
             val yaOcurrio = validarSiReservaYaPaso(fechaReserva, horaFin)
             if (yaOcurrio) {
-                txtFechaReserva.text = "📅 $fecha ⏱️ (Completada)"
+                txtFechaReserva.text = "📅 $fechaMostrada ⏱️ (Completada)"
                 txtFechaReserva.setTextColor(resources.getColor(android.R.color.holo_green_dark, null))
             } else {
-                txtFechaReserva.text = "📅 $fecha"
+                txtFechaReserva.text = "📅 $fechaMostrada"
             }
-            
+
             txtHorario.text = "🕐 $horaInicio - $horaFin"
             txtUsuario.text = "👤 Reservado por: $usuario"
 
@@ -94,13 +101,13 @@ class DetalleReservaFragment : Fragment(), OnMapReadyCallback {
                     .placeholder(R.drawable.ic_launcher_background)
                     .into(imgLugar)
             }
-            
+
             // 🆕 Configurar botón de cancelar según si la reserva ya pasó
             configurarBotonCancelar(btnCancelarReserva, yaOcurrio)
         }
 
         // El listener del botón se configura en configurarBotonCancelar()
-        
+
         // Configurar botón de volver
         btnVolver.setOnClickListener {
             requireActivity().supportFragmentManager.popBackStack()
@@ -126,7 +133,7 @@ class DetalleReservaFragment : Fragment(), OnMapReadyCallback {
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(lugar, 15f))
         map.uiSettings.isZoomControlsEnabled = true
     }
-    
+
     /**
      * 🆕 Convierte fecha de DD/MM/YYYY a YYYY-MM-DD para validación
      */
@@ -138,7 +145,7 @@ class DetalleReservaFragment : Fragment(), OnMapReadyCallback {
             fechaMostrar
         }
     }
-    
+
     /**
      * 🆕 Valida si la reserva ya pasó usando DateTimeUtils
      */
@@ -152,7 +159,7 @@ class DetalleReservaFragment : Fragment(), OnMapReadyCallback {
             false // En caso de error, asumir que no ha pasado para evitar bloquear funcionalidad
         }
     }
-    
+
     /**
      * 🆕 Configura el botón de cancelar según si la reserva ya pasó
      */
@@ -163,7 +170,7 @@ class DetalleReservaFragment : Fragment(), OnMapReadyCallback {
             boton.alpha = 0.5f
             boton.text = "✓ Reserva Completada"
             boton.setBackgroundColor(resources.getColor(android.R.color.darker_gray, null))
-            
+
             // Opcional: mostrar Toast informativo si intentan hacer clic
             boton.setOnClickListener {
                 Toast.makeText(
@@ -177,7 +184,7 @@ class DetalleReservaFragment : Fragment(), OnMapReadyCallback {
             boton.isEnabled = true
             boton.alpha = 1.0f
             boton.text = "Cancelar Reserva"
-            
+
             boton.setOnClickListener {
                 mostrarDialogoCancelacion()
             }
@@ -194,7 +201,7 @@ class DetalleReservaFragment : Fragment(), OnMapReadyCallback {
             ).show()
             return
         }
-        
+
         AlertDialog.Builder(requireContext())
             .setTitle("⚠️ Cancelar Reserva")
             .setMessage("¿Estás seguro de que deseas cancelar esta reserva?\n\nEsta acción no se puede deshacer.")
@@ -217,25 +224,39 @@ class DetalleReservaFragment : Fragment(), OnMapReadyCallback {
             ).show()
             return
         }
-        
+
         lifecycleScope.launch {
             try {
-                // Eliminar de Firestore
-                firestoreRepository.eliminarReserva(reservaId)
-                
+                // Corregir la llamada para que use cancelarReserva en lugar de eliminarReserva
+                firestoreRepository.cancelarReserva(reservaId)
+
                 Toast.makeText(
-                    requireContext(), 
-                    "✅ Reserva cancelada exitosamente", 
+                    requireContext(),
+                    "✅ Reserva cancelada exitosamente",
                     Toast.LENGTH_LONG
                 ).show()
 
+                // Show notification in status bar
+                NotificationUtils.showReservaCanceladaNotification(
+                    requireContext(),
+                    nombreLugar,
+                    fechaMostrada,
+                    horaInicio
+                )
+
+                // Save notification to history
+                val title = "❌ Reserva Cancelada"
+                val message = "Tu reserva en $nombreLugar para el $fechaMostrada a las $horaInicio ha sido cancelada."
+                val notificationData = NotificationHistoryItem(title = title, message = message)
+                notificationHistoryDao.insert(notificationData)
+
                 // Volver al calendario (se actualizará automáticamente en onResume)
                 requireActivity().supportFragmentManager.popBackStack()
-                
+
             } catch (e: Exception) {
                 Toast.makeText(
-                    requireContext(), 
-                    "❌ Error al cancelar la reserva: ${e.message}", 
+                    requireContext(),
+                    "❌ Error al cancelar la reserva: ${e.message}",
                     Toast.LENGTH_SHORT
                 ).show()
             }

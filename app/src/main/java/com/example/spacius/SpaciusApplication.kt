@@ -5,83 +5,58 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
-import android.util.Log
-import com.google.firebase.FirebaseApp
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-import com.example.spacius.data.FirestoreRepository
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 class SpaciusApplication : Application() {
 
     companion object {
+        // ID para el canal de notificaciones de nuevos espacios
         const val NEW_SPACES_CHANNEL_ID = "new_spaces_channel"
+        // ID para el canal de notificaciones de recordatorios de reservas
+        const val BOOKING_REMINDERS_CHANNEL_ID = "booking_reminders_channel"
+        // ID para el canal de notificaciones de confirmaciones de reservas
+        const val BOOKING_CONFIRMATIONS_CHANNEL_ID = "booking_confirmations_channel"
     }
 
     override fun onCreate() {
         super.onCreate()
-
-        // Inicializar Firebase explícitamente
-        FirebaseApp.initializeApp(this)
-
-        // Crear canales de notificación
-        createNotificationChannel()
-
-        // Inicializar Firestore y datos predefinidos
-        inicializarFirestore()
+        createNotificationChannels()
     }
 
-    private fun createNotificationChannel() {
+    private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "Nuevos Espacios"
-            val descriptionText = "Notificaciones sobre nuevos espacios disponibles"
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channel = NotificationChannel(NEW_SPACES_CHANNEL_ID, name, importance).apply {
-                description = descriptionText
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+            // Canal para nuevos espacios
+            val newSpacesChannel = NotificationChannel(
+                NEW_SPACES_CHANNEL_ID,
+                "Nuevos Espacios",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Notificaciones sobre nuevos espacios añadidos"
             }
-            // Registrar el canal con el sistema
-            val notificationManager: NotificationManager =
-                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
-            Log.d("SpaciusApp", "Canal de notificación 'Nuevos Espacios' creado.")
-        }
-    }
 
-    private fun inicializarFirestore() {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                Log.d("SpaciusApp", "Inicializando Firestore...")
-
-                val firestore = Firebase.firestore
-                val repository = FirestoreRepository()
-
-                // Forzar inicialización de lugares
-                val exito = repository.inicializarLugaresPredefinidos()
-                Log.d("SpaciusApp", "Lugares inicializados: $exito")
-
-                // Verificar que Firestore esté funcionando
-                val lugares = repository.obtenerLugares()
-                Log.d("SpaciusApp", "Lugares cargados: ${lugares.size}")
-
-                // Verificar estado de reservas (solo si hay usuario autenticado)
-                val auth = Firebase.auth
-                if (auth.currentUser != null) {
-                    Log.d("SpaciusApp", "Usuario autenticado: ${auth.currentUser?.email}")
-
-                    // Test simple: obtener todas las reservas de la colección
-                    val todasReservas = firestore.collection("reservas").get().await()
-                    Log.d("SpaciusApp", "Total reservas en Firestore: ${todasReservas.size()}")
-                } else {
-                    Log.d("SpaciusApp", "No hay usuario autenticado en Application")
-                }
-
-            } catch (e: Exception) {
-                Log.e("SpaciusApp", "Error al inicializar Firestore: ${e.message}")
+            // Canal para recordatorios de reservas
+            val bookingRemindersChannel = NotificationChannel(
+                BOOKING_REMINDERS_CHANNEL_ID,
+                "Recordatorios de Reservas",
+                NotificationManager.IMPORTANCE_HIGH // Más importante que los nuevos espacios
+            ).apply {
+                description = "Recordatorios para tus próximas reservas"
             }
+
+            // Canal para confirmaciones de reservas
+            val bookingConfirmationsChannel = NotificationChannel(
+                BOOKING_CONFIRMATIONS_CHANNEL_ID,
+                "Confirmaciones de Reserva",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Confirmaciones para tus reservas"
+            }
+
+            // Registrar los canales en el sistema
+            notificationManager.createNotificationChannel(newSpacesChannel)
+            notificationManager.createNotificationChannel(bookingRemindersChannel)
+            notificationManager.createNotificationChannel(bookingConfirmationsChannel)
         }
     }
 }

@@ -1,96 +1,98 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="10dp"
     app:cardCornerRadius="16dp"
     app:cardElevation="6dp"
-    android:foreground="?attr/selectableItemBackground"
-    android:clickable="true">
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="wrap_content">
 
-        <!-- Contenedor para la Imagen y el botón de favorito -->
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="180dp">
+        <ImageView
+            android:id="@+id/imgLugar"
+            android:layout_width="0dp"
+            android:layout_height="180dp"
+            android:contentDescription="Imagen del lugar"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_launcher_background"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <ImageView
-                android:id="@+id/imgLugar"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:src="@drawable/ic_launcher_background"
-                android:contentDescription="Imagen del lugar" />
+        <ImageButton
+            android:id="@+id/btnFavorito"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="8dp"
+            android:background="@drawable/favorite_button_background"
+            android:contentDescription="Marcar como favorito"
+            android:src="@drawable/ic_star_border"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <!-- ========================================================== -->
-            <!-- ESTE ES EL BOTÓN DE LA ESTRELLA QUE HEMOS AÑADIDO -->
-            <!-- ========================================================== -->
-            <ImageButton
-                android:id="@+id/btnFavorito"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_gravity="top|end"
-                android:layout_margin="8dp"
-                android:background="@drawable/favorite_button_background"
-                android:contentDescription="Marcar como favorito"
-                android:src="@drawable/ic_star_border" />
-            <!-- Por defecto mostramos la estrella con borde (no favorita) -->
-
-        </FrameLayout>
-
-        <!-- Contenido (esto se mantiene igual que antes) -->
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/txtNombreLugar"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="12dp">
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="12dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@android:color/black"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/imgLugar"
+            tools:text="Cancha de Fútbol Sintética" />
 
-            <TextView
-                android:id="@+id/txtNombreLugar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:text="Cancha de Fútbol Sintética"
-                android:textColor="@android:color/black"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+        <TextView
+            android:id="@+id/txtDescripcionLugar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="@id/txtNombreLugar"
+            app:layout_constraintStart_toStartOf="@id/txtNombreLugar"
+            app:layout_constraintTop_toBottomOf="@id/txtNombreLugar"
+            tools:text="Espacio amplio con iluminación nocturna y césped sintético en excelente estado." />
 
-            <TextView
-                android:id="@+id/txtDescripcionLugar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:ellipsize="end"
-                android:maxLines="2"
-                android:text="Espacio amplio con iluminación nocturna y césped sintético en excelente estado."
-                android:textColor="@android:color/darker_gray"
-                android:textSize="14sp" />
+        <TextView
+            android:id="@+id/txtCapacidad"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="@android:color/black"
+            android:textSize="13sp"
+            app:layout_constraintStart_toStartOf="@id/txtDescripcionLugar"
+            app:layout_constraintTop_toBottomOf="@id/txtDescripcionLugar"
+            tools:text="Capacidad: 12 personas" />
 
-            <TextView
-                android:id="@+id/txtCapacidad"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Capacidad: 12 personas"
-                android:textColor="@android:color/black"
-                android:textSize="13sp" />
+        <Button
+            android:id="@+id/btnReservar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="12dp"
+            android:backgroundTint="#4CAF50"
+            android:text="Reservar"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@id/txtNombreLugar"
+            app:layout_constraintStart_toStartOf="@id/txtNombreLugar"
+            app:layout_constraintTop_toBottomOf="@id/txtCapacidad" />
 
-            <Button
-                android:id="@+id/btnReservar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="4dp"
-                android:backgroundTint="#4CAF50"
-                android:text="Reservar"
-                android:textColor="@android:color/white"
-                android:textStyle="bold" />
-        </LinearLayout>
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.cardview.widget.CardView>

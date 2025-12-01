@@ -1,8 +1,6 @@
 package com.example.spacius
 
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,28 +13,20 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
-import com.example.spacius.data.LugarFirestore
 import com.example.spacius.data.FirestoreRepository
+import com.example.spacius.data.LugarFirestore
+import com.example.spacius.data.ReservaFirestore
 import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment() {
 
-    private lateinit var recyclerView: RecyclerView
+    private lateinit var recyclerLugares: RecyclerView
+    private lateinit var recyclerReservas: RecyclerView
     private lateinit var firestoreRepository: FirestoreRepository
     private val lugares = mutableListOf<LugarFirestore>()
+    private val reservas = mutableListOf<ReservaFirestore>()
     private var mensajeView: TextView? = null
-
-    private lateinit var imageCarousel: ViewPager2
-    private val imageList = listOf(
-        R.drawable.carr1,
-        R.drawable.carr2,
-        R.drawable.carr3,
-        R.drawable.carr4
-    )
-    private val handler = Handler(Looper.getMainLooper())
-    private lateinit var autoScrollRunnable: Runnable
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -44,60 +34,56 @@ class HomeFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_home, container, false)
 
-        recyclerView = view.findViewById(R.id.recyclerLugares)
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        recyclerLugares = view.findViewById(R.id.recyclerLugares)
+        recyclerLugares.layoutManager = LinearLayoutManager(requireContext())
 
-        imageCarousel = view.findViewById(R.id.imageCarousel)
-        setupCarousel()
+        recyclerReservas = view.findViewById(R.id.recyclerReservas)
+        recyclerReservas.layoutManager = LinearLayoutManager(requireContext())
 
         firestoreRepository = FirestoreRepository()
-        cargarLugaresDisponibles()
 
         return view
     }
 
-    private fun setupCarousel() {
-        imageCarousel.adapter = ImageCarouselAdapter(imageList)
-        autoScrollRunnable = Runnable {
-            var currentItem = imageCarousel.currentItem
-            currentItem = (currentItem + 1) % imageList.size
-            imageCarousel.setCurrentItem(currentItem, true)
-            handler.postDelayed(autoScrollRunnable, 6000) // 6 segundos
-        }
-    }
-
     override fun onResume() {
         super.onResume()
-        handler.postDelayed(autoScrollRunnable, 6000)
-        cargarLugaresDisponibles()
+        cargarDatos()
     }
 
-    override fun onPause() {
-        super.onPause()
-        handler.removeCallbacks(autoScrollRunnable)
-    }
-
-    private fun cargarLugaresDisponibles() {
+    private fun cargarDatos() {
         lifecycleScope.launch {
             try {
+                // Cargar lugares y reservas en paralelo
                 val lugaresDisponibles = firestoreRepository.obtenerLugaresDisponibles()
+                val reservasUsuario = firestoreRepository.obtenerReservasUsuario()
+
+                // Actualizar lista de lugares
                 lugares.clear()
                 lugares.addAll(lugaresDisponibles)
-
-                if (recyclerView.adapter == null) {
-                    recyclerView.adapter = LugarAdapter(
+                if (recyclerLugares.adapter == null) {
+                    recyclerLugares.adapter = LugarAdapter(
                         lugares,
                         onReservarClick = { lugar -> lanzarDetalleReserva(lugar) },
                         onFavoritoClick = { lugar -> toggleFavorito(lugar) }
                     )
                 } else {
-                    recyclerView.adapter?.notifyDataSetChanged()
+                    recyclerLugares.adapter?.notifyDataSetChanged()
                 }
-
                 mostrarEstadoLugares(lugaresDisponibles.isEmpty())
 
+                // Actualizar lista de reservas
+                reservas.clear()
+                reservas.addAll(reservasUsuario)
+                if (recyclerReservas.adapter == null) {
+                    recyclerReservas.adapter = ReservaAdapter(reservas) { reserva ->
+                        cancelarReserva(reserva)
+                    }
+                } else {
+                    recyclerReservas.adapter?.notifyDataSetChanged()
+                }
+
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error al cargar lugares: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), "Error al cargar datos: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -111,7 +97,7 @@ class HomeFragment : Fragment() {
             if (exito) {
                 val index = lugares.indexOfFirst { it.id == lugar.id }
                 if (index != -1) {
-                    recyclerView.adapter?.notifyItemChanged(index)
+                    recyclerLugares.adapter?.notifyItemChanged(index)
                 }
             } else {
                 lugar.esFavorito = !nuevoEstado
@@ -119,27 +105,43 @@ class HomeFragment : Fragment() {
         }
     }
 
+    private fun cancelarReserva(reserva: ReservaFirestore) {
+        lifecycleScope.launch {
+            try {
+                val exito = firestoreRepository.cancelarReserva(reserva.id)
+                if (exito) {
+                    Toast.makeText(requireContext(), "Reserva cancelada", Toast.LENGTH_SHORT).show()
+                    cargarDatos() // Recargar datos para actualizar las listas
+                } else {
+                    Toast.makeText(requireContext(), "Error al cancelar la reserva", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     private fun mostrarEstadoLugares(sinLugares: Boolean) {
         if (sinLugares) {
-            recyclerView.visibility = View.GONE
+            recyclerLugares.visibility = View.GONE
 
             if (mensajeView == null) {
                 mensajeView = TextView(requireContext()).apply {
                     text = "🎉 ¡Todos los lugares están reservados!\n\n" +
-                           "Revisa el calendario para ver tus reservas o " +
-                           "espera a que se liberen espacios."
+                            "Revisa el calendario para ver tus reservas o " +
+                            "espera a que se liberen espacios."
                     textSize = 16f
                     setTextColor(resources.getColor(android.R.color.black, null))
                     gravity = android.view.Gravity.CENTER
                     setPadding(32, 64, 32, 64)
                 }
 
-                (recyclerView.parent as? ViewGroup)?.addView(mensajeView)
+                (recyclerLugares.parent as? ViewGroup)?.addView(mensajeView)
             } else {
                 mensajeView?.visibility = View.VISIBLE
             }
         } else {
-            recyclerView.visibility = View.VISIBLE
+            recyclerLugares.visibility = View.VISIBLE
             mensajeView?.visibility = View.GONE
         }
     }
@@ -162,6 +164,35 @@ class HomeFragment : Fragment() {
             .replace(R.id.fragment_container, fragment)
             .addToBackStack(null)
             .commit()
+    }
+
+    inner class ReservaAdapter(
+        private val reservas: List<ReservaFirestore>,
+        private val onCancelarClick: (ReservaFirestore) -> Unit
+    ) : RecyclerView.Adapter<ReservaAdapter.ReservaViewHolder>() {
+
+        inner class ReservaViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+            val txtNombreLugar: TextView = itemView.findViewById(R.id.txtNombreLugarReserva)
+            val txtFecha: TextView = itemView.findViewById(R.id.txtFechaReserva)
+            val txtHora: TextView = itemView.findViewById(R.id.txtHoraReserva)
+            val btnCancelar: Button = itemView.findViewById(R.id.btnCancelarReservaItem)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int):
+                ReservaViewHolder {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_reserva, parent, false)
+            return ReservaViewHolder(view)
+        }
+
+        override fun onBindViewHolder(holder: ReservaViewHolder, position: Int) {
+            val reserva = reservas[position]
+            holder.txtNombreLugar.text = reserva.lugarNombre
+            holder.txtFecha.text = "Fecha: ${reserva.fecha}"
+            holder.txtHora.text = "Hora: ${reserva.horaInicio} - ${reserva.horaFin}"
+            holder.btnCancelar.setOnClickListener { onCancelarClick(reserva) }
+        }
+
+        override fun getItemCount() = reservas.size
     }
 
     inner class LugarAdapter(

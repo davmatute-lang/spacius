@@ -138,16 +138,6 @@
 
         </androidx.cardview.widget.CardView>
 
-        <!-- Botón de prueba -->
-        <Button
-            android:id="@+id/btn_test_notification"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="🔔 Enviar Notificación de Prueba"
-            android:backgroundTint="#1DB954"
-            android:textSize="16sp"
-            android:layout_marginTop="8dp" />
-
         <!-- Información adicional -->
         <TextView
             android:layout_width="wrap_content"

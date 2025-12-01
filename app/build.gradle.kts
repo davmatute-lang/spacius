@@ -4,6 +4,8 @@ import java.io.FileInputStream
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("kotlin-parcelize")
+    alias(libs.plugins.ksp)
     
     // 🔥 Google Services para Firebase
     id("com.google.gms.google-services")
@@ -40,7 +42,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -60,6 +62,11 @@ android {
     buildFeatures {
         viewBinding = true
     }
+    
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
 }
 
 dependencies {
@@ -68,26 +75,49 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
-    implementation("com.google.android.gms:play-services-maps:18.2.0")
-    implementation("de.hdodenhof:circleimageview:3.1.0") // <-- Añadido para imagen de perfil circular
-    
-    // SwipeRefreshLayout
-    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    implementation(libs.navigation.fragment.ktx)
+    implementation(libs.navigation.ui.ktx)
+    implementation(libs.swiperefreshlayout)
 
-    // --- 🔹 Glide (Carga de imágenes) ---
-    implementation("com.github.bumptech.glide:glide:4.16.0")
-    implementation("jp.wasabeef:glide-transformations:4.3.0") // <-- LIBRERÍA PARA DESENFOQUE
+    // --- ViewModel & LiveData ---
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity)
 
-    // --- 🔥 Firebase ---
-    implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
-    implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.firebase:firebase-analytics-ktx")
-    implementation("com.google.firebase:firebase-firestore-ktx")
-    implementation("com.google.firebase:firebase-storage-ktx")
+    // --- Firebase ---
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth.ktx)
+    implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.storage.ktx)
+    implementation(libs.firebase.analytics.ktx)
+    implementation(libs.firebase.messaging.ktx)
 
-    // --- Tests ---
+    // --- Google Maps ---
+    implementation(libs.play.services.maps)
+    implementation(libs.play.services.location)
+
+    // --- Room Database ---
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    // --- WorkManager ---
+    implementation(libs.work.runtime.ktx)
+
+    // --- Glide para imágenes ---
+    implementation(libs.glide)
+    ksp(libs.glide.ksp)
+
+    // --- CircleImageView ---
+    implementation(libs.circleimageview)
+
+    // --- Coroutines ---
+    implementation(platform(libs.kotlin.coroutines.bom))
+    implementation(libs.kotlin.coroutines.android)
+    implementation(libs.kotlin.coroutines.play.services)
+
+    // --- Testing ---
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

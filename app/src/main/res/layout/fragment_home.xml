@@ -7,14 +7,25 @@
     android:orientation="vertical"
     android:padding="16dp"
     android:background="#FFFFFF"
-    tools:context=".ui.InicioFragment">
+    tools:context=".HomeFragment">
 
-    <!-- Carrusel de imágenes -->
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/imageCarousel"
+    <!-- Título para Mis Reservas -->
+    <TextView
+        android:id="@+id/txtMisReservas"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Mis Reservas"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- RecyclerView para la lista de reservas -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerReservas"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:layout_marginBottom="16dp" />
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        tools:listitem="@layout/item_reserva" />
 
     <!-- Subtítulo -->
     <TextView
