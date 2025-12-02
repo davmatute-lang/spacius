@@ -9,16 +9,21 @@ import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.FirebaseApp
+import java.util.concurrent.atomic.AtomicBoolean
 
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var progressBar: ProgressBar
+
+    @VisibleForTesting
+    val isIdle = AtomicBoolean(true)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,7 +33,7 @@ class LoginActivity : AppCompatActivity() {
         if (FirebaseApp.getApps(this).isEmpty()) {
             FirebaseApp.initializeApp(this)
         }
-        
+
         // Inicializar Firebase Auth
         auth = Firebase.auth
 
@@ -37,7 +42,7 @@ class LoginActivity : AppCompatActivity() {
         val etContrasena = findViewById<EditText>(R.id.etContrasena)
         val btnLogin = findViewById<Button>(R.id.btnLogin)
         val tvRegistro = findViewById<TextView>(R.id.tvRegistro)
-        
+
         // Crear ProgressBar programáticamente si no existe en el layout
         progressBar = ProgressBar(this).apply {
             visibility = View.GONE
@@ -58,7 +63,7 @@ class LoginActivity : AppCompatActivity() {
             val intent = Intent(this, RegisterActivity::class.java)
             startActivity(intent)
         }
-        
+
         // Verificar si viene del registro y mostrar mensaje
         val mensajeRegistro = intent.getStringExtra("mensaje_registro")
         if (!mensajeRegistro.isNullOrEmpty()) {
@@ -68,7 +73,7 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        // Verificar si el usuario ya está logueado
+        // Verificar si el usuario ya esté logueado
         val currentUser = auth.currentUser
         if (currentUser != null) {
             // Usuario ya logueado, ir directamente al MainActivity
@@ -100,11 +105,12 @@ class LoginActivity : AppCompatActivity() {
 
     private fun loginConFirebase(correo: String, contrasena: String) {
         mostrarCargando(true)
+        isIdle.set(false)
 
         auth.signInWithEmailAndPassword(correo, contrasena)
             .addOnCompleteListener(this) { task ->
                 mostrarCargando(false)
-                
+
                 if (task.isSuccessful) {
                     // Login exitoso
                     val user = auth.currentUser
@@ -113,17 +119,17 @@ class LoginActivity : AppCompatActivity() {
                 } else {
                     // Error en el login
                     val exception = task.exception
-                    
+
                     val errorMessage = when {
                         exception?.message?.contains("badly formatted") == true -> "Formato de correo inválido"
                         exception?.message?.contains("no user record") == true -> "No existe una cuenta con este correo"
                         exception?.message?.contains("password is invalid") == true -> "Contraseña incorrecta"
-                        exception?.message?.contains("network error") == true -> "Error de conexión. Verifica tu internet"
                         exception?.message?.contains("too many requests") == true -> "Demasiados intentos. Espera un momento"
                         else -> "Error: ${exception?.message ?: "Desconocido"}"
                     }
                     Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
                 }
+                isIdle.set(true)
             }
     }
 
