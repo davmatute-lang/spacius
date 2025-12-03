@@ -112,36 +112,28 @@ class FirestoreRepository {
     }
     
     /**
-     * Obtener lugares disponibles (no reservados por el usuario actual)
+     * Obtener lugares disponibles (todos los lugares activos)
+     * NOTA: Ahora retorna TODOS los lugares sin filtrar por reservas del usuario
      */
     suspend fun obtenerLugaresDisponibles(): List<LugarFirestore> {
         return try {
             Log.d(TAG, "Iniciando búsqueda de lugares disponibles...")
             
-            // Primero obtenemos todos los lugares
+            // Obtener todos los lugares activos
             val todosLugares = obtenerLugares()
             Log.d(TAG, "Total lugares encontrados: ${todosLugares.size}")
             
-            // Luego obtenemos las reservas activas del usuario
-            val lugaresReservados = obtenerLugaresReservados()
-            Log.d(TAG, "Lugares reservados por usuario: ${lugaresReservados.size}")
-            
             // Obtener la lista de favoritos del usuario
             val favoritos = obtenerFavoritosUsuario()
+            Log.d(TAG, "Total favoritos: ${favoritos.size}")
 
-            // Filtramos en memoria para evitar consultas complejas
-            val lugaresDisponibles = todosLugares.filter { lugar -> 
-                val estaReservado = lugaresReservados.any { reserva -> 
-                    reserva.lugarId == lugar.id 
-                }
-                !estaReservado
-            }.map { lugar ->
-                // Marcar como favorito si está en la lista de favoritos
+            // Retornar todos los lugares marcando los favoritos
+            val lugaresConFavoritos = todosLugares.map { lugar ->
                 lugar.apply { esFavorito = favoritos.any { it.lugarId == lugar.id } }
             }
             
-            Log.d(TAG, "Lugares disponibles: ${lugaresDisponibles.size}")
-            lugaresDisponibles
+            Log.d(TAG, "Lugares disponibles para mostrar: ${lugaresConFavoritos.size}")
+            lugaresConFavoritos
             
         } catch (e: Exception) {
             Log.e(TAG, "Error al obtener lugares disponibles: ${e.message}")
