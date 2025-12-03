@@ -1,8 +1,10 @@
 package com.example.spacius.data
 
+import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
 
+@IgnoreExtraProperties
 data class Notification(
     val id: String = "",
     val title: String = "",

@@ -1,45 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
     app:cardCornerRadius="8dp"
     app:cardElevation="4dp">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:padding="16dp">
 
         <TextView
             android:id="@+id/txtNombreLugarReserva"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="Nombre del Lugar"
             android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnCancelarReservaItem"/>
 
         <TextView
             android:id="@+id/txtFechaReserva"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Fecha: DD/MM/AAAA" />
+            android:layout_marginTop="4dp"
+            android:text="Fecha: DD/MM/AAAA"
+            app:layout_constraintTop_toBottomOf="@+id/txtNombreLugarReserva"
+            app:layout_constraintStart_toStartOf="parent"/>
 
         <TextView
             android:id="@+id/txtHoraReserva"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Hora: HH:MM - HH:MM" />
+            android:text="Hora: HH:MM - HH:MM"
+            app:layout_constraintTop_toBottomOf="@+id/txtFechaReserva"
+            app:layout_constraintStart_toStartOf="parent"/>
 
         <Button
             android:id="@+id/btnCancelarReservaItem"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Cancelar" />
+            android:text="Cancelar"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.cardview.widget.CardView>

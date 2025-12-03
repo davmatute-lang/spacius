@@ -1,0 +1,22 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Bloquea el acceso a todos los documentos por defecto.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Permite a un usuario leer y escribir solo en su propio documento de usuario.
+    match /users/{userId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null;
+    }
+
+    // Permite a un usuario leer y escribir solo en sus propias notificaciones.
+    match /users/{userId}/notifications/{notificationId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
