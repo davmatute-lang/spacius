@@ -53,6 +53,9 @@ class HomeFragment : Fragment() {
     private fun cargarDatos() {
         lifecycleScope.launch {
             try {
+                // Inicializar lugares predefinidos si es la primera vez
+                firestoreRepository.inicializarLugaresPredefinidos()
+                
                 // Cargar lugares y reservas en paralelo
                 val lugaresDisponibles = firestoreRepository.obtenerLugaresDisponibles()
                 val reservasUsuario = firestoreRepository.obtenerReservasUsuario()
@@ -127,9 +130,9 @@ class HomeFragment : Fragment() {
 
             if (mensajeView == null) {
                 mensajeView = TextView(requireContext()).apply {
-                    text = "🎉 ¡Todos los lugares están reservados!\n\n" +
-                            "Revisa el calendario para ver tus reservas o " +
-                            "espera a que se liberen espacios."
+                    text = "😔 No hay lugares disponibles en este momento\n\n" +
+                            "Por favor, contacta al administrador o " +
+                            "intenta nuevamente más tarde."
                     textSize = 16f
                     setTextColor(resources.getColor(android.R.color.black, null))
                     gravity = android.view.Gravity.CENTER
