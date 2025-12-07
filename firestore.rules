@@ -4,60 +4,57 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // Regla 1: Deniega por defecto el acceso a toda la base de datos.
-    // Es la regla de seguridad más importante.
     match /{document=**} {
       allow read, write: if false;
     }
 
     // Regla 2: Permite crear un documento de usuario si estás autenticado.
-    // Permite leer, actualizar y borrar TU PROPIO documento de usuario.
     match /users/{userId} {
       allow create: if request.auth != null;
       allow read, update, delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Regla 3: Permite leer y escribir en subcolecciones del usuario (ej. notificaciones).
-    // Un usuario solo puede acceder a sus propias notificaciones.
+    // Regla 3: Permite leer y escribir en subcolecciones del usuario.
     match /users/{userId}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // ========================================
     // LUGARES - Todos los usuarios autenticados pueden leer y escribir
-    // ========================================
     match /lugares/{lugarId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null;
     }
 
-    // ========================================
     // RESERVAS - Usuarios pueden crear y gestionar sus propias reservas
-    // ========================================
     match /reservas/{reservaId} {
-      // Leer: solo si es tu reserva
-      allow read: if request.auth != null && 
-                     (resource.data.usuarioId == request.auth.uid);
+      // 🔓 CAMBIO CRÍTICO: Permitir leer todas las reservas para verificar disponibilidad
+      allow read: if request.auth != null;
+      
       // Crear: solo si pones tu propio usuarioId
       allow create: if request.auth != null && 
                        request.resource.data.usuarioId == request.auth.uid;
+      
       // Actualizar/Eliminar: solo si es tu reserva
       allow update, delete: if request.auth != null && 
                                resource.data.usuarioId == request.auth.uid;
     }
 
-    // ========================================
     // FAVORITOS - Usuarios pueden gestionar sus propios favoritos
-    // ========================================
     match /favoritos/{favoritoId} {
-      // Leer: solo si es tu favorito
       allow read: if request.auth != null && 
                      (resource.data.usuarioId == request.auth.uid);
-      // Crear: solo si pones tu propio usuarioId
       allow create: if request.auth != null && 
                        request.resource.data.usuarioId == request.auth.uid;
-      // Eliminar: solo si es tu favorito
       allow delete: if request.auth != null && 
                        resource.data.usuarioId == request.auth.uid;
+    }
+
+    // HISTORIAL - Usuarios pueden crear y leer su propio historial
+    match /history/{historyId} {
+      allow read: if request.auth != null && 
+                     resource.data.usuarioId == request.auth.uid;
+      allow create: if request.auth != null && 
+                       request.resource.data.usuarioId == request.auth.uid;
     }
   }
 }
