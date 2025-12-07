@@ -16,5 +16,6 @@
     <string name="cd_espacios">Botón para ver espacios públicos</string>
     <string name="cd_historial">Botón para ver historial</string>
     <string name="cd_cerrar_sesion">Botón para cerrar sesión</string>
+    <string name="cd_loading_notifications">Cargando notificaciones</string>
 
 </resources>

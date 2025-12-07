@@ -12,6 +12,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.example.spacius.preferences.NotificationPreferences
 import com.google.android.material.switchmaterial.SwitchMaterial
 
 class NotificationsFragment : Fragment(R.layout.fragment_notifications) {
@@ -22,7 +23,6 @@ class NotificationsFragment : Fragment(R.layout.fragment_notifications) {
     private lateinit var switchConfirmations: SwitchMaterial
     private lateinit var switchReminders: SwitchMaterial
     private lateinit var switchNewSpaces: SwitchMaterial
-    private lateinit var testButton: Button
 
     // Lanzador para solicitar permisos de notificación
     private val requestPermissionLauncher = registerForActivityResult(
@@ -47,7 +47,6 @@ class NotificationsFragment : Fragment(R.layout.fragment_notifications) {
         switchConfirmations = view.findViewById(R.id.switch_booking_confirmations)
         switchReminders = view.findViewById(R.id.switch_booking_reminders)
         switchNewSpaces = view.findViewById(R.id.switch_new_spaces)
-        testButton = view.findViewById(R.id.btn_test_notification)
 
         loadPreferences()
         setupListeners()
@@ -74,9 +73,6 @@ class NotificationsFragment : Fragment(R.layout.fragment_notifications) {
         }
         switchNewSpaces.setOnCheckedChangeListener { _, isChecked ->
             notificationPrefs.setNewSpacesEnabled(isChecked)
-        }
-        testButton.setOnClickListener {
-            handleTestNotificationClick()
         }
     }
 

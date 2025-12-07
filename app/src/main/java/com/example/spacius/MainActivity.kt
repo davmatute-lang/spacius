@@ -1,12 +1,24 @@
 package com.example.spacius
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import com.example.spacius.utils.NotificationUtils
+import com.example.spacius.viewmodels.NotificationViewModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
@@ -14,10 +26,30 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bottomNavigation: BottomNavigationView
     private val calendarFragment by lazy { CalendarFragment() } // Instancia única del calendario
 
+    // --- ViewModel ---
+    private val notificationViewModel: NotificationViewModel by viewModels()
+
+    // --- 🎨 UI para el contador de notificaciones ---
+    private var notificationBadge: TextView? = null
+
+    // --- 🔔 Lanuncher para el permiso de notificaciones ---
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // Permiso concedido. No se necesita hacer nada extra aquí.
+        } else {
+            // Permiso denegado. Las notificaciones no se mostrarán.
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+
+        // Crear canal de notificaciones
+        NotificationUtils.createNotificationChannel(this)
 
         // Configurar la Toolbar
         val topAppBar: Toolbar = findViewById(R.id.topAppBar)
@@ -39,6 +71,67 @@ class MainActivity : AppCompatActivity() {
                 .replace(R.id.fragment_container, HomeFragment(), "HOME")
                 .commit()
             supportActionBar?.title = "Inicio"
+        }
+
+        // Pedir permiso al iniciar
+        askNotificationPermission()
+        
+        // Observar el contador de notificaciones
+        notificationViewModel.unreadNotificationsCount.observe(this) {
+            count -> updateNotificationBadge(count)
+        }
+    }
+
+    private fun askNotificationPermission() {
+        // Solo es necesario para Android 13 (API 33) en adelante
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                // Si el permiso no está concedido, se solicita
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+
+        // --- 🎨 Configurar el contador de notificaciones ---
+        val notificationItem = menu?.findItem(R.id.action_notifications)
+        val actionView = notificationItem?.actionView
+        notificationBadge = actionView?.findViewById(R.id.notification_badge)
+
+        actionView?.setOnClickListener {
+            onOptionsItemSelected(notificationItem)
+        }
+
+        return true
+    }
+
+    // --- 🎨 Funciones para el contador de notificaciones ---
+    fun updateNotificationBadge(count: Int) {
+        if (notificationBadge == null) return
+
+        runOnUiThread {
+            if (count > 0) {
+                notificationBadge?.text = count.toString()
+                notificationBadge?.visibility = View.VISIBLE
+            } else {
+                notificationBadge?.visibility = View.GONE
+            }
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_notifications -> {
+                updateNotificationBadge(0) // Limpiar contador al abrir
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, NotificationHistoryFragment()) // Volver a usar el fragmento de historial
+                    .addToBackStack(null)
+                    .commit()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 
@@ -83,18 +176,15 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
-    // Función para cambiar la pestaña del BottomNavigation
     fun setSelectedBottomNav(itemId: Int) {
         bottomNavigation.selectedItemId = itemId
     }
 
-    // ✅ Función simplificada para cambiar a calendario (se actualiza automáticamente)
     fun marcarFechaEnCalendario(fecha: String) {
         setSelectedBottomNav(R.id.nav_calendario)
         supportActionBar?.title = "Calendario"
     }
 
-    // ✅ Función para navegar al calendario después de una reserva exitosa
     fun navegarACalendario() {
         setSelectedBottomNav(R.id.nav_calendario)
         supportActionBar?.title = "Calendario"
@@ -103,7 +193,6 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
-    // 🔹 Función simplificada para procesar reservas completas
     fun procesarReservaCompleta(
         idLugar: Int,
         nombreLugar: String,
@@ -117,7 +206,6 @@ class MainActivity : AppCompatActivity() {
         actualizarMapsFragment()
     }
 
-    // 🔹 Nueva función para actualizar calendario desde DetalleReservaFragment
     fun actualizarCalendarioDesdeDetalle() {
         if (calendarFragment.isAdded) {
             calendarFragment.actualizarDespuesDeCancelacion()
@@ -126,19 +214,13 @@ class MainActivity : AppCompatActivity() {
         actualizarHomeFragment()
     }
 
-    // 🔹 Nueva función para actualizar HomeFragment después de una reserva o cancelación
     fun actualizarHomeFragment() {
         val homeFragment = supportFragmentManager.findFragmentByTag("HOME") as? HomeFragment
-        homeFragment?.let {
-            // El onResume del fragment se encargará de recargar los datos
-        }
+        homeFragment?.let { }
     }
 
-    // 🔹 Nueva función para actualizar MapsFragment después de una reserva o cancelación
     fun actualizarMapsFragment() {
         val mapsFragment = supportFragmentManager.findFragmentByTag("MAPS") as? MapsFragment
-        mapsFragment?.let {
-            // El onResume del fragment se encargará de recargar los datos
-        }
+        mapsFragment?.let { }
     }
 }

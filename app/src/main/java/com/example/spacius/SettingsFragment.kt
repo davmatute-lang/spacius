@@ -1,9 +1,6 @@
 package com.example.spacius
 
 import android.content.Intent
-import com.example.spacius.FavoriteSpacesFragment
-import com.example.spacius.HistoryFragment
-import com.example.spacius.NotificationsFragment
 import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
