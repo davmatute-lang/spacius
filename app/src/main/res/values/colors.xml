@@ -3,7 +3,20 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <color name="colorPrimary">#2E7D32</color>
+    <!-- Paleta principal - Balance verde/neutros -->
+    <color name="colorPrimary">#43A047</color>
+    <color name="colorPrimaryDark">#2E7D32</color>
+    <color name="colorAccent">#66BB6A</color>
+    <color name="colorBackground">#F5F7F5</color>
+    <color name="colorSurface">#FFFFFF</color>
+    
+    <!-- Gradientes balanceados -->
+    <color name="gradient_start">#E8F5E9</color>
+    <color name="gradient_end">#F1F8E9</color>
+    <color name="header_gradient_start">#43A047</color>
+    <color name="header_gradient_end">#2E7D32</color>
+    
+    <!-- Verde para calendario y eventos -->
     <color name="green_primary">#2E7D32</color>
     <color name="green_secondary">#4CAF50</color>
     <color name="green_light_background">#E8F5E9</color>
@@ -14,9 +27,13 @@
     <color name="event_background">@color/green_light_background</color>
     <color name="event_icon_bg">@color/green_primary</color>
 
-    <color name="text_primary">#333333</color>
-    <color name="text_secondary">#666666</color>
-    <color name="text_disabled">#999999</color>
+    <!-- Textos -->
+    <color name="text_primary">#1B5E20</color>
+    <color name="text_secondary">#558B2F</color>
+    <color name="text_disabled">#BDBDBD</color>
+    <color name="text_hint">#81C784</color>
     
+    <!-- Estados -->
     <color name="colorError">#D32F2F</color>
+    <color name="colorSuccess">#4CAF50</color>
 </resources>

@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         app:cardCornerRadius="0dp"
         app:cardElevation="8dp"
-        app:cardBackgroundColor="#00000000"
+        app:cardBackgroundColor="@color/colorPrimary"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -23,7 +23,8 @@
             android:orientation="vertical"
             android:padding="24dp"
             android:paddingTop="48dp"
-            android:paddingBottom="32dp">
+            android:paddingBottom="32dp"
+            android:background="@drawable/header_gradient">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -243,18 +244,18 @@
                         android:id="@+id/btnRegistrar"
                         android:layout_width="match_parent"
                         android:layout_height="60dp"
-                        android:text="Crear Cuenta"
-                        android:textColor="@android:color/white"
-                        android:textSize="16sp"
+                        android:text="+ Crear Cuenta"
+                        android:textColor="@color/white"
+                        android:textSize="18sp"
                         android:textStyle="bold"
                         android:textAllCaps="false"
-                        app:cornerRadius="16dp"
-                        app:backgroundTint="@color/green_primary"
-                        app:elevation="4dp"
+                        app:cornerRadius="12dp"
+                        app:backgroundTint="@color/colorPrimaryDark"
+                        app:elevation="12dp"
+                        app:strokeWidth="2dp"
+                        app:strokeColor="@color/green_secondary"
                         android:layout_marginTop="24dp"
-                        app:icon="@android:drawable/ic_input_add"
-                        app:iconGravity="textStart"
-                        app:iconTint="@android:color/white" />
+                        android:layout_marginBottom="16dp" />
 
                 </LinearLayout>
 
@@ -263,7 +264,7 @@
             <!-- Espacio adicional al final -->
             <Space
                 android:layout_width="match_parent"
-                android:layout_height="24dp" />
+                android:layout_height="80dp" />
 
         </LinearLayout>
 
