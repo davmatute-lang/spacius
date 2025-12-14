@@ -11,6 +11,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -38,8 +39,8 @@ class LoginActivity : AppCompatActivity() {
         auth = Firebase.auth
 
         // Vincular los elementos del XML con sus IDs correctos
-        val etCorreo = findViewById<EditText>(R.id.etCorreo)
-        val etContrasena = findViewById<EditText>(R.id.etContrasena)
+        val etCorreo = findViewById<TextInputLayout>(R.id.tilEmail).editText
+        val etContrasena = findViewById<TextInputLayout>(R.id.tilPassword).editText
         val btnLogin = findViewById<Button>(R.id.btnLogin)
         val tvRegistro = findViewById<TextView>(R.id.tvRegistro)
 
@@ -50,8 +51,8 @@ class LoginActivity : AppCompatActivity() {
 
         // Botón Ingresar con Firebase Auth
         btnLogin.setOnClickListener {
-            val correo = etCorreo.text.toString().trim()
-            val contrasena = etContrasena.text.toString().trim()
+            val correo = etCorreo?.text.toString().trim()
+            val contrasena = etContrasena?.text.toString().trim()
 
             if (validarCampos(correo, contrasena)) {
                 loginConFirebase(correo, contrasena)

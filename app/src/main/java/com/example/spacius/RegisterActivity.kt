@@ -9,6 +9,7 @@ import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.auth.ktx.auth
@@ -27,12 +28,12 @@ class RegisterActivity : AppCompatActivity() {
 
         auth = Firebase.auth
 
-        val etNombre = findViewById<EditText>(R.id.etNombre)
-        val etCedula = findViewById<EditText>(R.id.etCedula)
-        val etEmail = findViewById<EditText>(R.id.etEmail)
-        val etTelefono = findViewById<EditText>(R.id.etTelefono)
-        val etPassword = findViewById<EditText>(R.id.etPassword)
-        val etConfirmPassword = findViewById<EditText>(R.id.etConfirmPassword)
+        val etNombre = findViewById<TextInputLayout>(R.id.tilNombre).editText
+        val etCedula = findViewById<TextInputLayout>(R.id.tilCedula).editText
+        val etEmail = findViewById<TextInputLayout>(R.id.tilEmail).editText
+        val etTelefono = findViewById<TextInputLayout>(R.id.tilTelefono).editText
+        val etPassword = findViewById<TextInputLayout>(R.id.tilPassword).editText
+        val etConfirmPassword = findViewById<TextInputLayout>(R.id.tilConfirmPassword).editText
         val btnRegistrar = findViewById<Button>(R.id.btnRegistrar)
 
         progressBar = ProgressBar(this).apply {
@@ -40,12 +41,12 @@ class RegisterActivity : AppCompatActivity() {
         }
 
         btnRegistrar.setOnClickListener {
-            val nombre = etNombre.text.toString().trim()
-            val cedula = etCedula.text.toString().trim()
-            val email = etEmail.text.toString().trim()
-            val telefono = etTelefono.text.toString().trim()
-            val password = etPassword.text.toString().trim()
-            val confirmPassword = etConfirmPassword.text.toString().trim()
+            val nombre = etNombre?.text.toString().trim()
+            val cedula = etCedula?.text.toString().trim()
+            val email = etEmail?.text.toString().trim()
+            val telefono = etTelefono?.text.toString().trim()
+            val password = etPassword?.text.toString().trim()
+            val confirmPassword = etConfirmPassword?.text.toString().trim()
 
             if (validarCampos(nombre, cedula, email, telefono, password, confirmPassword)) {
                 registrarConFirebase(nombre, cedula, email, telefono, password)
