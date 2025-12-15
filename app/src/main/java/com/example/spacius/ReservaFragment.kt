@@ -47,6 +47,7 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
     // Variables para almacenar datos del lugar
     private var lugarId: String = ""
     private var nombreLugar: String = ""
+    private var imagenUrlLugar: String = ""
     
     // Variables para almacenar selecciones del usuario
     private var fechaSeleccionada = ""
@@ -78,6 +79,7 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
         arguments?.let { bundle ->
             lugarId = bundle.getString("lugarId") ?: ""
             nombreLugar = bundle.getString("nombreLugar") ?: "Lugar desconocido"
+            imagenUrlLugar = bundle.getString("imagenUrl") ?: ""
             
             txtNombre.text = nombreLugar
             txtDescripcion.text = bundle.getString("descripcion")
@@ -91,7 +93,7 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
                 "📅 $disponibilidad"
             }
 
-            Glide.with(this).load(bundle.getString("imagenUrl"))
+            Glide.with(this).load(imagenUrlLugar)
                 .placeholder(R.drawable.ic_launcher_background)
                 .into(imgLugar)
 
@@ -167,6 +169,7 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
                     val reserva = ReservaFirestore(
                         lugarId = lugarId,
                         lugarNombre = nombreLugar,
+                        imagenUrl = imagenUrlLugar,
                         fecha = fechaSeleccionada,
                         horaInicio = horaInicioSeleccionada,
                         horaFin = horaFinSeleccionada,
@@ -215,14 +218,8 @@ class ReservaFragment : Fragment(), OnMapReadyCallback {
             navegarAlCalendario()
         }
 
-        // Configurar el mapa
-        val mapFragment = childFragmentManager.findFragmentById(R.id.mapFragmentContainer) as? SupportMapFragment
-            ?: SupportMapFragment.newInstance().also {
-                childFragmentManager.beginTransaction()
-                    .replace(R.id.mapFragmentContainer, it)
-                    .commit()
-            }
-        mapFragment.getMapAsync(this)
+        val mapFragment = childFragmentManager.findFragmentById(R.id.map_fragment) as? SupportMapFragment
+        mapFragment?.getMapAsync(this)
 
         return view
     }
