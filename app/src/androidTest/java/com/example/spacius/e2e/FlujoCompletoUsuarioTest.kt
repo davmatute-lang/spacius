@@ -120,13 +120,13 @@ class FlujoCompletoUsuarioTest {
     @Test
     fun flujoCompleto_navegacionLoginRegistro_funcionaCorrectamente() {
         // Act - Navegar a registro
-        onView(withId(R.id.tvRegistrarse))
+        onView(withId(R.id.tvRegistro))
             .perform(click())
         
         Thread.sleep(1000)
         
         // Assert - Verificar que estamos en RegisterActivity
-        onView(withId(R.id.btnRegister))
+        onView(withId(R.id.btnRegistrar))
             .check(matches(isDisplayed()))
         
         // Act - Volver a login
@@ -182,7 +182,7 @@ class FlujoCompletoUsuarioTest {
         onView(withId(R.id.btnLogin))
             .check(matches(isDisplayed()))
         
-        onView(withId(R.id.tvRegistrarse))
+        onView(withId(R.id.tvRegistro))
             .check(matches(isDisplayed()))
     }
 }

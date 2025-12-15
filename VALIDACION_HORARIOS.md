@@ -1,4 +1,4 @@
-# ⏰ Validación de Horarios - Sistema de Reservas
+qiue # ⏰ Validación de Horarios - Sistema de Reservas
 
 **Fecha:** 4 de Noviembre, 2025  
 **Feature:** Validación de reservas en horarios pasados  

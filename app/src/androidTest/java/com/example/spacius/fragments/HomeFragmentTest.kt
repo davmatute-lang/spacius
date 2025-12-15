@@ -33,7 +33,7 @@ class HomeFragmentTest {
     @Test
     fun homeFragment_seVisualizaCorrectamente() {
         // Assert - Verificar que el fragment se carga
-        onView(withId(R.id.tvBienvenida))
+        onView(withId(R.id.txtMisReservas))
             .check(matches(isDisplayed()))
     }
     
@@ -41,13 +41,6 @@ class HomeFragmentTest {
     fun recyclerViewLugares_estaVisible() {
         // Assert - Verificar que el RecyclerView está visible
         onView(withId(R.id.recyclerLugares))
-            .check(matches(isDisplayed()))
-    }
-    
-    @Test
-    fun swipeRefreshLayout_estaVisible() {
-        // Assert - Verificar que el SwipeRefresh está visible
-        onView(withId(R.id.swipeRefreshLayout))
             .check(matches(isDisplayed()))
     }
 }

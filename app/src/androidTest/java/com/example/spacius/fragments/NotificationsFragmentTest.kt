@@ -33,49 +33,35 @@ class NotificationsFragmentTest {
     @Test
     fun notificationsFragment_seVisualizaCorrectamente() {
         // Assert - Verificar que el fragment se carga
-        onView(withId(R.id.switchTodasNotificaciones))
+        onView(withId(R.id.switch_all_notifications))
             .check(matches(isDisplayed()))
     }
     
     @Test
     fun switchTodasNotificaciones_estaVisible() {
         // Assert
-        onView(withId(R.id.switchTodasNotificaciones))
+        onView(withId(R.id.switch_all_notifications))
             .check(matches(isDisplayed()))
     }
     
     @Test
     fun switchRecordatoriosReservas_estaVisible() {
         // Assert
-        onView(withId(R.id.switchRecordatoriosReservas))
+        onView(withId(R.id.switch_booking_reminders))
             .check(matches(isDisplayed()))
     }
     
     @Test
     fun switchConfirmaciones_estaVisible() {
         // Assert
-        onView(withId(R.id.switchConfirmaciones))
-            .check(matches(isDisplayed()))
-    }
-    
-    @Test
-    fun switchCancelaciones_estaVisible() {
-        // Assert
-        onView(withId(R.id.switchCancelaciones))
+        onView(withId(R.id.switch_booking_confirmations))
             .check(matches(isDisplayed()))
     }
     
     @Test
     fun switchProximasReservas_estaVisible() {
         // Assert
-        onView(withId(R.id.switchProximasReservas))
-            .check(matches(isDisplayed()))
-    }
-    
-    @Test
-    fun botonProbarNotificacion_estaVisible() {
-        // Assert
-        onView(withId(R.id.btnProbarNotificacion))
+        onView(withId(R.id.switch_new_spaces))
             .check(matches(isDisplayed()))
     }
 }

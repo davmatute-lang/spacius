@@ -33,12 +33,12 @@ class RegisterActivityTest {
     @Test
     fun registroConCamposVacios_muestraErrores() {
         // Act - Intentar registrar sin llenar campos
-        onView(withId(R.id.btnRegister))
+    onView(withId(R.id.btnRegistrar))
             .perform(scrollTo(), click())
         
         // Assert - Deberían mostrarse los campos sin error evidente
         // (La validación puede ser diferente según implementación)
-        onView(withId(R.id.btnRegister))
+    onView(withId(R.id.btnRegistrar))
             .check(matches(isDisplayed()))
     }
     
@@ -49,16 +49,16 @@ class RegisterActivityTest {
         val password = "Password123"
         
         // Act
-        onView(withId(R.id.etRegisterEmail))
+    onView(withId(R.id.etEmail))
             .perform(scrollTo(), typeText(emailInvalido), closeSoftKeyboard())
-        onView(withId(R.id.etRegisterPassword))
+    onView(withId(R.id.etPassword))
             .perform(scrollTo(), typeText(password), closeSoftKeyboard())
-        onView(withId(R.id.btnRegister))
+    onView(withId(R.id.btnRegistrar))
             .perform(scrollTo(), click())
         
         // Assert - La validación debería evitar el registro
         Thread.sleep(1000)
-        onView(withId(R.id.btnRegister))
+    onView(withId(R.id.btnRegistrar))
             .check(matches(isDisplayed()))
     }
     
@@ -69,23 +69,23 @@ class RegisterActivityTest {
         val passwordDebil = "123" // Muy corta
         
         // Act
-        onView(withId(R.id.etRegisterEmail))
+    onView(withId(R.id.etEmail))
             .perform(scrollTo(), typeText(email), closeSoftKeyboard())
-        onView(withId(R.id.etRegisterPassword))
+    onView(withId(R.id.etPassword))
             .perform(scrollTo(), typeText(passwordDebil), closeSoftKeyboard())
-        onView(withId(R.id.btnRegister))
+    onView(withId(R.id.btnRegistrar))
             .perform(scrollTo(), click())
         
         // Assert
         Thread.sleep(1000)
-        onView(withId(R.id.btnRegister))
+    onView(withId(R.id.btnRegistrar))
             .check(matches(isDisplayed()))
     }
     
     @Test
     fun botonYaTengoCuenta_muestraCorrectamente() {
         // Assert - Verificar que el botón de login está visible
-        onView(withId(R.id.tvYaTengoCuenta))
+    onView(withId(R.id.tvYaTengoCuenta))
             .perform(scrollTo())
             .check(matches(isDisplayed()))
     }
@@ -93,15 +93,15 @@ class RegisterActivityTest {
     @Test
     fun camposDeTextoVisibles_enPantalla() {
         // Assert - Verificar que todos los campos están visibles
-        onView(withId(R.id.etRegisterNombre))
+    onView(withId(R.id.etNombre))
             .perform(scrollTo())
             .check(matches(isDisplayed()))
         
-        onView(withId(R.id.etRegisterEmail))
+    onView(withId(R.id.etEmail))
             .perform(scrollTo())
             .check(matches(isDisplayed()))
         
-        onView(withId(R.id.etRegisterPassword))
+    onView(withId(R.id.etPassword))
             .perform(scrollTo())
             .check(matches(isDisplayed()))
     }
@@ -112,11 +112,11 @@ class RegisterActivityTest {
         val nombre = "Usuario Test"
         
         // Act
-        onView(withId(R.id.etRegisterNombre))
+    onView(withId(R.id.etNombre))
             .perform(scrollTo(), typeText(nombre), closeSoftKeyboard())
         
         // Assert
-        onView(withId(R.id.etRegisterNombre))
+    onView(withId(R.id.etNombre))
             .check(matches(withText(nombre)))
     }
     
@@ -126,11 +126,11 @@ class RegisterActivityTest {
         val email = "test@example.com"
         
         // Act
-        onView(withId(R.id.etRegisterEmail))
+    onView(withId(R.id.etEmail))
             .perform(scrollTo(), typeText(email), closeSoftKeyboard())
         
         // Assert
-        onView(withId(R.id.etRegisterEmail))
+    onView(withId(R.id.etEmail))
             .check(matches(withText(email)))
     }
 }

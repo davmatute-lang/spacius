@@ -261,6 +261,18 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Enlace para volver al Login -->
+            <TextView
+                android:id="@+id/tvYaTengoCuenta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="¿Ya tienes cuenta? Inicia sesión"
+                android:textColor="@color/colorPrimaryDark"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp" />
+
             <!-- Espacio adicional al final -->
             <Space
                 android:layout_width="match_parent"
