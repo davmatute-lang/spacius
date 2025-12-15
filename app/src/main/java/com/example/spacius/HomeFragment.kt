@@ -1,6 +1,7 @@
 package com.example.spacius
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,10 +15,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.spacius.data.FirestoreRepository
 import com.example.spacius.data.LugarFirestore
 import com.example.spacius.data.ReservaFirestore
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class HomeFragment : Fragment() {
 
@@ -28,66 +32,123 @@ class HomeFragment : Fragment() {
     private val reservas = mutableListOf<ReservaFirestore>()
     private var mensajeView: TextView? = null
 
+    companion object {
+        private const val TAG = "HomeFragment"
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_home, container, false)
+        Log.d(TAG, "onCreateView - Iniciando")
+        return try {
+            val view = inflater.inflate(R.layout.fragment_home, container, false)
 
-        recyclerLugares = view.findViewById(R.id.recyclerLugares)
-        recyclerLugares.layoutManager = LinearLayoutManager(requireContext())
+            recyclerLugares = view.findViewById(R.id.recyclerLugares)
+            recyclerLugares.layoutManager = LinearLayoutManager(requireContext())
 
-        recyclerReservas = view.findViewById(R.id.recyclerReservas)
-        recyclerReservas.layoutManager = LinearLayoutManager(requireContext())
+            recyclerReservas = view.findViewById(R.id.recyclerReservas)
+            recyclerReservas.layoutManager = LinearLayoutManager(requireContext())
 
-        firestoreRepository = FirestoreRepository()
-
-        return view
+            firestoreRepository = FirestoreRepository()
+            
+            Log.d(TAG, "onCreateView - Completado exitosamente")
+            view
+        } catch (e: Exception) {
+            Log.e(TAG, "Error en onCreateView: ${e.message}", e)
+            null
+        }
     }
 
     override fun onResume() {
         super.onResume()
+        Log.d(TAG, "onResume - Cargando datos")
         cargarDatos()
     }
 
     private fun cargarDatos() {
         lifecycleScope.launch {
             try {
-                // Inicializar lugares predefinidos si es la primera vez
-                firestoreRepository.inicializarLugaresPredefinidos()
+                Log.d(TAG, "Iniciando carga de datos...")
                 
-                // Cargar lugares y reservas en paralelo
-                val lugaresDisponibles = firestoreRepository.obtenerLugaresDisponibles()
-                val reservasUsuario = firestoreRepository.obtenerReservasUsuario()
-
-                // Actualizar lista de lugares
-                lugares.clear()
-                lugares.addAll(lugaresDisponibles)
-                if (recyclerLugares.adapter == null) {
-                    recyclerLugares.adapter = LugarAdapter(
-                        lugares,
-                        onReservarClick = { lugar -> lanzarDetalleReserva(lugar) },
-                        onFavoritoClick = { lugar -> toggleFavorito(lugar) }
-                    )
-                } else {
-                    recyclerLugares.adapter?.notifyDataSetChanged()
-                }
-                mostrarEstadoLugares(lugaresDisponibles.isEmpty())
-
-                // Actualizar lista de reservas
-                reservas.clear()
-                reservas.addAll(reservasUsuario)
-                if (recyclerReservas.adapter == null) {
-                    recyclerReservas.adapter = ReservaAdapter(reservas) { reserva ->
-                        cancelarReserva(reserva)
+                // Inicializar lugares predefinidos si es la primera vez
+                withContext(Dispatchers.IO) {
+                    try {
+                        firestoreRepository.inicializarLugaresPredefinidos()
+                        Log.d(TAG, "Lugares predefinidos inicializados")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error al inicializar lugares: ${e.message}", e)
                     }
-                } else {
-                    recyclerReservas.adapter?.notifyDataSetChanged()
                 }
+                
+                // Cargar lugares y reservas
+                val lugaresDisponibles = withContext(Dispatchers.IO) {
+                    try {
+                        firestoreRepository.obtenerLugaresDisponibles()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error al obtener lugares: ${e.message}", e)
+                        emptyList()
+                    }
+                }
+                
+                val reservasUsuario = withContext(Dispatchers.IO) {
+                    try {
+                        firestoreRepository.obtenerReservasUsuario()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error al obtener reservas: ${e.message}", e)
+                        emptyList()
+                    }
+                }
+
+                // Actualizar UI en el hilo principal
+                withContext(Dispatchers.Main) {
+                    actualizarUILugares(lugaresDisponibles)
+                    actualizarUIReservas(reservasUsuario)
+                }
+                
+                Log.d(TAG, "Datos cargados: ${lugaresDisponibles.size} lugares, ${reservasUsuario.size} reservas")
 
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error al cargar datos: ${e.message}", Toast.LENGTH_LONG).show()
+                Log.e(TAG, "Error general al cargar datos: ${e.message}", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Error al cargar datos. Verifica tu conexión a internet.", Toast.LENGTH_LONG).show()
+                }
             }
+        }
+    }
+    
+    private fun actualizarUILugares(lugaresDisponibles: List<LugarFirestore>) {
+        try {
+            lugares.clear()
+            lugares.addAll(lugaresDisponibles)
+            if (recyclerLugares.adapter == null) {
+                recyclerLugares.adapter = LugarAdapter(
+                    lugares,
+                    onReservarClick = { lugar -> lanzarDetalleReserva(lugar) },
+                    onFavoritoClick = { lugar -> toggleFavorito(lugar) }
+                )
+            } else {
+                recyclerLugares.adapter?.notifyDataSetChanged()
+            }
+            mostrarEstadoLugares(lugaresDisponibles.isEmpty())
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al actualizar UI de lugares: ${e.message}", e)
+        }
+    }
+    
+    private fun actualizarUIReservas(reservasUsuario: List<ReservaFirestore>) {
+        try {
+            reservas.clear()
+            reservas.addAll(reservasUsuario)
+            if (recyclerReservas.adapter == null) {
+                recyclerReservas.adapter = ReservaAdapter(reservas) { reserva ->
+                    cancelarReserva(reserva)
+                }
+            } else {
+                recyclerReservas.adapter?.notifyDataSetChanged()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al actualizar UI de reservas: ${e.message}", e)
         }
     }
 
@@ -95,78 +156,103 @@ class HomeFragment : Fragment() {
         val nuevoEstado = !lugar.esFavorito
         lugar.esFavorito = nuevoEstado
 
-        lifecycleScope.launch {
-            val exito = firestoreRepository.actualizarFavorito(lugar.id, nuevoEstado)
-            if (exito) {
-                val index = lugares.indexOfFirst { it.id == lugar.id }
-                if (index != -1) {
-                    recyclerLugares.adapter?.notifyItemChanged(index)
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val exito = firestoreRepository.actualizarFavorito(lugar.id, nuevoEstado)
+                withContext(Dispatchers.Main) {
+                    if (exito) {
+                        val index = lugares.indexOfFirst { it.id == lugar.id }
+                        if (index != -1) {
+                            recyclerLugares.adapter?.notifyItemChanged(index)
+                        }
+                    } else {
+                        lugar.esFavorito = !nuevoEstado
+                        Toast.makeText(requireContext(), "Error al actualizar favorito", Toast.LENGTH_SHORT).show()
+                    }
                 }
-            } else {
-                lugar.esFavorito = !nuevoEstado
+            } catch (e: Exception) {
+                Log.e(TAG, "Error al actualizar favorito: ${e.message}", e)
+                withContext(Dispatchers.Main) {
+                    lugar.esFavorito = !nuevoEstado
+                    Toast.makeText(requireContext(), "Error de conexión", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
 
     private fun cancelarReserva(reserva: ReservaFirestore) {
-        lifecycleScope.launch {
+        lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val exito = firestoreRepository.cancelarReserva(reserva.id)
-                if (exito) {
-                    Toast.makeText(requireContext(), "Reserva cancelada", Toast.LENGTH_SHORT).show()
-                    cargarDatos() // Recargar datos para actualizar las listas
-                } else {
-                    Toast.makeText(requireContext(), "Error al cancelar la reserva", Toast.LENGTH_SHORT).show()
+                withContext(Dispatchers.Main) {
+                    if (exito) {
+                        Toast.makeText(requireContext(), "Reserva cancelada", Toast.LENGTH_SHORT).show()
+                        cargarDatos() // Recargar datos para actualizar las listas
+                    } else {
+                        Toast.makeText(requireContext(), "Error al cancelar la reserva", Toast.LENGTH_SHORT).show()
+                    }
                 }
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                Log.e(TAG, "Error al cancelar reserva: ${e.message}", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Error de conexión al cancelar", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
 
     private fun mostrarEstadoLugares(sinLugares: Boolean) {
-        if (sinLugares) {
-            recyclerLugares.visibility = View.GONE
+        try {
+            if (sinLugares) {
+                recyclerLugares.visibility = View.GONE
 
-            if (mensajeView == null) {
-                mensajeView = TextView(requireContext()).apply {
-                    text = "😔 No hay lugares disponibles en este momento\n\n" +
-                            "Por favor, contacta al administrador o " +
-                            "intenta nuevamente más tarde."
-                    textSize = 16f
-                    setTextColor(resources.getColor(android.R.color.black, null))
-                    gravity = android.view.Gravity.CENTER
-                    setPadding(32, 64, 32, 64)
+                if (mensajeView == null) {
+                    mensajeView = TextView(requireContext()).apply {
+                        text = "😔 No hay lugares disponibles en este momento\n\n" +
+                                "Por favor, contacta al administrador o " +
+                                "intenta nuevamente más tarde."
+                        textSize = 16f
+                        setTextColor(resources.getColor(android.R.color.black, null))
+                        gravity = android.view.Gravity.CENTER
+                        setPadding(32, 64, 32, 64)
+                    }
+
+                    (recyclerLugares.parent as? ViewGroup)?.addView(mensajeView)
+                } else {
+                    mensajeView?.visibility = View.VISIBLE
                 }
-
-                (recyclerLugares.parent as? ViewGroup)?.addView(mensajeView)
             } else {
-                mensajeView?.visibility = View.VISIBLE
+                recyclerLugares.visibility = View.VISIBLE
+                mensajeView?.visibility = View.GONE
             }
-        } else {
-            recyclerLugares.visibility = View.VISIBLE
-            mensajeView?.visibility = View.GONE
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al mostrar estado de lugares: ${e.message}", e)
         }
     }
 
     private fun lanzarDetalleReserva(lugar: LugarFirestore) {
-        val fragment = ReservaFragment()
-        fragment.arguments = Bundle().apply {
-            putString("lugarId", lugar.id)
-            putString("nombreLugar", lugar.nombre)
-            putString("descripcion", lugar.descripcion)
-            putString("fecha", lugar.fechaDisponible)
-            putString("categoria", lugar.categoria)
-            putString("imagenUrl", lugar.imagenUrl)
-            putDouble("latitud", lugar.latitud)
-            putDouble("longitud", lugar.longitud)
-            putInt("capacidad", lugar.capacidadMaxima)
-        }
+        try {
+            val fragment = ReservaFragment()
+            fragment.arguments = Bundle().apply {
+                putString("lugarId", lugar.id)
+                putString("nombreLugar", lugar.nombre)
+                putString("descripcion", lugar.descripcion)
+                putString("fecha", lugar.fechaDisponible)
+                putString("categoria", lugar.categoria)
+                putString("imagenUrl", lugar.imagenUrl)
+                putDouble("latitud", lugar.latitud)
+                putDouble("longitud", lugar.longitud)
+                putInt("capacidad", lugar.capacidadMaxima)
+            }
 
-        requireActivity().supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, fragment)
-            .addToBackStack(null)
-            .commit()
+            requireActivity().supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
+                .commit()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al abrir detalle de reserva: ${e.message}", e)
+            Toast.makeText(requireContext(), "Error al abrir detalles", Toast.LENGTH_SHORT).show()
+        }
     }
 
     inner class ReservaAdapter(
@@ -189,16 +275,28 @@ class HomeFragment : Fragment() {
         }
 
         override fun onBindViewHolder(holder: ReservaViewHolder, position: Int) {
-            val reserva = reservas[position]
-            holder.txtNombreLugar.text = reserva.lugarNombre
-            holder.txtFecha.text = "Fecha: ${reserva.fecha}"
-            holder.txtHora.text = "Hora: ${reserva.horaInicio} - ${reserva.horaFin}"
-            holder.btnCancelar.setOnClickListener { onCancelarClick(reserva) }
+            try {
+                val reserva = reservas[position]
+                holder.txtNombreLugar.text = reserva.lugarNombre
+                holder.txtFecha.text = "Fecha: ${reserva.fecha}"
+                holder.txtHora.text = "Hora: ${reserva.horaInicio} - ${reserva.horaFin}"
+                holder.btnCancelar.setOnClickListener { onCancelarClick(reserva) }
 
-            Glide.with(holder.itemView.context)
-                .load(reserva.imagenUrl)
-                .placeholder(R.drawable.ic_launcher_background)
-                .into(holder.imgLugar)
+                // Cargar imagen con manejo de errores mejorado
+                if (reserva.imagenUrl.isNotEmpty()) {
+                    Glide.with(holder.itemView.context)
+                        .load(reserva.imagenUrl)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .placeholder(R.drawable.ic_launcher_background)
+                        .error(R.drawable.ic_launcher_background)
+                        .timeout(10000)
+                        .into(holder.imgLugar)
+                } else {
+                    holder.imgLugar.setImageResource(R.drawable.ic_launcher_background)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error en onBindViewHolder de ReservaAdapter: ${e.message}", e)
+            }
         }
 
         override fun getItemCount() = reservas.size
@@ -223,34 +321,44 @@ class HomeFragment : Fragment() {
             LugarViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_lugar, parent, false))
 
         override fun onBindViewHolder(holder: LugarViewHolder, position: Int) {
-            val lugar = lugares[position]
-            holder.txtNombre.text = lugar.nombre
-            holder.txtDescripcion.text = lugar.descripcion
+            try {
+                val lugar = lugares[position]
+                holder.txtNombre.text = lugar.nombre
+                holder.txtDescripcion.text = lugar.descripcion
 
-            val capacidadInfo = if (lugar.capacidadMaxima > 0) {
-                " Capacidad: ${lugar.capacidadMaxima} personas"
-            } else {
-                "🏢 Espacio disponible"
-            }
+                val capacidadInfo = if (lugar.capacidadMaxima > 0) {
+                    "👥 Capacidad: ${lugar.capacidadMaxima} personas"
+                } else {
+                    "🏢 Espacio disponible"
+                }
 
-            val disponibilidadInfo = lugar.fechaDisponible.takeIf { it.isNotEmpty() } ?: "Disponible"
-            holder.txtCapacidad.text = "$capacidadInfo • 📅 $disponibilidadInfo"
+                val disponibilidadInfo = lugar.fechaDisponible.takeIf { it.isNotEmpty() } ?: "Disponible"
+                holder.txtCapacidad.text = "$capacidadInfo • 📅 $disponibilidadInfo"
 
-            Glide.with(holder.itemView.context)
-                .load(lugar.imagenUrl)
-                .placeholder(R.drawable.ic_launcher_background)
-                .error(R.drawable.ic_launcher_background)
-                .timeout(10000)
-                .into(holder.imgLugar)
+                // Cargar imagen con manejo de errores mejorado
+                if (lugar.imagenUrl.isNotEmpty()) {
+                    Glide.with(holder.itemView.context)
+                        .load(lugar.imagenUrl)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .placeholder(R.drawable.ic_launcher_background)
+                        .error(R.drawable.ic_launcher_background)
+                        .timeout(10000)
+                        .into(holder.imgLugar)
+                } else {
+                    holder.imgLugar.setImageResource(R.drawable.ic_launcher_background)
+                }
 
-            holder.btnReservar.setOnClickListener { onReservarClick(lugar) }
+                holder.btnReservar.setOnClickListener { onReservarClick(lugar) }
+                holder.btnFavorito.setOnClickListener { onFavoritoClick(lugar) }
 
-            holder.btnFavorito.setOnClickListener { onFavoritoClick(lugar) }
-
-            if (lugar.esFavorito) {
-                holder.btnFavorito.setImageResource(R.drawable.ic_star_filled)
-            } else {
-                holder.btnFavorito.setImageResource(R.drawable.ic_star_border)
+                // Actualizar icono de favorito
+                if (lugar.esFavorito) {
+                    holder.btnFavorito.setImageResource(R.drawable.ic_star_filled)
+                } else {
+                    holder.btnFavorito.setImageResource(R.drawable.ic_star_border)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error en onBindViewHolder de LugarAdapter: ${e.message}", e)
             }
         }
 

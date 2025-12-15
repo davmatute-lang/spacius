@@ -272,7 +272,7 @@ class AndroidPermissionsSecurityTest {
             datosProhibidos.forEach { datoProhibido ->
                 assertFalse(
                     "Log no debería contener '$datoProhibido': $mensaje",
-                    mensaje.toLowerCase().contains(datoProhibido.toLowerCase())
+                    mensaje.lowercase().contains(datoProhibido.lowercase())
                 )
             }
         }
@@ -332,7 +332,7 @@ class AndroidPermissionsSecurityTest {
      * Valida que notificación no contenga datos sensibles
      */
     private fun validarContenidoNotificacion(notificacion: Map<String, String>): Boolean {
-        val contenido = notificacion.values.joinToString(" ").toLowerCase()
+        val contenido = notificacion.values.joinToString(" ").lowercase()
         val datosSensibles = listOf("password", "token", "email", "phone")
         return datosSensibles.none { contenido.contains(it) }
     }

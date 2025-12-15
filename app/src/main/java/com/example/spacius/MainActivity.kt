@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -32,63 +33,105 @@ class MainActivity : AppCompatActivity() {
     // --- 🎨 UI para el contador de notificaciones ---
     private var notificationBadge: TextView? = null
 
+    companion object {
+        private const val TAG = "MainActivity"
+    }
+
     // --- 🔔 Lanuncher para el permiso de notificaciones ---
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
+            Log.d(TAG, "Permiso de notificaciones concedido")
             // Permiso concedido. No se necesita hacer nada extra aquí.
         } else {
+            Log.d(TAG, "Permiso de notificaciones denegado")
             // Permiso denegado. Las notificaciones no se mostrarán.
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
-
-        // Crear canal de notificaciones
-        NotificationUtils.createNotificationChannel(this)
-
-        // Configurar la Toolbar
-        val topAppBar: Toolbar = findViewById(R.id.topAppBar)
-        setSupportActionBar(topAppBar)
-
-        // Manejo de EdgeToEdge
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-
-        // Configurar BottomNavigationView
-        setupBottomNavigation()
-
-        // Cargar fragment inicial y establecer título
-        if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, HomeFragment(), "HOME")
-                .commit()
-            supportActionBar?.title = "Inicio"
-        }
-
-        // Pedir permiso al iniciar
-        askNotificationPermission()
         
-        // Observar el contador de notificaciones
-        notificationViewModel.unreadNotificationsCount.observe(this) {
-            count -> updateNotificationBadge(count)
+        try {
+            Log.d(TAG, "onCreate - Iniciando MainActivity")
+            enableEdgeToEdge()
+            setContentView(R.layout.activity_main)
+
+            // Crear canal de notificaciones (con try-catch)
+            try {
+                NotificationUtils.createNotificationChannel(this)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error creando canal de notificaciones: ${e.message}", e)
+            }
+
+            // Configurar la Toolbar
+            val topAppBar: Toolbar = findViewById(R.id.topAppBar)
+            setSupportActionBar(topAppBar)
+
+            // Manejo de EdgeToEdge
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+                insets
+            }
+
+            // Configurar BottomNavigationView
+            setupBottomNavigation()
+
+            // Cargar fragment inicial y establecer título
+            if (savedInstanceState == null) {
+                Log.d(TAG, "Cargando HomeFragment inicial")
+                try {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, HomeFragment(), "HOME")
+                        .commit()
+                    supportActionBar?.title = "Inicio"
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error cargando HomeFragment: ${e.message}", e)
+                }
+            }
+
+            // Pedir permiso al iniciar
+            try {
+                askNotificationPermission()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error solicitando permisos: ${e.message}", e)
+            }
+            
+            // Observar el contador de notificaciones
+            try {
+                notificationViewModel.unreadNotificationsCount.observe(this) {
+                    count -> updateNotificationBadge(count)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error configurando notificaciones: ${e.message}", e)
+            }
+            
+            Log.d(TAG, "onCreate - MainActivity inicializada correctamente")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error CRÍTICO en onCreate: ${e.message}", e)
+            e.printStackTrace()
+            // Mostrar mensaje al usuario
+            android.widget.Toast.makeText(
+                this,
+                "Error al iniciar la aplicación: ${e.message}",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
         }
     }
 
     private fun askNotificationPermission() {
-        // Solo es necesario para Android 13 (API 33) en adelante
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                // Si el permiso no está concedido, se solicita
-                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        try {
+            // Solo es necesario para Android 13 (API 33) en adelante
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                    // Si el permiso no está concedido, se solicita
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al solicitar permiso de notificaciones: ${e.message}", e)
         }
     }
 

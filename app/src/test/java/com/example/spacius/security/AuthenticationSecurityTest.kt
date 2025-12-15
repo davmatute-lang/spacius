@@ -212,7 +212,7 @@ class AuthenticationSecurityTest {
             )
             assertFalse(
                 "Entrada sanitizada no debería contener javascript:",
-                sanitizado.toLowerCase().contains("javascript:")
+                sanitizado.lowercase().contains("javascript:")
             )
         }
     }
@@ -345,7 +345,7 @@ class AuthenticationSecurityTest {
             "12345", "1234", "111111", "1234567", "dragon",
             "123123", "baseball", "abc123", "football", "monkey"
         )
-        return passwordsComunes.contains(password.toLowerCase())
+        return passwordsComunes.contains(password.lowercase())
     }
     
     /**

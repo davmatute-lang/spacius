@@ -10,7 +10,7 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android_layout_height="wrap_content">
+        android:layout_height="wrap_content">
 
         <ImageView
             android:id="@+id/imgLugarReserva"
@@ -36,7 +36,8 @@
                 android:id="@+id/txtNombreLugarReserva"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nombre del Lugar"                android:textSize="18sp"
+                android:text="Nombre del Lugar"
+                android:textSize="18sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -58,13 +59,13 @@
 
         <Button
             android:id="@+id/btnCancelarReservaItem"
-            android.layout_width="wrap_content"
-            android.layout_height="wrap_content"
-            android.layout_marginTop="8dp"
-            android.text="Cancelar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Cancelar"
             app:layout_constraintEnd_toEndOf="parent"
-            app.layout_constraintTop_toBottomOf="@+id/linearLayout"
-            app.layout_constraintBottom_toBottomOf="parent" />
+            app:layout_constraintTop_toBottomOf="@+id/linearLayout"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
