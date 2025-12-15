@@ -62,8 +62,9 @@
             android:layout_marginTop="8dp"
             android:text="Seleccionar Hora de Fin" />
 
-        <FrameLayout
-            android:id="@+id/mapFragmentContainer"
+        <fragment
+            android:id="@+id/map_fragment"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
             android:layout_height="200dp"
             android:layout_marginTop="16dp" />

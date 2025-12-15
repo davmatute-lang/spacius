@@ -55,6 +55,7 @@ data class ReservaFirestore(
     val id: String = "",
     val lugarId: String = "",
     val lugarNombre: String = "", // Desnormalizado para consultas rápidas
+    val imagenUrl: String = "", // URL de la imagen del lugar
     val usuarioId: String = "", // ID del usuario de Firebase Auth
     val usuarioEmail: String = "", // Email del usuario para referencia
     val usuarioNombre: String = "", // Nombre del usuario
@@ -73,6 +74,7 @@ data class ReservaFirestore(
         id = "",
         lugarId = "",
         lugarNombre = "",
+        imagenUrl = "",
         usuarioId = "",
         usuarioEmail = "",
         usuarioNombre = "",

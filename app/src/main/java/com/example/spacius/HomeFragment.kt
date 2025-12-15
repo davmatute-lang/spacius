@@ -175,6 +175,7 @@ class HomeFragment : Fragment() {
     ) : RecyclerView.Adapter<ReservaAdapter.ReservaViewHolder>() {
 
         inner class ReservaViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+            val imgLugar: ImageView = itemView.findViewById(R.id.imgLugarReserva)
             val txtNombreLugar: TextView = itemView.findViewById(R.id.txtNombreLugarReserva)
             val txtFecha: TextView = itemView.findViewById(R.id.txtFechaReserva)
             val txtHora: TextView = itemView.findViewById(R.id.txtHoraReserva)
@@ -193,6 +194,11 @@ class HomeFragment : Fragment() {
             holder.txtFecha.text = "Fecha: ${reserva.fecha}"
             holder.txtHora.text = "Hora: ${reserva.horaInicio} - ${reserva.horaFin}"
             holder.btnCancelar.setOnClickListener { onCancelarClick(reserva) }
+
+            Glide.with(holder.itemView.context)
+                .load(reserva.imagenUrl)
+                .placeholder(R.drawable.ic_launcher_background)
+                .into(holder.imgLugar)
         }
 
         override fun getItemCount() = reservas.size
