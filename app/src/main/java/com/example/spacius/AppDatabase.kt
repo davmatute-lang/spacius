@@ -22,7 +22,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "spacius_database"
                 )
-                .fallbackToDestructiveMigration() // This will clear the old data
+                .fallbackToDestructiveMigration(dropAllTables = true) // Destruir tablas en cambios de versión
                 .build()
                 INSTANCE = instance
                 instance
