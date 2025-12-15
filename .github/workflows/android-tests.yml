@@ -1,6 +1,7 @@
 name: Android CI - Build, Test & Deploy
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main, Dani-Freire, Ashlee_Coello, Diego_Rubio ]
   pull_request:
