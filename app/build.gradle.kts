@@ -41,12 +41,18 @@ android {
     }
 
     buildTypes {
+        debug {
+            // La configuración debug usa firma automática
+            isMinifyEnabled = false
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Usar misma configuración que debug para evitar problemas de firma
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
@@ -116,6 +122,8 @@ dependencies {
     // --- Glide para imágenes ---
     implementation(libs.glide)
     ksp(libs.glide.ksp)
+    implementation("com.github.bumptech.glide:okhttp3-integration:4.16.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     // --- CircleImageView ---
     implementation(libs.circleimageview)

@@ -233,6 +233,8 @@ class HomeFragment : Fragment() {
             Glide.with(holder.itemView.context)
                 .load(lugar.imagenUrl)
                 .placeholder(R.drawable.ic_launcher_background)
+                .error(R.drawable.ic_launcher_background)
+                .timeout(10000)
                 .into(holder.imgLugar)
 
             holder.btnReservar.setOnClickListener { onReservarClick(lugar) }

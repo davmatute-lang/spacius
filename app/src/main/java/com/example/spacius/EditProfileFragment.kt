@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -24,6 +25,7 @@ import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import java.io.ByteArrayOutputStream
+import java.io.File
 
 class EditProfileFragment : Fragment() {
 
@@ -37,6 +39,7 @@ class EditProfileFragment : Fragment() {
     private var isLoading = false
 
     companion object {
+        private const val TAG = "EditProfileFragment"
         private const val COLLECTION_USERS = "users"
         private const val STORAGE_PROFILE_IMAGES = "profile_images"
         private const val MAX_IMAGE_SIZE_KB = 500
@@ -97,14 +100,11 @@ class EditProfileFragment : Fragment() {
             return
         }
         
-        // Cargar foto de perfil
-        loadProfileImage(user.photoUrl)
-        
         // Cargar datos básicos
         binding.etProfileName.setText(user.displayName.orEmpty())
         binding.etProfileEmail.setText(user.email.orEmpty())
         
-        // Cargar datos adicionales de Firestore
+        // Cargar datos adicionales de Firestore (incluyendo foto local si existe)
         firestore.collection(COLLECTION_USERS)
             .document(user.uid)
             .get()
@@ -112,6 +112,28 @@ class EditProfileFragment : Fragment() {
                 if (document.exists()) {
                     binding.etProfilePhone.setText(document.getString("telefono").orEmpty())
                     binding.etProfileCedula.setText(document.getString("cedula").orEmpty())
+                    
+                    // Intentar cargar foto local primero
+                    val localImageUri = getLocalImageUri(user.uid)
+                    if (localImageUri != null) {
+                        loadProfileImage(localImageUri)
+                    } else {
+                        // Si no hay imagen local, intentar desde Firestore o Firebase Auth
+                        val photoUrl = document.getString("photoUrl")
+                        if (photoUrl != null) {
+                            loadProfileImage(Uri.parse(photoUrl))
+                        } else {
+                            loadProfileImage(user.photoUrl)
+                        }
+                    }
+                } else {
+                    // No hay documento, intentar imagen local
+                    val localImageUri = getLocalImageUri(user.uid)
+                    if (localImageUri != null) {
+                        loadProfileImage(localImageUri)
+                    } else {
+                        loadProfileImage(user.photoUrl)
+                    }
                 }
                 setLoading(false)
             }
@@ -119,6 +141,20 @@ class EditProfileFragment : Fragment() {
                 showToast("Error al cargar datos: ${e.message}")
                 setLoading(false)
             }
+    }
+    
+    /**
+     * Obtiene la Uri de la imagen de perfil guardada localmente
+     * @return Uri si existe, null si no
+     */
+    private fun getLocalImageUri(userId: String): Uri? {
+        val directory = File(requireContext().filesDir, "profile_images")
+        val imageFile = File(directory, "$userId.jpg")
+        return if (imageFile.exists()) {
+            Uri.fromFile(imageFile)
+        } else {
+            null
+        }
     }
     
     private fun loadProfileImage(photoUrl: Uri?) {
@@ -148,23 +184,47 @@ class EditProfileFragment : Fragment() {
         setLoading(true)
         
         try {
+            // Guardar imagen localmente en lugar de Firebase Storage
             val bitmap = loadBitmapFromUri(imageUri)
-            val compressedImage = compressImage(bitmap)
-            val storageRef = storage.reference.child("$STORAGE_PROFILE_IMAGES/${user.uid}.jpg")
+            val savedUri = saveImageLocally(bitmap, user.uid)
             
-            storageRef.putBytes(compressedImage)
-                .addOnSuccessListener {
-                    storageRef.downloadUrl.addOnSuccessListener { downloadUri ->
-                        updateProfilePhoto(downloadUri)
-                    }.addOnFailureListener { e ->
-                        handleError("Error al obtener URL: ${e.message}")
-                    }
-                }
-                .addOnFailureListener { e ->
-                    handleError("Error al subir la imagen: ${e.message}")
-                }
+            if (savedUri != null) {
+                // Actualizar perfil con la ruta local
+                updateProfilePhoto(savedUri)
+            } else {
+                handleError("Error al guardar la imagen localmente")
+            }
         } catch (e: Exception) {
             handleError("Error al procesar la imagen: ${e.message}")
+        }
+    }
+    
+    /**
+     * Guarda la imagen localmente en el almacenamiento interno de la app
+     * @return Uri de la imagen guardada o null si falla
+     */
+    private fun saveImageLocally(bitmap: Bitmap, userId: String): Uri? {
+        return try {
+            // Crear directorio para imágenes de perfil si no existe
+            val directory = File(requireContext().filesDir, "profile_images")
+            if (!directory.exists()) {
+                directory.mkdirs()
+            }
+            
+            // Crear archivo con el UID del usuario
+            val imageFile = File(directory, "$userId.jpg")
+            
+            // Comprimir y guardar
+            val outputStream = imageFile.outputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
+            outputStream.flush()
+            outputStream.close()
+            
+            // Retornar Uri del archivo local
+            Uri.fromFile(imageFile)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al guardar imagen localmente: ${e.message}")
+            null
         }
     }
     
@@ -195,24 +255,29 @@ class EditProfileFragment : Fragment() {
     private fun updateProfilePhoto(photoUri: Uri) {
         val user = auth.currentUser ?: return
         
-        val profileUpdates = UserProfileChangeRequest.Builder()
-            .setPhotoUri(photoUri)
-            .build()
-            
-        user.updateProfile(profileUpdates)
-            .addOnCompleteListener { task ->
+        // Ya no necesitamos actualizar Firebase Auth con la URI
+        // Solo actualizamos Firestore con la referencia local
+        val photoData = hashMapOf<String, Any>(
+            "photoUrl" to photoUri.toString(),
+            "photoLocal" to true // Indicador de que es una imagen local
+        )
+        
+        firestore.collection(COLLECTION_USERS)
+            .document(user.uid)
+            .set(photoData, com.google.firebase.firestore.SetOptions.merge())
+            .addOnSuccessListener {
                 setLoading(false)
-                if (task.isSuccessful) {
-                    showToast("¡Foto de perfil actualizada!")
-                    // Recargar imagen sin caché
-                    Glide.with(this)
-                        .load(photoUri)
-                        .diskCacheStrategy(DiskCacheStrategy.NONE)
-                        .skipMemoryCache(true)
-                        .into(binding.ivProfileImage)
-                } else {
-                    showToast("Error al actualizar el perfil")
-                }
+                showToast("¡Foto de perfil actualizada!")
+                // Recargar imagen
+                Glide.with(this)
+                    .load(photoUri)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)
+                    .into(binding.ivProfileImage)
+            }
+            .addOnFailureListener { e ->
+                setLoading(false)
+                showToast("Error al actualizar el perfil: ${e.message}")
             }
     }
 
