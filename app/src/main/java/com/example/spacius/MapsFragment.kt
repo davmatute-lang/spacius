@@ -1,6 +1,7 @@
 package com.example.spacius
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,26 +22,34 @@ class MapsFragment : Fragment(), OnMapReadyCallback {
     private lateinit var firestoreRepository: FirestoreRepository
     private var rootView: View? = null
 
+    companion object {
+        private const val TAG = "MapsFragment"
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        Log.d(TAG, "onCreateView - Iniciando MapsFragment")
         rootView = inflater.inflate(R.layout.fragment_maps, container, false)
 
         firestoreRepository = FirestoreRepository()
 
         val mapFragment = childFragmentManager.findFragmentById(R.id.mapFragmentContainer) as? SupportMapFragment
             ?: SupportMapFragment.newInstance().also {
+                Log.d(TAG, "Creando nuevo SupportMapFragment")
                 childFragmentManager.beginTransaction()
                     .replace(R.id.mapFragmentContainer, it)
                     .commit()
             }
 
+        Log.d(TAG, "Solicitando getMapAsync")
         mapFragment.getMapAsync(this)
         return rootView
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
+        Log.d(TAG, "onMapReady - Mapa listo")
         mMap = googleMap
         mMap.uiSettings.isZoomControlsEnabled = true
         mMap.uiSettings.isMyLocationButtonEnabled = false
@@ -50,6 +59,7 @@ class MapsFragment : Fragment(), OnMapReadyCallback {
 
         val guayaquil = LatLng(-2.170998, -79.922359)
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(guayaquil, 12f))
+        Log.d(TAG, "Cámara posicionada en Guayaquil")
 
         cargarReservasEnMapa()
         
@@ -60,60 +70,67 @@ class MapsFragment : Fragment(), OnMapReadyCallback {
         }
     }
     
-    // � Nueva función para cargar solo lugares con reservas activas desde Firestore
+    // Nueva función para cargar solo lugares con reservas activas desde Firestore
     private fun cargarReservasEnMapa() {
+        Log.d(TAG, "cargarReservasEnMapa - Iniciando carga")
         lifecycleScope.launch {
-            // Limpiar marcadores anteriores
-            mMap.clear()
-            
-            // Obtener todas las reservas activas del usuario desde Firestore
-            val reservas = firestoreRepository.obtenerLugaresReservados()
-            
-            // Controlar visibilidad del mensaje y mapa
-            val tvSinReservas = rootView?.findViewById<android.widget.TextView>(R.id.tvSinReservas)
-            val mapContainer = rootView?.findViewById<View>(R.id.mapFragmentContainer)
-            
-            if (reservas.isEmpty()) {
-                // Mostrar mensaje cuando no hay reservas
-                tvSinReservas?.visibility = View.VISIBLE
-                mapContainer?.visibility = View.GONE
-                return@launch
-            } else {
-                // Mostrar mapa cuando hay reservas
-                tvSinReservas?.visibility = View.GONE
-                mapContainer?.visibility = View.VISIBLE
-            }
-            
-            // Obtener todos los lugares para buscar coordenadas
-            val lugares = firestoreRepository.obtenerLugares()
-            
-            // Para cada reserva, crear marcador
-            var primeraReserva = true
-            for (reserva in reservas) {
-                // Buscar el lugar correspondiente por ID
-                val lugar = lugares.find { it.id == reserva.lugarId }
+            try {
+                // Limpiar marcadores anteriores
+                mMap.clear()
                 
-                lugar?.let {
-                    val coordenada = LatLng(it.latitud, it.longitud)
+                // Obtener todas las reservas activas del usuario desde Firestore
+                Log.d(TAG, "Obteniendo reservas desde Firestore...")
+                val reservas = firestoreRepository.obtenerLugaresReservados()
+                Log.d(TAG, "Reservas obtenidas: ${reservas.size}")
+                
+                // Controlar visibilidad del mensaje y mapa
+                val tvSinReservas = rootView?.findViewById<android.widget.TextView>(R.id.tvSinReservas)
+                val mapContainer = rootView?.findViewById<View>(R.id.mapFragmentContainer)
+                
+                if (reservas.isEmpty()) {
+                    // Mostrar mensaje cuando no hay reservas
+                    tvSinReservas?.visibility = View.VISIBLE
+                    mapContainer?.visibility = View.GONE
+                    return@launch
+                } else {
+                    // Mostrar mapa cuando hay reservas
+                    tvSinReservas?.visibility = View.GONE
+                    mapContainer?.visibility = View.VISIBLE
+                }
+                
+                // Obtener todos los lugares para buscar coordenadas
+                val lugares = firestoreRepository.obtenerLugares()
+                
+                // Para cada reserva, crear marcador
+                var primeraReserva = true
+                for (reserva in reservas) {
+                    // Buscar el lugar correspondiente por ID
+                    val lugar = lugares.find { it.id == reserva.lugarId }
                     
-                    // Crear snippet con información de la reserva
-                    val snippetInfo = "📅 ${reserva.fecha}\n" +
-                                     "🕐 ${reserva.horaInicio} - ${reserva.horaFin}\n" +
-                                     "👤 ${reserva.usuarioNombre}"
-                    
-                    mMap.addMarker(
-                        MarkerOptions()
-                            .position(coordenada)
-                            .title("📍 ${reserva.lugarNombre}")
-                            .snippet(snippetInfo)
-                    )
-                    
-                    // Centrar la cámara en la primera reserva
-                    if (primeraReserva) {
-                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(coordenada, 13f))
-                        primeraReserva = false
+                    lugar?.let {
+                        val coordenada = LatLng(it.latitud, it.longitud)
+                        
+                        // Crear snippet con información de la reserva
+                        val snippetInfo = "📅 ${reserva.fecha}\n" +
+                                         "🕐 ${reserva.horaInicio} - ${reserva.horaFin}\n" +
+                                         "👤 ${reserva.usuarioNombre}"
+                        
+                        mMap.addMarker(
+                            MarkerOptions()
+                                .position(coordenada)
+                                .title("📍 ${reserva.lugarNombre}")
+                                .snippet(snippetInfo)
+                        )
+                        
+                        // Centrar la cámara en la primera reserva
+                        if (primeraReserva) {
+                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(coordenada, 13f))
+                            primeraReserva = false
+                        }
                     }
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error en cargarReservasEnMapa: ${e.message}", e)
             }
         }
     }
